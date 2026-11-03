@@ -1,35 +1,36 @@
 import { Scene } from 'phaser';
+import { AssetKeys } from '../config/AssetKeys';
+import { Balance } from '../config/Balance';
+import { Enemy } from '../entities/enemy/Enemy';
+import { Player } from '../entities/player/Player';
+import { Team } from '../types/Team';
 
+/** Scene utama permainan untuk pengujian awal entitas. */
 export class Game extends Scene
 {
-    camera: Phaser.Cameras.Scene2D.Camera;
-    background: Phaser.GameObjects.Image;
-    msg_text : Phaser.GameObjects.Text;
-
+    /** Mendaftarkan scene Game. */
     constructor ()
     {
         super('Game');
     }
 
-    create ()
+    /** Menyiapkan background, pemain, dan satu musuh untuk pengujian awal. */
+    create (): void
     {
-        this.camera = this.cameras.main;
-        this.camera.setBackgroundColor(0x00ff00);
+        this.cameras.main.setBackgroundColor(Balance.background.color);
 
-        this.background = this.add.image(512, 384, 'background');
-        this.background.setAlpha(0.5);
-
-        this.msg_text = this.add.text(512, 384, 'Make something fun!\nand share it with us:\nsupport@phaser.io', {
-            fontFamily: 'Arial Black', fontSize: 38, color: '#ffffff',
-            stroke: '#000000', strokeThickness: 8,
-            align: 'center'
+        new Player(this, 512, 680, AssetKeys.Player, {
+            team: Team.Player,
+            maxHp: Balance.player.maxHp,
+            moveSpeed: Balance.player.moveSpeed,
+            bodyRadius: Balance.player.bodyRadius
         });
-        this.msg_text.setOrigin(0.5);
 
-        this.input.once('pointerdown', () => {
-
-            this.scene.start('GameOver');
-
+        new Enemy(this, 512, 160, AssetKeys.Enemy, {
+            team: Team.Enemy,
+            maxHp: Balance.enemy.maxHp,
+            moveSpeed: Balance.enemy.moveSpeed,
+            bodyRadius: Balance.enemy.bodyRadius
         });
     }
 }

@@ -1,16 +1,19 @@
 import { Scene, GameObjects } from 'phaser';
 
+/** Menu utama yang menunggu klik untuk memulai game. */
 export class MainMenu extends Scene
 {
     background: GameObjects.Image;
     logo: GameObjects.Image;
     title: GameObjects.Text;
 
+    /** Mendaftarkan scene MainMenu. */
     constructor ()
     {
         super('MainMenu');
     }
 
+    /** Menampilkan background, logo, judul, dan menunggu klik untuk mulai. */
     create ()
     {
         this.background = this.add.image(512, 384, 'background');
@@ -25,6 +28,7 @@ export class MainMenu extends Scene
 
         this.input.once('pointerdown', () => {
 
+            // Mulai game setelah pemain menekan layar.
             this.scene.start('Game');
 
         });

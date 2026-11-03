@@ -1,3 +1,14 @@
+AGENTS.md
+
+# AI agent session data
+.omo/
+.opencode
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
 # Logs
 logs
 *.log
@@ -22,3 +33,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+#java
+.mtj.tmp/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
