@@ -1,23 +1,15 @@
 import { defineConfig } from 'vite';
+import { fileURLToPath } from 'node:url';
 
-const phasermsg = () => {
-    return {
-        name: 'phasermsg',
-        buildStart() {
-            process.stdout.write(`Building for production...\n`);
-        },
-        buildEnd() {
-            const line = "---------------------------------------------------------";
-            const msg = `❤️❤️❤️ Tell us about your game! - games@phaser.io ❤️❤️❤️`;
-            process.stdout.write(`${line}\n${msg}\n${line}\n`);
-            
-            process.stdout.write(`✨ Done ✨\n`);
-        }
-    }
-}   
+const srcDir = fileURLToPath(new URL('../src', import.meta.url));
 
 export default defineConfig({
     base: './',
+    resolve: {
+        alias: {
+            '@': srcDir
+        }
+    },
     logLevel: 'warning',
     build: {
         rollupOptions: {
@@ -40,8 +32,5 @@ export default defineConfig({
     },
     server: {
         port: 8080
-    },
-    plugins: [
-        phasermsg()
-    ]
+    }
 });

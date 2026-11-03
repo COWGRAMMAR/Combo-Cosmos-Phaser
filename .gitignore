@@ -1,5 +1,14 @@
 AGENTS.md
 
+# AI agent session data
+.omo/
+.opencode
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
 # Logs
 logs
 *.log

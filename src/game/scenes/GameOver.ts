@@ -1,16 +1,19 @@
 import { Scene } from 'phaser';
 
+/** Layar game over yang menunggu klik untuk kembali ke menu. */
 export class GameOver extends Scene
 {
     camera: Phaser.Cameras.Scene2D.Camera;
     background: Phaser.GameObjects.Image;
     gameover_text : Phaser.GameObjects.Text;
 
+    /** Mendaftarkan scene GameOver. */
     constructor ()
     {
         super('GameOver');
     }
 
+    /** Menampilkan layar game over dan menunggu klik untuk kembali ke menu. */
     create ()
     {
         this.camera = this.cameras.main
@@ -28,6 +31,7 @@ export class GameOver extends Scene
 
         this.input.once('pointerdown', () => {
 
+            // Kembali ke menu setelah pemain menekan layar.
             this.scene.start('MainMenu');
 
         });

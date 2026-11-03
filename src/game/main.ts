@@ -4,6 +4,7 @@ import { Game as MainGame } from './scenes/Game';
 import { MainMenu } from './scenes/MainMenu';
 import { AUTO, Game } from 'phaser';
 import { Preloader } from './scenes/Preloader';
+import { Balance } from './config/Balance';
 
 //  Find out more information about the Game Config at:
 //  https://docs.phaser.io/api-documentation/typedef/types-core#gameconfig
@@ -12,7 +13,13 @@ const config: Phaser.Types.Core.GameConfig = {
     width: 1024,
     height: 768,
     parent: 'game-container',
-    backgroundColor: '#028af8',
+    backgroundColor: Balance.background.color,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            debug: false
+        }
+    },
     scene: [
         Boot,
         Preloader,
@@ -22,6 +29,7 @@ const config: Phaser.Types.Core.GameConfig = {
     ]
 };
 
+/** Membuat instance Phaser Game dengan parent container tertentu. */
 const StartGame = (parent: string) => {
 
     return new Game({ ...config, parent });
