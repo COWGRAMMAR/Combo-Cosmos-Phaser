@@ -72,8 +72,13 @@ export class Game extends Phaser.Scene
     /** Callback overlap peluru pemain dengan musuh; dibuat sekali, bukan per frame. */
     private readonly handlePlayerBulletHitsEnemy: Phaser.Types.Physics.Arcade.ArcadePhysicsCallback = (bulletObject, enemyObject) =>
     {
-        const bullet = bulletObject as PlayerBullet;
+        const bullet = bulletObject as Phaser.GameObjects.GameObject & Partial<PlayerBullet>;
         const enemy = enemyObject as DummyEnemy;
+
+        if (!(bullet instanceof PlayerBullet) || typeof bullet.deactivate !== 'function')
+        {
+            return;
+        }
 
         if (!bullet.active || !enemy.active)
         {
