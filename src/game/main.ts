@@ -1,19 +1,32 @@
 import { Boot } from './scenes/Boot';
 import { GameOver } from './scenes/GameOver';
 import { Game as MainGame } from './scenes/Game';
+import { Hud } from './scenes/Hud';
 import { MainMenu } from './scenes/MainMenu';
-import { AUTO, Game } from 'phaser';
+import { AUTO, Game, Scale } from 'phaser';
+import { Pause } from './scenes/Pause';
 import { Preloader } from './scenes/Preloader';
-import { Balance } from './config/Balance';
+import { ScreenConfig } from './config/ScreenConfig';
+import { TimeConfig } from './config/TimeConfig';
+import { WorldConfig } from './config/WorldConfig';
 
 //  Find out more information about the Game Config at:
 //  https://docs.phaser.io/api-documentation/typedef/types-core#gameconfig
 const config: Phaser.Types.Core.GameConfig = {
     type: AUTO,
-    width: 1024,
-    height: 768,
+    width: ScreenConfig.width,
+    height: ScreenConfig.height,
     parent: 'game-container',
-    backgroundColor: Balance.background.color,
+    backgroundColor: WorldConfig.background.color,
+    scale: {
+        mode: Scale.FIT,
+        autoCenter: Scale.CENTER_BOTH
+    },
+    fps: {
+        target: TimeConfig.targetFps,
+        limit: TimeConfig.maxFps,
+        min: TimeConfig.minFps
+    },
     physics: {
         default: 'arcade',
         arcade: {
@@ -25,6 +38,8 @@ const config: Phaser.Types.Core.GameConfig = {
         Preloader,
         MainMenu,
         MainGame,
+        Hud,
+        Pause,
         GameOver
     ]
 };

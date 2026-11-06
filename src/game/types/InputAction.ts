@@ -8,5 +8,6 @@ export enum InputAction
     MoveDown = 'move-down',
     MoveLeft = 'move-left',
     MoveRight = 'move-right',
-    Fire = 'fire'
+    Fire = 'fire',
+    Dash = 'dash'
 }

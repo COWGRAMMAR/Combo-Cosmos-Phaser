@@ -12,5 +12,6 @@ export const DEFAULT_INPUT_BINDINGS = {
     [InputAction.MoveDown]: ['DOWN', 'S'],
     [InputAction.MoveLeft]: ['LEFT', 'A'],
     [InputAction.MoveRight]: ['RIGHT', 'D'],
-    [InputAction.Fire]: ['SPACE']
+    [InputAction.Fire]: ['SPACE'],
+    [InputAction.Dash]: ['SHIFT']
 } as const satisfies InputBindingMap;
