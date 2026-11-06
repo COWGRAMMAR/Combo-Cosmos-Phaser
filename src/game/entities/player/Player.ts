@@ -1,60 +1,205 @@
 import * as Phaser from 'phaser';
+import { DepthConfig } from '../../config/DepthConfig';
+import { PlayerConfig } from '../../config/PlayerConfig';
 import type { EntityConfig } from '../../types/EntityConfig';
+import type { IInputSource } from '../../types/IInputSource';
+import { InputAction } from '../../types/InputAction';
 import { BaseEntity } from '../BaseEntity';
+import type { PlayerWeapon } from './PlayerWeapon';
 import { PlayerState } from './PlayerState';
 
-/** Entitas pemain yang bergerak empat arah dengan keyboard. */
+/** Entitas pemain yang bergerak empat arah lewat sumber input. */
 export class Player extends BaseEntity
 {
     public entityState: PlayerState = PlayerState.Alive;
 
-    private readonly cursors: Phaser.Types.Input.Keyboard.CursorKeys;
-    private readonly keyW: Phaser.Input.Keyboard.Key;
-    private readonly keyA: Phaser.Input.Keyboard.Key;
-    private readonly keyS: Phaser.Input.Keyboard.Key;
-    private readonly keyD: Phaser.Input.Keyboard.Key;
+    private readonly inputSource: IInputSource;
+    private readonly weapon?: PlayerWeapon;
 
-    /** Menyiapkan input keyboard untuk gerakan empat arah. */
-    constructor(scene: Phaser.Scene, x: number, y: number, texture: string, config: EntityConfig)
+    private _lives: number = PlayerConfig.lives;
+    private shieldActive: boolean = false;
+
+    private dashRemainingMs: number = 0;
+    private dashCooldownRemainingMs: number = 0;
+    private dashDirX: number = 0;
+    private dashDirY: number = 0;
+
+    /** Menyimpan sumber input yang di-inject oleh scene. */
+    constructor(
+        scene: Phaser.Scene,
+        x: number,
+        y: number,
+        texture: string,
+        config: EntityConfig,
+        inputSource: IInputSource,
+        weapon?: PlayerWeapon
+    )
     {
         super(scene, x, y, texture, config);
 
-        const keyboard = scene.input.keyboard;
+        this.inputSource = inputSource;
+        this.weapon = weapon;
 
-        if (!keyboard)
-        {
-            throw new Error('Player requires keyboard input, but the keyboard plugin is unavailable.');
-        }
-
-        this.cursors = keyboard.createCursorKeys();
-        this.keyW = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-        this.keyA = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-        this.keyS = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-        this.keyD = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+        this.setDepth(DepthConfig.player);
     }
 
-    /** Menghitung arah gerak dari tombol panah atau WASD, lalu menerapkan velocity. */
-    protected updateEntity(_time: number, _delta: number): void
+    /** Radius hitbox kecil untuk tabrakan peluru musuh. */
+    get hitRadius(): number
     {
-        const left = this.cursors.left.isDown || this.keyA.isDown;
-        const right = this.cursors.right.isDown || this.keyD.isDown;
-        const up = this.cursors.up.isDown || this.keyW.isDown;
-        const down = this.cursors.down.isDown || this.keyS.isDown;
-
-        const direction = new Phaser.Math.Vector2(
-            (right ? 1 : 0) - (left ? 1 : 0),
-            (down ? 1 : 0) - (up ? 1 : 0)
-        );
-
-        if (direction.lengthSq() > 0)
-        {
-            direction.normalize().scale(this.moveSpeed);
-        }
-
-        this.setVelocity(direction.x, direction.y);
+        return PlayerConfig.hitRadius;
     }
 
-    /** Menonaktifkan pemain saat HP habis. */
+    /** Sisa nyawa pemain pada run ini. */
+    get lives(): number
+    {
+        return this._lives;
+    }
+
+    /** Apakah shield sedang aktif. */
+    get isShieldActive(): boolean
+    {
+        return this.shieldActive;
+    }
+
+    /**
+     * Mengurangi satu nyawa karena peluru musuh.
+     * Mengembalikan true kalau nyawa habis dan pemain mati.
+     */
+    public applyHit(): boolean
+    {
+        if (!this.active)
+        {
+            return true;
+        }
+
+        this._lives -= 1;
+
+        if (this._lives <= 0)
+        {
+            this._lives = 0;
+            this.die();
+
+            return true;
+        }
+
+        this.startInvulnerability(PlayerConfig.invulnMs);
+
+        return false;
+    }
+
+    /** Memberi kebal sementara; dipakai kena hit maupun dash. */
+    public startInvulnerability(durationMs: number): void
+    {
+        if (!this.active)
+        {
+            return;
+        }
+
+        this.invulnerableRemainingMs = Math.max(this.invulnerableRemainingMs, durationMs);
+
+        if (this.entityState !== PlayerState.Dead)
+        {
+            this.entityState = PlayerState.Invulnerable;
+        }
+    }
+
+    /** Peluru musuh diabaikan saat kebal atau saat shield aktif. */
+    public isDamageImmune(): boolean
+    {
+        return this.isInvulnerable() || this.shieldActive;
+    }
+
+    /** Menyalakan atau mematikan shield dari EffectManager. */
+    public setShield(active: boolean): void
+    {
+        this.shieldActive = active;
+    }
+
+    /** Menambah nyawa sampai batas maksimum config. */
+    public addLife(): void
+    {
+        this._lives = Math.min(this._lives + 1, PlayerConfig.maxLives);
+    }
+
+    /** True selama durasi dash berjalan. */
+    public isDashing(): boolean
+    {
+        return this.dashRemainingMs > 0;
+    }
+
+    /** True kalau cooldown dash sudah selesai dan dash bisa dipakai lagi. */
+    public isDashReady(): boolean
+    {
+        return this.dashCooldownRemainingMs <= 0;
+    }
+
+    /** Membaca aksi gerak dari sumber input, lalu menerapkan velocity. */
+    protected updateEntity(_time: number, delta: number): void
+    {
+        const axisX = this.inputSource.getAxis(InputAction.MoveLeft, InputAction.MoveRight);
+        const axisY = this.inputSource.getAxis(InputAction.MoveUp, InputAction.MoveDown);
+
+        if (this.dashRemainingMs > 0)
+        {
+            this.dashRemainingMs = Math.max(0, this.dashRemainingMs - delta);
+        }
+
+        if (this.dashCooldownRemainingMs > 0)
+        {
+            this.dashCooldownRemainingMs = Math.max(0, this.dashCooldownRemainingMs - delta);
+        }
+
+        this.tryStartDash(axisX, axisY);
+        this.updateBlink();
+
+        if (this.isDashing())
+        {
+            this.setVelocity(this.dashDirX * PlayerConfig.dash.speed, this.dashDirY * PlayerConfig.dash.speed);
+        }
+        // Hitung normalisasi dengan skalar agar tidak membuat Vector2 baru tiap frame.
+        else if (axisX !== 0 || axisY !== 0)
+        {
+            const length = Math.sqrt(axisX * axisX + axisY * axisY);
+            const speed = this.moveSpeed / length;
+
+            this.setVelocity(axisX * speed, axisY * speed);
+        }
+        else
+        {
+            this.setVelocity(0, 0);
+        }
+
+        if (this.entityState === PlayerState.Invulnerable && !this.isInvulnerable())
+        {
+            this.entityState = PlayerState.Alive;
+        }
+
+        this.weapon?.update(
+            delta,
+            this.x,
+            this.y + PlayerConfig.weapon.muzzleOffsetY,
+            this.inputSource.isDown(InputAction.Fire)
+        );
+    }
+
+    /** Mengembalikan nyawa, shield, dan status dash ke kondisi awal run. */
+    public override resetForPool(x: number, y: number): void
+    {
+        super.resetForPool(x, y);
+
+        this._lives = PlayerConfig.lives;
+        this.shieldActive = false;
+        this.dashRemainingMs = 0;
+        this.dashCooldownRemainingMs = 0;
+        this.dashDirX = 0;
+        this.dashDirY = 0;
+        this.invulnerableRemainingMs = 0;
+        this.entityState = PlayerState.Alive;
+
+        this.setAlpha(PlayerConfig.normalAlpha);
+    }
+
+    /** Menonaktifkan pemain saat nyawa habis. */
     public die(): void
     {
         this.entityState = PlayerState.Dead;
@@ -63,5 +208,50 @@ export class Player extends BaseEntity
 
         const body = this.body as Phaser.Physics.Arcade.Body;
         body.enable = false;
+    }
+
+    /** Memulai dash hanya jika cooldown siap dan ada arah input. */
+    private tryStartDash(axisX: number, axisY: number): void
+    {
+        if (!this.inputSource.isJustDown(InputAction.Dash))
+        {
+            return;
+        }
+
+        if (!this.isDashReady() || (axisX === 0 && axisY === 0))
+        {
+            return;
+        }
+
+        const length = Math.sqrt(axisX * axisX + axisY * axisY);
+
+        this.dashDirX = axisX / length;
+        this.dashDirY = axisY / length;
+        this.dashRemainingMs = PlayerConfig.dash.durationMs;
+        this.dashCooldownRemainingMs = PlayerConfig.dash.cooldownMs;
+
+        this.startInvulnerability(PlayerConfig.dash.invulnMs);
+    }
+
+    /** Mengedipkan alpha selama kebal tanpa membuat tween baru. */
+    private updateBlink(): void
+    {
+        if (this.isDashing())
+        {
+            this.setAlpha(PlayerConfig.dashAlpha);
+
+            return;
+        }
+
+        if (this.isInvulnerable())
+        {
+            const blinkOn = Math.floor(this.invulnerableRemainingMs / PlayerConfig.invulnBlinkMs) % 2 === 0;
+
+            this.setAlpha(blinkOn ? PlayerConfig.normalAlpha : PlayerConfig.invulnAlpha);
+
+            return;
+        }
+
+        this.setAlpha(PlayerConfig.normalAlpha);
     }
 }

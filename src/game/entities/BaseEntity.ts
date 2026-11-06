@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { TimeConfig } from '../config/TimeConfig';
 import type { EntityConfig } from '../types/EntityConfig';
 import type { Team } from '../types/Team';
 import type { IDamageable } from './IDamageable';
@@ -10,7 +11,7 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
     private _hp: number;
     public moveSpeed: number;
     public readonly team: Team;
-    protected invulnerableUntil: number = 0;
+    protected invulnerableRemainingMs: number = 0;
 
     /** Menyiapkan sprite, HP, tim, dan body fisika entitas. */
     constructor(scene: Phaser.Scene, x: number, y: number, texture: string, config: EntityConfig)
@@ -66,7 +67,7 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
     /** Mengurangi HP, memicu onDamaged(), dan memanggil die() jika HP habis. */
     public takeDamage(amount: number, _source?: unknown): void
     {
-        if (!this.isAlive || amount <= 0 || this.isInvulnerable(this.scene.time.now))
+        if (!this.isAlive || amount <= 0 || this.isInvulnerable())
         {
             return;
         }
@@ -91,10 +92,10 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
         this._hp = Math.min(this.maxHp, this._hp + amount);
     }
 
-    /** True jika entitas masih dalam masa kebal terhadap damage. */
-    public isInvulnerable(now: number): boolean
+    /** True jika sisa durasi kebal masih berjalan. */
+    public isInvulnerable(): boolean
     {
-        return now < this.invulnerableUntil;
+        return this.invulnerableRemainingMs > 0;
     }
 
     /** True jika target masih hidup dan berasal dari tim berbeda. */
@@ -108,6 +109,7 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
     {
         this.setPosition(x, y);
         this._hp = this.maxHp;
+        this.invulnerableRemainingMs = 0;
         this.setActive(true);
         this.setVisible(true);
 
@@ -120,7 +122,15 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
     public preUpdate(time: number, delta: number): void
     {
         super.preUpdate(time, delta);
-        this.updateEntity(time, delta);
+
+        const safeDelta = Math.min(delta, TimeConfig.maxDeltaMs);
+
+        if (this.invulnerableRemainingMs > 0)
+        {
+            this.invulnerableRemainingMs = Math.max(0, this.invulnerableRemainingMs - safeDelta);
+        }
+
+        this.updateEntity(time, safeDelta);
     }
 
     /** Logika per-frame khusus subclass; dipanggil otomatis dari preUpdate(). */

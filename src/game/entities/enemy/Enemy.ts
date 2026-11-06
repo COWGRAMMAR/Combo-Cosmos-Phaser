@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { DepthConfig } from '../../config/DepthConfig';
 import type { EntityConfig } from '../../types/EntityConfig';
 import { BaseEntity } from '../BaseEntity';
 import { EnemyState } from './EnemyState';
@@ -17,6 +18,8 @@ export class Enemy extends BaseEntity
         body.setImmovable(true);
         body.moves = false;
         this.setVelocity(0, 0);
+
+        this.setDepth(DepthConfig.enemy);
     }
 
     /** Belum ada perilaku per-frame untuk musuh. */
