@@ -1,53 +1,59 @@
-# Build & Menjalankan Proyek: Combo-Cosmos-Phaser
+# Build & Menjalankan Proyek
 
-- **Status:** berlaku (Bun sebagai package manager utama)
-- **Tanggal:** 2026-11-07
-- **Scope dokumen:** instalasi, menjalankan dev server, build produksi, typecheck, dan kebijakan lockfile/package manager.
-
-Dokumen ini menjelaskan cara menjalankan proyek. Ringkasan struktur file ada di [`struktur-file.md`](struktur-file.md).
+> Windows: gunakan PowerShell 5.1+ (7+ disarankan). CMD kurang nyaman untuk perintah build.
 
 ---
 
-## 1. Package Manager
+## 1. First-Time Setup
 
-| Item | Nilai |
-|---|---|
-| Package manager utama | **Bun** (Bun 1.4.2 saat dokumen dibuat) |
-| Lockfile yang di-commit | `bun.lock` |
-| Package manager sebelumnya | npm (`package-lock.json`, dihapus saat migrasi) |
-| pnpm/yarn | tidak pernah dipakai |
+> Langkah satu kali. Selesaikan sebelum build pertama.
 
-`npm` tetap **bisa** dipakai untuk menjalankan script, tetapi `bun.lock` adalah sumber kebenaran versi dependency.
+### Alat yang Diperlukan
 
-## 2. Prasyarat
+Proyek ini butuh Bun (disarankan) atau Node.js 18+ dan Git. Di Windows, [scoop](https://scoop.sh/) mempermudah pemasangan.
 
-- **Bun** (disarankan): https://bun.sh
-- atau **Node.js 18+** (disarankan 20+) + npm, kalau tidak ingin memasang Bun.
-- Git.
-
-Vite dan TypeScript dijalankan dari `node_modules`, jadi salah satu dari Bun/Node harus tersedia.
-
-## 3. Instalasi
-
-Cara utama:
-
-```bash
-bun install
-```
-
-Alternatif npm:
-
-```bash
-npm install
-```
+| Alat | Windows (scoop) | macOS (brew) | Linux (curl/apt) |
+| --- | --- | --- | --- |
+| **Bun** (disarankan) | `scoop install bun` | `brew install oven-sh/bun/bun` | `curl -fsSL https://bun.sh/install \| bash` |
+| **Node.js 18+** (alternatif) | `scoop install nodejs-lts` | `brew install node` | `apt install nodejs npm` |
+| **Git** | `scoop install git` | `brew install git` | `apt install git` |
 
 Catatan:
 
-- `npm install` akan membuat `package-lock.json`. File itu **jangan di-commit**; yang di-commit hanya `bun.lock`.
-- Jangan mencampur `bun install` dan `npm install` di working copy yang sama. Kalau berpindah manager, hapus `node_modules` dulu, lalu install ulang dengan manager pilihan.
-- Jangan menghapus `bun.lock` untuk "reset". File itu yang mengunci versi dependency.
+- Bun sudah membawa runtime JavaScript, jadi Node.js tidak wajib kalau memakai Bun.
+- `apt install nodejs` di Ubuntu/Debian bisa memberi versi lama. Kalau butuh Node 20+, pakai NodeSource atau `nvm`.
+- Kolom Linux memakai nama paket Debian/Ubuntu. Untuk Fedora, Arch, dan openSUSE, cari paket setara di `dnf`, `pacman`, atau `zypper`.
+- Proyek tidak punya dependency native khusus OS. Perintah Bun/Node sama di Windows, Linux, dan macOS.
 
-## 4. Menjalankan Development
+### Pengaturan Pertama
+
+1. Pasang Bun atau Node.js + Git (lihat tabel).
+2. Clone repo:
+
+   ```bash
+   git clone https://github.com/COWGRAMMAR/Combo-Cosmos-Phaser.git
+   cd Combo-Cosmos-Phaser
+   ```
+
+3. Install dependency:
+
+   ```bash
+   bun install
+   # atau
+   npm install
+   ```
+
+Catatan lockfile:
+
+- `bun.lock` adalah sumber kebenaran versi dependency dan wajib di-commit.
+- `npm install` membuat `package-lock.json`. File itu jangan di-commit.
+- Jangan mencampur `bun install` dan `npm install` di working copy yang sama. Kalau berpindah manager, hapus `node_modules` dulu.
+
+---
+
+## 2. Building & Running
+
+### 2a. Dev Server
 
 ```bash
 bun run dev
@@ -57,7 +63,7 @@ npm run dev
 
 Dev server berjalan di `http://localhost:8080` (lihat `vite/config.dev.mjs`).
 
-Untuk mengakses dari perangkat lain di LAN:
+### 2b. Dev Server LAN
 
 ```bash
 bun run dev:lan
@@ -65,9 +71,9 @@ bun run dev:lan
 npm run dev:lan
 ```
 
-Script `dev:lan` menambahkan `--host --strictPort`.
+Script ini menambahkan `--host --strictPort` supaya bisa diakses dari perangkat lain di jaringan yang sama.
 
-## 5. Build Produksi
+### 2c. Build Produksi
 
 ```bash
 bun run build
@@ -75,9 +81,9 @@ bun run build
 npm run build
 ```
 
-Hasil build ada di `dist/`. Upload seluruh isi `dist/` ke static hosting (GitHub Pages, Netlify, Vercel, Nginx, dsb). Konfigurasi build ada di `vite/config.prod.mjs` (minify terser, chunk `phaser` terpisah).
+Hasil build ada di `dist/`. Upload seluruh isi `dist/` ke static hosting (GitHub Pages, Netlify, Vercel, Nginx). Konfigurasi build ada di `vite/config.prod.mjs` (minify terser, chunk `phaser` terpisah).
 
-## 6. Typecheck
+### 2d. Typecheck
 
 ```bash
 bun x tsc --noEmit
@@ -85,12 +91,12 @@ bun x tsc --noEmit
 npx tsc --noEmit
 ```
 
-Tidak menghasilkan file; hanya memeriksa tipe.
+Tidak menghasilkan file. Hanya memeriksa tipe.
 
-## 7. Padanan Perintah
+### 2e. Padanan Perintah
 
 | Kebutuhan | Bun | npm |
-|---|---|---|
+| --- | --- | --- |
 | Install | `bun install` | `npm install` |
 | Dev | `bun run dev` | `npm run dev` |
 | Dev LAN | `bun run dev:lan` | `npm run dev:lan` |
@@ -99,7 +105,41 @@ Tidak menghasilkan file; hanya memeriksa tipe.
 
 Semua script ada di `package.json` dan tidak memakai API khusus Bun, jadi kedua manager menjalankan perintah yang sama.
 
-## 8. Kebijakan Lockfile
+---
+
+## 3. Maintenance
+
+### 3a. Clean Install
+
+Hapus `node_modules` lalu install ulang.
+
+```bash
+# Linux/macOS
+rm -rf node_modules
+
+# Windows (PowerShell)
+Remove-Item -Recurse -Force node_modules
+```
+
+Lalu install ulang:
+
+```bash
+bun install
+```
+
+### 3b. Build Bersih
+
+Hapus `dist/` lalu build ulang.
+
+```bash
+# Linux/macOS
+rm -rf dist
+
+# Windows (PowerShell)
+Remove-Item -Recurse -Force dist
+```
+
+### 3c. Kebijakan Lockfile
 
 1. `bun.lock` wajib di-commit setiap kali dependency berubah.
 2. `package-lock.json` adalah artefak lokal npm dan tidak boleh di-commit.
@@ -108,19 +148,16 @@ Semua script ada di `package.json` dan tidak memakai API khusus Bun, jadi kedua 
 
 `package-lock.json` belum masuk `.gitignore`. Kalau anggota tim memakai npm, tambahkan file itu ke `.gitignore` agar tidak ikut ter-commit.
 
-## 9. Catatan Bun vs npm
+---
 
-- Script `package.json` bersifat manager-agnostic. `npm run dev` tetap jalan; tidak ada yang "dikunci" ke Bun.
-- Bun memblokir postinstall script kecuali di-allowlist. Repo ini sudah punya `allowScripts: { "esbuild@0.25.2": true }` di `package.json`. npm menjalankan semua postinstall secara default.
-- Kalau `npm run dev` gagal setelah `bun install`, cek `node_modules` lalu jalankan install ulang dengan manager yang dipakai.
-- Bun dan npm membaca lockfile berbeda. `bun install` memakai `bun.lock`; `npm install` mengabaikan `bun.lock`, menyelesaikan versi dari rentang semver di `package.json`, lalu menulis `package-lock.json`. Isi `node_modules` bisa berbeda karena rentang versi bergeser. Pilih satu manager per mesin/CI.
+## 4. Troubleshooting
 
-## 10. Troubleshooting
+- **`vite: command not found` atau script gagal**: `node_modules` belum ada. Jalankan `bun install` atau `npm install`.
+- **Port 8080 dipakai**: hentikan dev server lain, atau ubah `server.port` di `vite/config.dev.mjs`.
+- **Dependency berbeda antar anggota**: pakai `bun.lock`, hapus `node_modules`, install ulang dengan Bun.
+- **Build gagal karena tipe**: jalankan `bun x tsc --noEmit`, perbaiki error.
+- **`package-lock.json` muncul**: jangan commit; tambahkan ke `.gitignore` bila perlu.
+- **`npm run dev` gagal setelah `bun install`**: cek `node_modules`, lalu install ulang dengan manager yang sama seperti lockfile yang dipakai.
+- **`bun: command not found` di Windows**: tutup lalu buka PowerShell baru setelah `scoop install bun` agar PATH diperbarui.
 
-| Gejala | Penyebab umum | Solusi |
-|---|---|---|
-| `vite: command not found` / script gagal | `node_modules` belum ada | `bun install` atau `npm install` |
-| Dependency berbeda antar anggota | lockfile/manager campur | Pakai `bun.lock`, hapus `node_modules`, install ulang dengan Bun |
-| Port 8080 dipakai | dev server lain masih jalan | Hentikan proses lama atau ubah `server.port` di `vite/config.dev.mjs` |
-| Build gagal karena tipe | error TypeScript | Jalankan `bun x tsc --noEmit`, perbaiki error |
-| `package-lock.json` muncul | menjalankan `npm install` | Jangan commit; tambahkan ke `.gitignore` bila perlu |
+> Jika mengalami kendala di Linux/macOS, pastikan Bun atau Node.js dan Git sudah terpasang. Proyek tidak butuh compiler atau library sistem tambahan.
