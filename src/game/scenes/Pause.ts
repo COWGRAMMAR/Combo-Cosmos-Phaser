@@ -2,6 +2,7 @@ import { Scene } from 'phaser';
 import { GameEvents } from '../config/GameEvents';
 import { PauseConfig } from '../config/PauseConfig';
 import { ScreenConfig } from '../config/ScreenConfig';
+import { bindDesignCamera } from '../utils/designCamera';
 
 /** Overlay pause di atas gameplay; isinya masih placeholder. TEMP */
 export class Pause extends Scene
@@ -49,6 +50,8 @@ export class Pause extends Scene
                 color: PauseConfig.hint.color
             }
         ).setOrigin(0.5);
+
+        bindDesignCamera(this);
 
         this.input.once('pointerdown', () => {
 

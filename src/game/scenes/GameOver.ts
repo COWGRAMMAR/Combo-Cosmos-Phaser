@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { ScreenConfig } from '../config/ScreenConfig';
+import { bindDesignCamera } from '../utils/designCamera';
 
 /** Layar game over yang menunggu klik untuk kembali ke menu. */
 export class GameOver extends Scene
@@ -31,6 +32,8 @@ export class GameOver extends Scene
             align: 'center'
         });
         this.gameover_text.setOrigin(0.5);
+
+        bindDesignCamera(this);
 
         this.input.once('pointerdown', () => {
 
