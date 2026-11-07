@@ -1,5 +1,6 @@
 import { Scene, GameObjects } from 'phaser';
 import { ScreenConfig } from '../config/ScreenConfig';
+import { bindDesignCamera } from '../utils/designCamera';
 
 const LOGO_OFFSET_Y = -240;
 const TITLE_OFFSET_Y = -80;
@@ -31,6 +32,8 @@ export class MainMenu extends Scene
             stroke: '#000000', strokeThickness: 8,
             align: 'center'
         }).setOrigin(0.5);
+
+        bindDesignCamera(this);
 
         this.input.once('pointerdown', () => {
 

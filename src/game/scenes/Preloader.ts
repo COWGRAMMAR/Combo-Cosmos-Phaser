@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { ScreenConfig } from '../config/ScreenConfig';
+import { bindDesignCamera } from '../utils/designCamera';
 import { createPlaceholderTextures } from '../utils/textures';
 
 const BAR_WIDTH = 468;
@@ -42,6 +43,8 @@ export class Preloader extends Scene
             bar.width = BAR_FILL_START + (BAR_FILL_RANGE * progress);
 
         });
+
+        bindDesignCamera(this);
     }
 
     /** Memuat aset game dan menampilkan progres loading. */
