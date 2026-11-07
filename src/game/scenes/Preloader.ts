@@ -22,7 +22,8 @@ export class Preloader extends Scene
     init ()
     {
         //  We loaded this image in our Boot Scene, so we can display it here
-        this.add.image(ScreenConfig.center.x, ScreenConfig.center.y, 'background');
+        this.add.image(ScreenConfig.center.x, ScreenConfig.center.y, 'background')
+            .setDisplaySize(ScreenConfig.width, ScreenConfig.height);
 
         //  A simple progress bar. This is the outline of the bar.
         this.add.rectangle(ScreenConfig.center.x, ScreenConfig.center.y, BAR_WIDTH, BAR_HEIGHT).setStrokeStyle(1, 0xffffff);
@@ -53,7 +54,7 @@ export class Preloader extends Scene
         //  Load the assets for the game - Replace with your own assets
         this.load.setPath('assets');
 
-        this.load.image('logo', 'logo.png');
+        this.load.image('logo', 'logo-upscaled.png');
     }
 
     /** Membuat tekstur placeholder lalu masuk ke MainMenu. */

@@ -23,14 +23,16 @@ export class MainMenu extends Scene
     {
         const center = ScreenConfig.center;
 
-        this.background = this.add.image(center.x, center.y, 'background');
+        this.background = this.add.image(center.x, center.y, 'background')
+            .setDisplaySize(ScreenConfig.width, ScreenConfig.height);
 
-        this.logo = this.add.image(center.x, center.y + LOGO_OFFSET_Y, 'logo');
+        this.logo = this.add.image(center.x, center.y + LOGO_OFFSET_Y, 'logo')
+            .setDisplaySize(500, 108);
 
         this.title = this.add.text(center.x, center.y + TITLE_OFFSET_Y, 'Main Menu', {
             fontFamily: 'Arial Black', fontSize: 38, color: '#ffffff',
             stroke: '#000000', strokeThickness: 8,
-            align: 'center'
+            align: 'center', resolution: 2
         }).setOrigin(0.5);
 
         bindDesignCamera(this);

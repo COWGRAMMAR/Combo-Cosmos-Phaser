@@ -48,7 +48,8 @@ export class Hud extends Scene
             {
                 fontFamily: HudConfig.label.fontFamily,
                 fontSize: HudConfig.label.fontSize,
-                color: HudConfig.label.color
+                color: HudConfig.label.color,
+                resolution: 2
             }
         ).setOrigin(0.5);
 
@@ -69,7 +70,8 @@ export class Hud extends Scene
             {
                 fontFamily: HudConfig.label.fontFamily,
                 fontSize: HudConfig.label.fontSize,
-                color: HudConfig.label.color
+                color: HudConfig.label.color,
+                resolution: 2
             }
         ).setOrigin(0.5);
 

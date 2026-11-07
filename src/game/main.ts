@@ -17,7 +17,7 @@ const config: Phaser.Types.Core.GameConfig = {
     width: ScreenConfig.width,
     height: ScreenConfig.height,
     parent: 'game-container',
-    backgroundColor: WorldConfig.background.color,
+    backgroundColor: WorldConfig.letterbox.color,
     scale: {
         // Canvas mengikuti ukuran window (tidak di-upscale) supaya selalu tajam.
         mode: Scale.RESIZE,
