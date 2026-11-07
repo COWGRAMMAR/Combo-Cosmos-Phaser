@@ -23,6 +23,13 @@ dist
 dist-ssr
 *.local
 
+# Cache Vite dan hasil build inkremental TypeScript
+.vite/
+*.tsbuildinfo
+
+# Hasil coverage tes
+coverage/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
