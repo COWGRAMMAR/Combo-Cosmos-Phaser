@@ -3,7 +3,7 @@
 - **Status:** Draft — menunggu ACC sebelum implementasi
 - **Tanggal:** 2026-11-01
 - **Menggantikan:** `plans/1#-bullet-hell-porting.md` §5 (Struktur Folder Target)
-- **Struktur folder:** lihat `doc/struktur-file.md` (sumber kebenaran struktur file)
+- **Struktur folder:** lihat `docs/struktur-file.md` (sumber kebenaran struktur file)
 - **Scope:** field/method class untuk sistem Player & Enemy (Fase 1–6). WaveManager, DifficultyManager, SkillManager, ProfileService di luar scope dokumen ini.
 
 ---
@@ -37,7 +37,7 @@
 
 Baru: `config/Balance.ts`, `config/AssetKeys.ts`, `utils/textures.ts`, `types/Team.ts`, `types/EntityConfig.ts`, `entities/IDamageable.ts`, `entities/BaseEntity.ts`, `entities/player/Player.ts`, `entities/player/PlayerState.ts`, `entities/enemy/Enemy.ts`, `entities/enemy/EnemyState.ts`.
 
-Diubah: `game/main.ts` (tambah `physics: { default: 'arcade' }`), `scenes/Game.ts` (buang demo text/`pointerdown`/background image), `scenes/Preloader.ts` (generate texture), `doc/struktur-file.md` (tambah `utils/textures.ts`).
+Diubah: `game/main.ts` (tambah `physics: { default: 'arcade' }`), `scenes/Game.ts` (buang demo text/`pointerdown`/background image), `scenes/Preloader.ts` (generate texture), `docs/struktur-file.md` (tambah `utils/textures.ts`).
 
 ### 0.4 Kriteria selesai
 

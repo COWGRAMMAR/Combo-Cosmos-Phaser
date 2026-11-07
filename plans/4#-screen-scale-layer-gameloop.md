@@ -88,7 +88,7 @@ serta layer depth bernama dan scene HUD terpisah.
 - `src/game/entities/enemy/Enemy.ts`
 - `src/game/systems/EnemyBulletManager.ts`
 - `src/game/ui/DebugOverlay.ts`
-- `doc/struktur-file.md`
+- `docs/struktur-file.md`
 
 ## Verifikasi
 

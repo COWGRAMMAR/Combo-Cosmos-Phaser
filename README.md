@@ -40,7 +40,7 @@ Combo-Cosmos-Phaser/
 ├─ public/assets/        # sprite, audio, tilemap
 ├─ plans/                # rencana fitur
 ├─ issues/               # catatan bug (dibuat saat diperlukan)
-├─ doc/
+├─ docs/
 │  └─ struktur-file.md   # sumber kebenaran struktur file
 └─ src/
    ├─ main.ts            # bootstrap DOM
@@ -53,7 +53,7 @@ Combo-Cosmos-Phaser/
       └─ utils/          # helper (texture placeholder, math)
 ```
 
-Detail struktur dan aturan penempatan file ada di [`doc/struktur-file.md`](doc/struktur-file.md).
+Detail struktur dan aturan penempatan file ada di [`docs/struktur-file.md`](docs/struktur-file.md).
 
 ## Konvensi Kode
 
