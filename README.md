@@ -2,43 +2,17 @@
 
 Game bullet hell bergaya 1945 Air Force, dibangun dengan Phaser 4, Vite, dan TypeScript.
 
-## Dokumentasi
+## Build
 
-| Dokumen | Isi |
-|---|---|
-| [`docs/build.md`](docs/build.md) | Instalasi, menjalankan dev server, build produksi, typecheck, kebijakan lockfile |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Aturan branch, aturan commit, menulis deskripsi PR |
-| [`docs/struktur-file.md`](docs/struktur-file.md) | Struktur folder dan aturan penempatan file |
-| [`docs/bullet-system.md`](docs/bullet-system.md) | Kontrak bullet system |
+Baca [docs/build.md](docs/build.md) untuk instalasi, menjalankan dev server, build produksi, dan typecheck.
 
-## Struktur Folder
+## Contributing
 
-```
-Combo-Cosmos-Phaser/
-├─ index.html
-├─ package.json
-├─ tsconfig.json
-├─ CONTRIBUTING.md
-├─ vite/                 # konfigurasi Vite (dev & prod)
-├─ public/assets/        # sprite, audio, tilemap
-├─ plans/                # rencana fitur
-├─ issues/               # catatan bug (dibuat saat diperlukan)
-├─ docs/
-│  ├─ build.md           # panduan build dan package manager
-│  ├─ bullet-system.md   # kontrak bullet system
-│  └─ struktur-file.md   # sumber kebenaran struktur file
-└─ src/
-   ├─ main.ts            # bootstrap DOM
-   └─ game/
-      ├─ main.ts         # konfigurasi Phaser
-      ├─ config/         # balance, asset key, event, konstanta
-      ├─ scenes/         # Boot, Preloader, MainMenu, Game, GameOver
-      ├─ entities/       # BaseEntity, Player, Enemy
-      ├─ types/          # Team, EntityConfig
-      └─ utils/          # helper (texture placeholder, math)
-```
+Baca [CONTRIBUTING.md](CONTRIBUTING.md) untuk aturan branch, commit, dan deskripsi PR.
 
-Detail struktur dan aturan penempatan file ada di [`docs/struktur-file.md`](docs/struktur-file.md).
+## Struktur
+
+Baca [docs/](docs/) untuk detail struktur file dan logika.
 
 ## Konvensi Kode
 
