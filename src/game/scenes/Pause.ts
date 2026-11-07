@@ -36,7 +36,8 @@ export class Pause extends Scene
                 fontSize: PauseConfig.title.fontSize,
                 color: PauseConfig.title.color,
                 stroke: PauseConfig.title.stroke,
-                strokeThickness: PauseConfig.title.strokeThickness
+                strokeThickness: PauseConfig.title.strokeThickness,
+                resolution: 2
             }
         ).setOrigin(0.5);
 
@@ -47,7 +48,8 @@ export class Pause extends Scene
             {
                 fontFamily: PauseConfig.hint.fontFamily,
                 fontSize: PauseConfig.hint.fontSize,
-                color: PauseConfig.hint.color
+                color: PauseConfig.hint.color,
+                resolution: 2
             }
         ).setOrigin(0.5);
 
