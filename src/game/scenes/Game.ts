@@ -5,9 +5,10 @@ import { EnemyConfig } from '../config/EnemyConfig';
 import { GameEvents } from '../config/GameEvents';
 import { PlayerConfig } from '../config/PlayerConfig';
 import { ScreenConfig } from '../config/ScreenConfig';
-import { TimeConfig } from '../config/TimeConfig';
+import { runFixedStepsWithTimeConfig } from '../utils/fixedStep';
 import { WorldConfig } from '../config/WorldConfig';
 import { PlayerBullet } from '../entities/bullet/PlayerBullet';
+import { Shield } from '../entities/effects/Shield';
 import { Shockwave } from '../entities/effects/Shockwave';
 import { DummyEnemy } from '../entities/enemy/DummyEnemy';
 import { Player } from '../entities/player/Player';
@@ -41,6 +42,7 @@ export class Game extends Phaser.Scene
     private effects?: EffectManager;
     private powerUps?: PowerUpManager;
     private shockwave?: Shockwave;
+    private shield?: Shield;
     private laser?: PlayerLaser;
     private overlay?: DebugOverlay;
     private debugTools?: DebugTools;
@@ -48,6 +50,7 @@ export class Game extends Phaser.Scene
     private respawnEvent?: Phaser.Time.TimerEvent;
     private playerBulletMax: number = 0;
     private gameOverPending: boolean = false;
+    private _accumulatorMs: number = 0;
 
     // Objek statistik dipakai ulang tiap frame agar tidak ada alokasi di update().
     private readonly stats: DebugStats = {
@@ -59,6 +62,9 @@ export class Game extends Phaser.Scene
         enemyBulletsActive: 0,
         enemyBulletsMax: 0,
         enemyBulletsOverflow: 0,
+        enemyBulletsTotalCreated: 0,
+        enemyBulletsCreatedThisFrame: 0,
+        enemyBulletsSpawnMs: 0,
         playerHits: 0,
         lanes: 0,
         lives: 0,
@@ -209,6 +215,7 @@ export class Game extends Phaser.Scene
         );
 
         this.shockwave = new Shockwave(this, this.enemyBullets);
+        this.shield = new Shield(this);
 
         this.physics.add.overlap(
             this.weapon.bulletGroup,
@@ -247,32 +254,64 @@ export class Game extends Phaser.Scene
         this.gameOverPending = false;
 
         this.events.once('shutdown', this.handleShutdown, this);
+
+        // Reset accumulator saat scene pause/resume agar sisa delta tidak menjadi burst.
+        this.events.on(Phaser.Core.Events.PAUSE, this.handleScenePause, this);
+        this.events.on(Phaser.Core.Events.RESUME, this.handleSceneResume, this);
     }
 
     /** Menjalankan seluruh sistem per frame. */
     update (_time: number, delta: number): void
     {
-        const safeDelta = Math.min(delta, TimeConfig.maxDeltaMs);
 
-        this.enemyBullets?.update(safeDelta);
-        this.effects?.update(safeDelta);
-        this.shockwave?.update(safeDelta);
-        this.laser?.update(safeDelta);
+        this._accumulatorMs = runFixedStepsWithTimeConfig(
+            this._accumulatorMs,
+            delta,
+            (fixedStepMs) => {
+                this.enemyBullets?.update(fixedStepMs);
+                this.effects?.update(fixedStepMs);
+                this.shockwave?.update(fixedStepMs);
+            }
+        );
 
-        this.updateStats(safeDelta);
+        this.shield?.update(this.player?.x ?? 0, this.player?.y ?? 0);
+        this.laser?.setPosition(this.player?.x ?? 0, this.player?.y ?? 0);
+
+        this.updateStats(delta);
 
         this.debugTools?.update();
         this.overlay?.update(this.stats);
     }
 
+    /** Set ulang accumulator saat scene dijeda, mencegah burst saat kembali aktif. */
+    private handleScenePause (): void
+    {
+        this._accumulatorMs = 0;
+        this.player?.resetAccumulator();
+        this.dummy?.resetAccumulator();
+    }
+
+    /** Set ulang accumulator saat scene dilanjutkan, mencegah burst dari delta waktu jeda. */
+    private handleSceneResume (): void
+    {
+        this._accumulatorMs = 0;
+        this.player?.resetAccumulator();
+        this.dummy?.resetAccumulator();
+    }
+
     /** Mengosongkan seluruh pool dan mengembalikan state ke awal run. */
     public resetRun (): void
     {
+        this._accumulatorMs = 0;
+        this.player?.resetAccumulator();
+        this.dummy?.resetAccumulator();
+
         this.effects?.reset();
         this.weapon?.reset();
         this.weapon?.clearAll();
         this.enemyBullets?.reset();
         this.shockwave?.stop();
+        this.shield?.stop();
         this.laser?.reset();
 
         this.respawnEvent?.remove(false);
@@ -295,9 +334,11 @@ export class Game extends Phaser.Scene
                 break;
             case EffectType.Shield:
                 this.player?.setShield(true);
+                this.shield?.start(this.player?.x ?? 0, this.player?.y ?? 0);
                 break;
             case EffectType.Laser:
                 this.laser?.activate();
+                this.weapon?.setFiringEnabled(false);
                 break;
         }
     }
@@ -312,9 +353,11 @@ export class Game extends Phaser.Scene
                 break;
             case EffectType.Shield:
                 this.player?.setShield(false);
+                this.shield?.stop();
                 break;
             case EffectType.Laser:
                 this.laser?.deactivate();
+                this.weapon?.setFiringEnabled(true);
                 break;
         }
     }
@@ -348,6 +391,9 @@ export class Game extends Phaser.Scene
         stats.enemyBulletsActive = enemyBullets.activeCount;
         stats.enemyBulletsMax = enemyBullets.maxActive;
         stats.enemyBulletsOverflow = enemyBullets.overflowCount;
+        stats.enemyBulletsTotalCreated = enemyBullets.totalCreated;
+        stats.enemyBulletsCreatedThisFrame = enemyBullets.createdThisFrame;
+        stats.enemyBulletsSpawnMs = enemyBullets.spawnMsThisFrame;
         stats.playerHits = enemyBullets.playerHitCount;
         stats.lanes = weapon.laneCount;
         stats.lives = player.lives;
@@ -416,6 +462,9 @@ export class Game extends Phaser.Scene
         this.shockwave?.destroy();
         this.shockwave = undefined;
 
+        this.shield?.destroy();
+        this.shield = undefined;
+
         this.laser?.destroy();
         this.laser = undefined;
 
@@ -424,5 +473,7 @@ export class Game extends Phaser.Scene
 
         this.events.off(GameEvents.PLAYER_HIT, this.handlePlayerHit);
         this.events.off(GameEvents.BOMB_USED, this.handleBombUsed);
+        this.events.off(Phaser.Core.Events.PAUSE, this.handleScenePause, this);
+        this.events.off(Phaser.Core.Events.RESUME, this.handleSceneResume, this);
     }
 }

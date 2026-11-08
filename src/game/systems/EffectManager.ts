@@ -98,11 +98,7 @@ export class EffectManager
         return (this.remaining.get(type) ?? 0) > 0;
     }
 
-    /** Sisa durasi efek dalam milidetik, untuk ditampilkan di overlay. */
-    public getRemaining(type: EffectType): number
-    {
-        return this.remaining.get(type) ?? 0;
-    }
+
 
     /** Mematikan semua efek dan menjalankan callback akhirnya. */
     public reset(): void

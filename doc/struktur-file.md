@@ -64,6 +64,7 @@ Combo-Cosmos-Phaser/
       │  │  ├─ PlayerBullet.ts    # body fisika + damage
       │  │  └─ EnemyBullet.ts     # tanpa body + hook moveStep
       │  ├─ effects/
+      │  │  ├─ Shield.ts         # lingkaran placeholder shield di sekitar pemain
       │  │  └─ Shockwave.ts       # ring meluas, membersihkan peluru musuh di radius
       │  ├─ player/
       │  │  ├─ Player.ts          # gerak, nyawa, i-frame, shield, dash
@@ -90,6 +91,7 @@ Combo-Cosmos-Phaser/
       │  ├─ EffectType.ts         # enum jenis efek durasi
       │  └─ IInputSource.ts       # kontrak sumber input (tanpa Phaser)
       └─ utils/
+         ├─ fixedStep.ts          # helper loop fixed timestep (ekstraksi duplikat Game.ts & BaseEntity.ts)
          └─ textures.ts           # generate placeholder texture
 ```
 

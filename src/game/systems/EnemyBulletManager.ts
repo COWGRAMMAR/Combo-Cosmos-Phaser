@@ -18,11 +18,20 @@ export class EnemyBulletManager
     private readonly scene: Phaser.Scene;
     private readonly player: Player;
     private readonly onPlayerHit?: () => void;
+    /** Free-list peluru idle: pop di spawn, push di despawn (O(1), tanpa scan linier). */
+    private readonly _idle: EnemyBullet[] = [];
 
     private _activeCount: number = 0;
     private _maxActive: number = 0;
     private _overflowCount: number = 0;
     private _playerHitCount: number = 0;
+
+    /** Total EnemyBullet objek yang pernah dibuat (termasih pre-warm konstruktor). */
+    private _totalCreated: number = 0;
+    /** Jumlah objek baru yang dibuat dalam frame ini (harus 0 selama gameplay karena pool pre-warm). */
+    private _createdThisFrame: number = 0;
+    /** Total waktu yang dihabiskan di spawn() selama frame ini, dalam milidetik. */
+    private _spawnMsThisFrame: number = 0;
 
     /**
      * Membuat pool peluru musuh dan mengisinya di awal.
@@ -43,9 +52,16 @@ export class EnemyBulletManager
         for (let i = 0; i < EnemyConfig.bullet.poolSize; i++)
         {
             this.group.create(0, 0, AssetKeys.EnemyBullet, undefined, false, false);
+            this._totalCreated++;
         }
 
         this.bullets = Array.from(this.group.children) as EnemyBullet[];
+
+        // Semua peluru pre-warm mulai dalam keadaan idle, siap dipakai lewat free-list.
+        for (const bullet of this.bullets)
+        {
+            this._idle.push(bullet);
+        }
     }
 
     /** Pool peluru musuh, disediakan untuk kebutuhan debug atau sistem lain. */
@@ -78,6 +94,24 @@ export class EnemyBulletManager
         return this._playerHitCount;
     }
 
+    /** Total EnemyBullet objek yang pernah dibuat. */
+    get totalCreated(): number
+    {
+        return this._totalCreated;
+    }
+
+    /** Jumlah EnemyBullet baru yang dibuat dalam frame ini. */
+    get createdThisFrame(): number
+    {
+        return this._createdThisFrame;
+    }
+
+    /** Waktu total yang dihabiskan di spawn() selama frame ini, dalam milidetik. */
+    get spawnMsThisFrame(): number
+    {
+        return this._spawnMsThisFrame;
+    }
+
     /**
      * Memunculkan satu peluru dari pool.
      * Mengembalikan null tanpa error kalau pool sudah penuh.
@@ -90,7 +124,7 @@ export class EnemyBulletManager
         options?: EnemyBulletSpawnOptions
     ): EnemyBullet | null
     {
-        const bullet = this.group.get(x, y) as EnemyBullet | null;
+        const bullet = this._idle.pop() as EnemyBullet | null;
 
         if (!bullet)
         {
@@ -113,6 +147,9 @@ export class EnemyBulletManager
     /** Satu pass per frame: gerak, tabrakan pemain, lalu buang yang keluar layar. */
     public update(delta: number): void
     {
+        this._createdThisFrame = 0;
+        this._spawnMsThisFrame = 0;
+
         const bounds = this.scene.physics.world.bounds;
         const margin = EnemyConfig.bullet.offScreenMargin;
         const player = this.player;
@@ -218,6 +255,9 @@ export class EnemyBulletManager
         this._maxActive = 0;
         this._overflowCount = 0;
         this._playerHitCount = 0;
+        this._totalCreated = 0;
+        this._createdThisFrame = 0;
+        this._spawnMsThisFrame = 0;
     }
 
     /** Mengembalikan satu peluru ke pool sambil menjaga penghitung tetap akurat. */
@@ -230,5 +270,6 @@ export class EnemyBulletManager
 
         bullet.deactivate();
         this._activeCount--;
+        this._idle.push(bullet);
     }
 }

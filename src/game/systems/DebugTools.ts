@@ -73,7 +73,7 @@ export class DebugTools
 
         if (Phaser.Input.Keyboard.JustDown(this.stress1000Key))
         {
-            this.actions.stress(1000);
+            this.actions.stress(100);
         }
 
         if (Phaser.Input.Keyboard.JustDown(this.stress3000Key))
@@ -116,3 +116,5 @@ export class DebugTools
         }
     }
 }
+
+

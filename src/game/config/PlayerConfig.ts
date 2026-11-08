@@ -3,57 +3,61 @@
  * Angka di sini sengaja dipisah dari musuh supaya mudah di-tune sendiri.
  */
 export const PlayerConfig = {
-    maxHp: 100,
-    moveSpeed: 300,
-    bodyRadius: 16,
+    /** Kecepatan player */
+    moveSpeed: 360,
+    /** Radius body fisika */
+    bodyRadius: 20,
     /** Radius hitbox kecil gaya bullet-hell, terpisah dari ukuran sprite. */
-    hitRadius: 6,
+    hitRadius: 7,
+    /** Nyawa awal */
     lives: 3,
     /** Batas maksimum nyawa dari power-up tambah nyawa. */
     maxLives: 5,
+    /** HP maksimal (pemain pakai sistem lives, bukan HP; dipertahankan agar BaseEntity.isAlive benar). */
+    maxHp: 100,
     /** Durasi kebal setelah terkena tembakan, dalam milidetik. */
-    invulnMs: 1200,
+    invulnMs: 1100,
     /** Jeda kedip alpha selama kebal, dalam milidetik. */
-    invulnBlinkMs: 80,
-    dashAlpha: 0.7,
-    invulnAlpha: 0.35,
+    invulnBlinkMs: 150,
+    dashAlpha: 1,
+    invulnAlpha: 0.4,
     normalAlpha: 1,
     /** Gelombang kejut yang menghapus peluru musuh di sekitar pemain. */
     shockwave: {
         /** Radius akhir gelombang, dalam piksel. */
-        maxRadius: 170,
+        maxRadius: 100,
         /** Kecepatan melebar gelombang, dalam piksel per detik. */
-        growSpeed: 900
+        growSpeed: 800
     },
     /** Efek durasi: menembak lebih cepat. */
     atkSpeed: {
-        durationMs: 8000,
+        durationMs: 7000,
         /** Cooldown menembak dikali nilai ini saat efek aktif. */
-        cooldownMultiplier: 0.45
+        cooldownMultiplier: 0.40
     },
     /** Efek durasi: kebal semua peluru musuh. */
     shield: {
-        durationMs: 8000
+        durationMs: 10000
     },
     /** Efek durasi: laser lurus ke depan. */
     laser: {
-        durationMs: 6000,
+        durationMs: 7000,
         /** Panjang dan lebar hitbox laser, dalam piksel. */
-        length: 560,
-        width: 18,
+        length: 800,
+        width: 28,
         /** Jeda antar tick damage, dalam milidetik. */
-        tickMs: 120,
+        tickMs: 140,
         /** Damage per tick. */
-        damage: 45
+        damage: 50
     },
     /** Efek durasi: dash untuk menghindar. */
     dash: {
         /** Kecepatan dash, dalam piksel per detik. */
-        speed: 900,
-        durationMs: 150,
-        cooldownMs: 1200,
+        speed: 1000,
+        durationMs: 100,
+        cooldownMs: 1300,
         /** Kebal selama dash memakai mekanisme invuln yang sama dengan kena hit. */
-        invulnMs: 220
+        invulnMs: 200
     },
     /** Ledakan bom: damage besar ke semua musuh tanpa langsung destroy. */
     bomb: {
@@ -63,14 +67,14 @@ export const PlayerConfig = {
         lanes: 1,
         maxLanes: 5,
         /** Jarak horizontal antar jalur tembakan, dalam piksel. */
-        laneSpacing: 18,
-        fireCooldownMs: 90,
-        bulletSpeed: 700,
+        laneSpacing: 20,
+        fireCooldownMs: 170,
+        bulletSpeed: 950,
         bulletDamage: 10,
-        bulletRadius: 4,
+        bulletRadius: 5,
         /** Ukuran pool; harus cukup untuk kasus terburuk 5 jalur. */
         poolSize: 400,
         /** Offset titik keluar peluru dari pusat pemain (negatif = ke atas). */
-        muzzleOffsetY: -24
+        muzzleOffsetY: -20
     }
 } as const;

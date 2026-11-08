@@ -58,8 +58,6 @@ export class PlayerLaser
             return;
         }
 
-        this.beam.setPosition(this.player.x, this.player.y - PlayerConfig.laser.length / 2);
-
         this.tickAccumulator += delta;
 
         if (this.tickAccumulator < PlayerConfig.laser.tickMs)
@@ -69,6 +67,15 @@ export class PlayerLaser
 
         this.tickAccumulator -= PlayerConfig.laser.tickMs;
         this.damageEnemiesInBeam();
+    }
+
+    /**
+     * Memindahkan beam ke posisi pemain.
+     * Dipanggil di akhir Game.update() agar posisi visual sinkron dengan sprite pemain setelah physics.
+     */
+    public setPosition(x: number, y: number): void
+    {
+        this.beam.setPosition(x, y - PlayerConfig.laser.length / 2);
     }
 
     /** Membersihkan state saat run di-reset. */

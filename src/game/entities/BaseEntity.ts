@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { TimeConfig } from '../config/TimeConfig';
+import { runFixedStepsWithTimeConfig } from '../utils/fixedStep';
 import type { EntityConfig } from '../types/EntityConfig';
 import type { Team } from '../types/Team';
 import type { IDamageable } from './IDamageable';
@@ -12,6 +12,7 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
     public moveSpeed: number;
     public readonly team: Team;
     protected invulnerableRemainingMs: number = 0;
+    private _accumulatorMs: number = 0;
 
     /** Menyiapkan sprite, HP, tim, dan body fisika entitas. */
     constructor(scene: Phaser.Scene, x: number, y: number, texture: string, config: EntityConfig)
@@ -81,16 +82,7 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
         }
     }
 
-    /** Menambah HP tanpa melebihi nilai maksimum. */
-    public heal(amount: number): void
-    {
-        if (!this.isAlive || amount <= 0)
-        {
-            return;
-        }
 
-        this._hp = Math.min(this.maxHp, this._hp + amount);
-    }
 
     /** True jika sisa durasi kebal masih berjalan. */
     public isInvulnerable(): boolean
@@ -98,11 +90,7 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
         return this.invulnerableRemainingMs > 0;
     }
 
-    /** True jika target masih hidup dan berasal dari tim berbeda. */
-    public canDamage(target: BaseEntity): boolean
-    {
-        return target.isAlive && target.team !== this.team;
-    }
+
 
     /** Mengaktifkan ulang entitas di posisi baru untuk dipakai dari object pool. */
     public resetForPool(x: number, y: number): void
@@ -118,19 +106,34 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
         body.reset(x, y);
     }
 
+    /** Tangkap snapshot input sekali per frame sebelum loop fixed-step; override di subclass yang butuh input. */
+    protected captureFrameInput(): void {}
+
+    /** Set ulang accumulator fixed-step agar sisa delta tidak menjadi burst setelah pause/reset. */
+    public resetAccumulator(): void
+    {
+        this._accumulatorMs = 0;
+    }
+
     /** Memanggil updateEntity() setiap frame setelah update dasar Phaser. */
     public preUpdate(time: number, delta: number): void
     {
         super.preUpdate(time, delta);
 
-        const safeDelta = Math.min(delta, TimeConfig.maxDeltaMs);
+        this.captureFrameInput();
 
-        if (this.invulnerableRemainingMs > 0)
-        {
-            this.invulnerableRemainingMs = Math.max(0, this.invulnerableRemainingMs - safeDelta);
-        }
+        this._accumulatorMs = runFixedStepsWithTimeConfig(
+            this._accumulatorMs,
+            delta,
+            (fixedStepMs) => {
+                if (this.invulnerableRemainingMs > 0)
+                {
+                    this.invulnerableRemainingMs = Math.max(0, this.invulnerableRemainingMs - fixedStepMs);
+                }
 
-        this.updateEntity(time, safeDelta);
+                this.updateEntity(time, fixedStepMs);
+            }
+        );
     }
 
     /** Logika per-frame khusus subclass; dipanggil otomatis dari preUpdate(). */
