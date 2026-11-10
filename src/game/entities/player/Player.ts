@@ -1,6 +1,8 @@
 import * as Phaser from 'phaser';
 import { DepthConfig } from '../../config/DepthConfig';
+import { AnimKeys } from '../../config/AssetManifest';
 import { PlayerConfig } from '../../config/PlayerConfig';
+import type { AssetRef } from '../../types/AssetRef';
 import type { EntityConfig } from '../../types/EntityConfig';
 import type { IInputSource } from '../../types/IInputSource';
 import { InputAction } from '../../types/InputAction';
@@ -34,18 +36,21 @@ export class Player extends BaseEntity
         scene: Phaser.Scene,
         x: number,
         y: number,
-        texture: string,
+        asset: AssetRef,
         config: EntityConfig,
         inputSource: IInputSource,
         weapon?: PlayerWeapon
     )
     {
-        super(scene, x, y, texture, config);
+        super(scene, x, y, asset, config);
 
         this.inputSource = inputSource;
         this._weapon = weapon;
 
         this.setDepth(DepthConfig.player);
+
+        // Animasi placeholder; hanya mengganti frame, tidak menyentuh alpha dash/invuln.
+        this.play(AnimKeys.PlayerIdle);
     }
 
     /** Radius hitbox kecil untuk tabrakan peluru musuh. */

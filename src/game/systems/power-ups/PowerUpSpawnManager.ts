@@ -108,7 +108,13 @@ export class PowerUpSpawnManager
         const x = Phaser.Math.Between(margin, width - margin);
         const y = Phaser.Math.Between(margin, height - margin);
 
-        const item = this.scene.add.circle(x, y, PowerUpConfig.itemRadius, PowerUpConfig.itemColor, PowerUpConfig.itemAlpha);
+        const item = this.scene.add.circle(
+            x,
+            y,
+            PowerUpConfig.itemRadius,
+            this.iconColorFor(type),
+            PowerUpConfig.itemAlpha
+        );
         item.setDepth(PowerUpConfig.itemDepth);
 
         this.scene.physics.add.existing(item);
@@ -130,6 +136,12 @@ export class PowerUpSpawnManager
         this.scene.time.delayedCall(PowerUpConfig.itemDespawnMs, () => {
             this.removeItem(item);
         });
+    }
+
+    /** Warna placeholder item per tipe buff (single source: PowerUpConfig.iconColor). */
+    private iconColorFor(type: PowerUpBuffType): number
+    {
+        return (PowerUpConfig as { iconColor: Record<string, number> }).iconColor[type];
     }
 
     /** Pemain menyentuh item: emit event, hapus item, delegate ke PowerUpManager. */

@@ -3,6 +3,7 @@ import type { IPowerUpBuff } from './IPowerUpBuff';
 import type { Player } from '../../entities/player/Player';
 import type { PlayerWeapon } from '../../entities/player/PlayerWeapon';
 import type { EffectManager } from '../EffectManager';
+import { PlayerConfig } from '../../config/PlayerConfig';
 
 /**
  * Mengelola buff aktif (jenis Slotted) dengan dukungan pause/resume durasi.
@@ -14,10 +15,13 @@ export class ActiveBuffManager
     private readonly effects: EffectManager;
 
     /** Buff yang sedang aktif dengan sisa durasi. */
-    private readonly activeBuffs = new Map<PowerUpBuffType, { buff: IPowerUpBuff; remainingMs: number }>();
+    private readonly activeBuffs = new Map<PowerUpBuffType, { buff: IPowerUpBuff; remainingMs: number; totalMs: number }>();
 
     /** Flag apakah ada buff aktif yang memblokir tembakan biasa. */
     private blocksNormalFireFlag: boolean = false;
+
+    /** Flag apakah seluruh buff sedang dalam status paused (durasi tidak berkurang). */
+    private _paused: boolean = false;
 
     constructor(effects: EffectManager)
     {
@@ -43,15 +47,22 @@ export class ActiveBuffManager
         if (durationMs > 0)
         {
             this.effects.activate(type as any, durationMs);
-            this.activeBuffs.set(type, { buff, remainingMs: durationMs });
+            this.activeBuffs.delete(type);
+            this.activeBuffs.set(type, { buff, remainingMs: durationMs, totalMs: durationMs });
         }
 
         this.recalculateBlocksNormalFire();
     }
 
-    /** Kurangi durasi semua buff aktif. Dipanggil tiap frame via Game.update(). */
+    /** Kurangi durasi semua buff aktif. Dipanggil tiap frame via Game.update(). Durasi tidak berkurang saat paused. */
     public update(delta: number): void
     {
+        if (this._paused)
+        {
+            this.recalculateBlocksNormalFire();
+            return;
+        }
+
         const toRemove: PowerUpBuffType[] = [];
 
         for (const [type, entry] of this.activeBuffs)
@@ -71,29 +82,48 @@ export class ActiveBuffManager
         this.recalculateBlocksNormalFire();
     }
 
-    /** Pause semua buff aktif (saat game pause). */
+    /** Pause semua buff aktif (saat game pause). Durasi tidak berkurang selama paused. */
     public pauseAll(): void
     {
-        // Pause dilakukan dengan tidak memanggil update() selama game pause.
-        // Simpan snapshot untuk resume.
+        this._paused = true;
     }
 
-    /** Resume semua buff aktif (saat game resume dari pause). */
+    /** Resume semua buff aktif (saat game resume dari pause). Durasi lanjut berkurang dari sisa yang tersisa. */
     public resumeAll(): void
     {
-        // Tidak perlu aksi khusus; update akan lanjut dari sisa durasi.
+        this._paused = false;
     }
 
     /** Pause durasi satu jenis buff (misalnya AtkSpeed saat Laser aktif). */
     public pause(_type: PowerUpBuffType): void
     {
-        // Tidak ada aksi khusus; pause diatur dengan tidak memanggil update().
+        // Pause per-jenis diatur dengan jeda antar aktivasi; sisa durasi tetap dipertahankan.
+        // Implementasi saat ini memakai paused global via pauseAll/resumeAll.
     }
 
     /** Resume durasi satu jenis buff. */
     public resume(_type: PowerUpBuffType): void
     {
-        // Tidak ada aksi khusus.
+        // Resume per-jenis diatur dengan jeda antar aktivasi; sisa durasi tetap dipertahankan.
+        // Implementasi saat ini memakai paused global via pauseAll/resumeAll.
+    }
+
+    /** Apakah seluruh buff sedang dalam status paused. */
+    public isPaused(): boolean
+    {
+        return this._paused;
+    }
+
+    /** Daftar semua tipe buff yang sedang aktif (untuk konsumsi HUD). */
+    public getActiveBuffTypes(): PowerUpBuffType[]
+    {
+        return Array.from(this.activeBuffs.keys());
+    }
+
+    /** Durasi total konfigurasi buff tipe tertentu (untuk progress bar), atau 0 jika tidak diketahui. */
+    public getTotalMs(type: PowerUpBuffType): number
+    {
+        return this.getBuffDuration(type);
     }
 
     /** Matikan satu buff aktif secara paksa (misalnya shield pecah saat kena musuh). */
@@ -157,11 +187,11 @@ export class ActiveBuffManager
         switch (_type)
         {
             case PowerUpBuffType.AtkSpeed:
-                return 7000;
+                return PlayerConfig.atkSpeed.durationMs;
             case PowerUpBuffType.Shield:
-                return 10000;
+                return PlayerConfig.shield.durationMs;
             case PowerUpBuffType.Laser:
-                return 7000;
+                return PlayerConfig.laser.durationMs;
             default:
                 return 0;
         }

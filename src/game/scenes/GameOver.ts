@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import { AssetKeys } from '../config/AssetKeys';
 import { ScreenConfig } from '../config/ScreenConfig';
 
 /** Layar game over yang menunggu klik untuk kembali ke menu. */
@@ -22,7 +23,7 @@ export class GameOver extends Scene
 
         const center = ScreenConfig.center;
 
-        this.background = this.add.image(center.x, center.y, 'background');
+        this.background = this.add.image(center.x, center.y, AssetKeys.Background);
         this.background.setAlpha(0.5);
 
         this.gameover_text = this.add.text(center.x, center.y, 'Game Over', {

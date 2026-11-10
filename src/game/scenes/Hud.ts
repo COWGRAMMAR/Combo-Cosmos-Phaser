@@ -1,16 +1,18 @@
 import { Scene } from 'phaser';
-import { HudConfig } from '../config/HudConfig';
 import { ScreenConfig } from '../config/ScreenConfig';
+import { HudManager } from '../ui/HudManager';
 
 /**
  * Scene HUD paralel dengan gameplay.
  * Setiap panel memakai kamera sendiri supaya efek kamera gameplay tidak
- * mengenai HUD. Isi panel masih placeholder. TEMP
+ * mengenai HUD. Isi panel diatur oleh HudManager.
  */
 export class Hud extends Scene
 {
     private leftContainer!: Phaser.GameObjects.Container;
     private rightContainer!: Phaser.GameObjects.Container;
+
+    private hudManager?: HudManager;
 
     /** Mendaftarkan scene Hud. */
     constructor()
@@ -18,7 +20,7 @@ export class Hud extends Scene
         super('Hud');
     }
 
-    /** Membuat dua kamera panel dan placeholder kotak HUD. */
+    /** Membuat dua kamera panel dan inisialisasi HudManager. */
     create(): void
     {
         const leftPanel = ScreenConfig.leftPanel;
@@ -32,50 +34,18 @@ export class Hud extends Scene
         this.leftContainer = this.add.container(0, 0);
         this.rightContainer = this.add.container(0, 0);
 
-        const leftBackground = this.add.rectangle(
-            0,
-            0,
-            leftPanel.width,
-            leftPanel.height,
-            HudConfig.leftPanel.color
-        ).setOrigin(0);
-
-        const leftLabel = this.add.text(
-            leftPanel.width / 2,
-            leftPanel.height / 2,
-            HudConfig.leftPanel.label,
-            {
-                fontFamily: HudConfig.label.fontFamily,
-                fontSize: HudConfig.label.fontSize,
-                color: HudConfig.label.color
-            }
-        ).setOrigin(0.5);
-
-        this.leftContainer.add([leftBackground, leftLabel]);
-
-        const rightBackground = this.add.rectangle(
-            0,
-            0,
-            rightPanel.width,
-            rightPanel.height,
-            HudConfig.rightPanel.color
-        ).setOrigin(0);
-
-        const rightLabel = this.add.text(
-            rightPanel.width / 2,
-            rightPanel.height / 2,
-            HudConfig.rightPanel.label,
-            {
-                fontFamily: HudConfig.label.fontFamily,
-                fontSize: HudConfig.label.fontSize,
-                color: HudConfig.label.color
-            }
-        ).setOrigin(0.5);
-
-        this.rightContainer.add([rightBackground, rightLabel]);
+        // Inisialisasi HudManager dengan referensi scene Game untuk polling data logic.
+        const gameScene = this.scene.get('Game');
+        this.hudManager = new HudManager(this, gameScene, this.leftContainer, this.rightContainer);
 
         // Setiap kamera hanya merender panel miliknya sendiri.
         leftCamera.ignore(this.rightContainer);
         rightCamera.ignore(this.leftContainer);
+    }
+
+    /** Memperbarui semua panel HUD tiap frame. */
+    update(_time: number, delta: number): void
+    {
+        this.hudManager?.update(_time, delta);
     }
 }

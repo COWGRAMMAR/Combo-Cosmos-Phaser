@@ -13,8 +13,6 @@ export const PlayerConfig = {
     lives: 3,
     /** Batas maksimum nyawa dari power-up tambah nyawa. */
     maxLives: 5,
-    /** HP maksimal (pemain pakai sistem lives, bukan HP; dipertahankan agar BaseEntity.isAlive benar). */
-    maxHp: 100,
     /** Durasi kebal setelah terkena tembakan, dalam milidetik. */
     invulnMs: 1100,
     /** Jeda kedip alpha selama kebal, dalam milidetik. */

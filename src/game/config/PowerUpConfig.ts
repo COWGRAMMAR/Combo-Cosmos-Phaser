@@ -50,5 +50,35 @@ export const PowerUpConfig = {
         laser: 1,
         nuke: 1,
         life: 2
+    },
+
+    /** Warna placeholder ikon per jenis buff (hex). Digunakan AssetManager untuk menggambar lingkaran placeholder. */
+    iconColor: {
+        'atk-speed': 0x7df9ff,
+        shield: 0x4da6ff,
+        lane: 0xff8c00,
+        laser: 0x8a2be2,
+        nuke: 0xff0000,
+        life: 0x00ff00,
+    },
+
+    /** Kunci aset ikon placeholder per jenis buff (nama properti AssetKeys). Digunakan UI untuk menampilkan ikon yang konsisten. */
+    iconKey: {
+        'atk-speed': 'powerup-icon-atk-speed',
+        shield: 'powerup-icon-shield',
+        lane: 'powerup-icon-lane',
+        laser: 'powerup-icon-laser',
+        nuke: 'powerup-icon-nuke',
+        life: 'powerup-icon-life',
+    },
+
+    /** Nama properti AssetKeys per jenis buff (digunakan untuk resolve tekstur ikon). */
+    iconAssetKey: {
+        'atk-speed': 'PowerUpIconAtkSpeed',
+        shield: 'PowerUpIconShield',
+        lane: 'PowerUpIconLane',
+        laser: 'PowerUpIconLaser',
+        nuke: 'PowerUpIconNuke',
+        life: 'PowerUpIconLife',
     }
 } as const;

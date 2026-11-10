@@ -17,7 +17,7 @@ export const PauseConfig = {
         offsetY: -40
     },
     hint: {
-        text: 'Klik untuk resume (TEMP)',
+        text: 'Klik atau ESC untuk resume',
         fontFamily: 'Arial',
         fontSize: 28,
         color: '#cbd5e1',

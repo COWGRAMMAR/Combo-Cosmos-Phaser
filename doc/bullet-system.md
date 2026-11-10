@@ -165,9 +165,12 @@ jadi tidak ada state yang bocor ke spawn berikutnya.
 ### Kalau butuh texture baru
 
 1. Tambah key di `config/AssetKeys.ts`.
-2. Tambah placeholder di `utils/textures.ts` (pola: kalau texture sudah ada, jangan ditimpa,
+2. Daftarkan entri di `config/AssetManifest.ts` (`source: 'generated'` bila placeholder).
+3. Tambah resep gambar di `systems/AssetManager.ts` (pola: kalau texture sudah ada, jangan ditimpa,
    jadi PNG final dari Preloader otomatis menang).
-3. Tambah opsi `texture` bila perlu, atau buat spawn helper di sistemmu sendiri.
+4. Tambah opsi `texture` bila perlu, atau buat spawn helper di sistemmu sendiri.
+
+Detail lengkap ada di `doc/asset-system.md`.
 
 ---
 

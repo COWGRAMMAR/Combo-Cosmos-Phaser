@@ -28,7 +28,6 @@ export class PowerUpSlotManager
         for (let i = 0; i < this.slotCount; i++)
         {
             this.slots[i] = [];
-            this.slotTypes[i] = PowerUpBuffType.Nuke;
             this.slotCounts[i] = 0;
         }
     }
@@ -57,6 +56,31 @@ export class PowerUpSlotManager
             return 0;
         }
         return this.slotCounts[index];
+    }
+
+    /** Label tombol keybind untuk slot indeks (1, 2, 3, dst). */
+    public getKeybind(index: number): string
+    {
+        if (index < 0 || index >= this.slotCount)
+        {
+            return '';
+        }
+        return String(index + 1);
+    }
+
+    /** Max stack untuk slot indeks berdasarkan jenis buff yang saat ini ada di slot. */
+    public getMaxStackAt(index: number): number
+    {
+        if (index < 0 || index >= this.slotCount)
+        {
+            return 0;
+        }
+        if (this.slotCounts[index] === 0)
+        {
+            return 1;
+        }
+        const type = this.slotTypes[index];
+        return this.maxStackPerSlot[type as keyof typeof this.maxStackPerSlot] ?? 1;
     }
 
     /**

@@ -1,4 +1,5 @@
 import { Scene, GameObjects } from 'phaser';
+import { AssetKeys } from '../config/AssetKeys';
 import { ScreenConfig } from '../config/ScreenConfig';
 
 const LOGO_OFFSET_Y = -240;
@@ -22,9 +23,9 @@ export class MainMenu extends Scene
     {
         const center = ScreenConfig.center;
 
-        this.background = this.add.image(center.x, center.y, 'background');
+        this.background = this.add.image(center.x, center.y, AssetKeys.Background);
 
-        this.logo = this.add.image(center.x, center.y + LOGO_OFFSET_Y, 'logo');
+        this.logo = this.add.image(center.x, center.y + LOGO_OFFSET_Y, AssetKeys.Logo);
 
         this.title = this.add.text(center.x, center.y + TITLE_OFFSET_Y, 'Main Menu', {
             fontFamily: 'Arial Black', fontSize: 38, color: '#ffffff',

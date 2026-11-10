@@ -1,6 +1,7 @@
 import { Scene } from 'phaser';
+import { AssetKeys } from '../config/AssetKeys';
 import { ScreenConfig } from '../config/ScreenConfig';
-import { createPlaceholderTextures } from '../utils/textures';
+import { AssetManager } from '../systems/AssetManager';
 
 const BAR_WIDTH = 468;
 const BAR_HEIGHT = 32;
@@ -21,7 +22,7 @@ export class Preloader extends Scene
     init ()
     {
         //  We loaded this image in our Boot Scene, so we can display it here
-        this.add.image(ScreenConfig.center.x, ScreenConfig.center.y, 'background');
+        this.add.image(ScreenConfig.center.x, ScreenConfig.center.y, AssetKeys.Background);
 
         //  A simple progress bar. This is the outline of the bar.
         this.add.rectangle(ScreenConfig.center.x, ScreenConfig.center.y, BAR_WIDTH, BAR_HEIGHT).setStrokeStyle(1, 0xffffff);
@@ -48,9 +49,7 @@ export class Preloader extends Scene
     preload ()
     {
         //  Load the assets for the game - Replace with your own assets
-        this.load.setPath('assets');
-
-        this.load.image('logo', 'logo.png');
+        AssetManager.preloadMain(this);
     }
 
     /** Membuat tekstur placeholder lalu masuk ke MainMenu. */
@@ -59,7 +58,8 @@ export class Preloader extends Scene
         //  When all the assets have loaded, it's often worth creating global objects here that the rest of the game can use.
         //  For example, you can define global animations here, so we can use them in other scenes.
 
-        createPlaceholderTextures(this);
+        AssetManager.ensurePlaceholders(this);
+        AssetManager.ensureAnimations(this);
 
         //  Move to the MainMenu. You could also swap this for a Scene Transition, such as a camera fade.
         this.scene.start('MainMenu');

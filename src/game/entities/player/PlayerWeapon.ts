@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
-import { AssetKeys } from '../../config/AssetKeys';
 import { PlayerConfig } from '../../config/PlayerConfig';
+import type { AssetRef } from '../../types/AssetRef';
 import { PlayerBullet } from '../bullet/PlayerBullet';
 
 /**
@@ -11,6 +11,8 @@ import { PlayerBullet } from '../bullet/PlayerBullet';
 export class PlayerWeapon
 {
     private readonly scene: Phaser.Scene;
+    /** Referensi tekstur peluru yang sudah di-resolve oleh pemanggil (scene). */
+    private readonly bulletAsset: AssetRef;
     private readonly group: Phaser.Physics.Arcade.Group;
     /** Cache semua peluru agar loop tidak membuat array baru setiap frame. */
     private readonly bullets: PlayerBullet[];
@@ -26,19 +28,21 @@ export class PlayerWeapon
     /**
      * Membuat pool peluru pemain dan mengisinya di awal.
      * Pool diisi awal supaya group tidak membuat objek baru saat gameplay berjalan.
+     * Referensi aset diterima dari scene karena entities tidak boleh mengakses systems.
      */
-    constructor(scene: Phaser.Scene)
+    constructor(scene: Phaser.Scene, bulletAsset: AssetRef)
     {
         this.scene = scene;
+        this.bulletAsset = bulletAsset;
         this.group = scene.physics.add.group({
             classType: PlayerBullet,
             maxSize: PlayerConfig.weapon.poolSize,
-            defaultKey: AssetKeys.PlayerBullet
+            defaultKey: this.bulletAsset.texture
         });
 
         for (let i = 0; i < PlayerConfig.weapon.poolSize; i++)
         {
-            this.group.create(0, 0, AssetKeys.PlayerBullet, undefined, false, false);
+            this.group.create(0, 0, this.bulletAsset.texture, this.bulletAsset.frame, false, false);
         }
 
         this.bullets = Array.from(this.group.children) as PlayerBullet[];

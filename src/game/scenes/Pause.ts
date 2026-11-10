@@ -1,7 +1,9 @@
 import { Scene } from 'phaser';
 import { GameEvents } from '../config/GameEvents';
+import { DEFAULT_INPUT_BINDINGS } from '../config/InputBindings';
 import { PauseConfig } from '../config/PauseConfig';
 import { ScreenConfig } from '../config/ScreenConfig';
+import { InputAction } from '../types/InputAction';
 
 /** Overlay pause di atas gameplay; isinya masih placeholder. TEMP */
 export class Pause extends Scene
@@ -12,7 +14,7 @@ export class Pause extends Scene
         super('Pause');
     }
 
-    /** Menampilkan overlay dan menunggu klik untuk resume. */
+    /** Menampilkan overlay dan menunggu klik atau ESC untuk resume. */
     create(): void
     {
         const center = ScreenConfig.center;
@@ -53,6 +55,21 @@ export class Pause extends Scene
         this.input.once('pointerdown', () => {
 
             // Minta PauseManager melanjutkan gameplay dan HUD.
+            this.game.events.emit(GameEvents.PAUSE_RESUME);
+
+        });
+
+        const pauseKey = DEFAULT_INPUT_BINDINGS[InputAction.Pause][0];
+
+        // Scene Game berhenti update saat paused, jadi tombol resume ditangani di sini.
+        this.input.keyboard?.on(`keydown-${pauseKey}`, (event: KeyboardEvent) => {
+
+            // Abaikan auto-repeat selama tombol masih ditahan.
+            if (event.repeat)
+            {
+                return;
+            }
+
             this.game.events.emit(GameEvents.PAUSE_RESUME);
 
         });

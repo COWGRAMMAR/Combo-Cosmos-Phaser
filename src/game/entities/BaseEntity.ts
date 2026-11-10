@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { runFixedStepsWithTimeConfig } from '../utils/fixedStep';
+import type { AssetRef } from '../types/AssetRef';
 import type { EntityConfig } from '../types/EntityConfig';
 import type { Team } from '../types/Team';
 import type { IDamageable } from './IDamageable';
@@ -15,9 +16,9 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
     private _accumulatorMs: number = 0;
 
     /** Menyiapkan sprite, HP, tim, dan body fisika entitas. */
-    constructor(scene: Phaser.Scene, x: number, y: number, texture: string, config: EntityConfig)
+    constructor(scene: Phaser.Scene, x: number, y: number, asset: AssetRef, config: EntityConfig)
     {
-        super(scene, x, y, texture);
+        super(scene, x, y, asset.texture, asset.frame);
 
         this.maxHp = config.maxHp;
         this._hp = config.maxHp ?? 0;

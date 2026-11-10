@@ -10,7 +10,7 @@ export interface DebugActions
     powerUp: (kind: PowerUpType) => void;
 }
 
-/** Urutan power-up untuk tombol angka 1 sampai 6. */
+/** Urutan power-up untuk tombol Z sampai N. */
 const POWER_UP_KEYS: readonly PowerUpType[] = [
     PowerUpType.Lane,
     PowerUpType.AtkSpeed,
@@ -44,14 +44,17 @@ export class DebugTools
             throw new Error('Keyboard tidak tersedia untuk DebugTools');
         }
 
+        // Tombol debug sengaja hardcode (bukan InputAction) agar bisa dicabut tanpa
+        // mengubah keybind gameplay. Daftar lengkap tombol ada di doc/debug-toggles.md.
         const keyCodes = Phaser.Input.Keyboard.KeyCodes;
-        const numberCodes = [
-            keyCodes.ONE,
-            keyCodes.TWO,
-            keyCodes.THREE,
-            keyCodes.FOUR,
-            keyCodes.FIVE,
-            keyCodes.SIX
+        // Z..N dipetakan satu-satu ke POWER_UP_KEYS berdasarkan index (Z = Lane, N = Life).
+        const powerUpCodes = [
+            keyCodes.Z,
+            keyCodes.X,
+            keyCodes.C,
+            keyCodes.V,
+            keyCodes.B,
+            keyCodes.N
         ];
 
         this.scene = scene;
@@ -60,7 +63,7 @@ export class DebugTools
         this.stress1000Key = keyboard.addKey(keyCodes.F2);
         this.stress3000Key = keyboard.addKey(keyCodes.F3);
         this.lanesKey = keyboard.addKey(keyCodes.F4);
-        this.powerUpKeys = numberCodes.map((code) => keyboard.addKey(code));
+        this.powerUpKeys = powerUpCodes.map((code) => keyboard.addKey(code));
     }
 
     /** Memeriksa tombol debug sekali per frame. */
@@ -68,21 +71,25 @@ export class DebugTools
     {
         if (Phaser.Input.Keyboard.JustDown(this.toggleKey))
         {
+            // F1: tampilkan/sembunyikan overlay statistik (FPS, isi pool peluru, status buff).
             this.actions.toggleOverlay();
         }
 
         if (Phaser.Input.Keyboard.JustDown(this.stress1000Key))
         {
+            // F2: hujan 100 peluru musuh dari atas layar untuk uji baseline performa.
             this.actions.stress(100);
         }
 
         if (Phaser.Input.Keyboard.JustDown(this.stress3000Key))
         {
+            // F3: hujan 3000 peluru musuh untuk menguji batas pool dan penurunan FPS.
             this.actions.stress(3000);
         }
 
         if (Phaser.Input.Keyboard.JustDown(this.lanesKey))
         {
+            // F4: putar jumlah jalur tembak pemain 1 → 2 → ... → maxLanes → 1.
             this.actions.cycleLanes();
         }
 
@@ -90,6 +97,7 @@ export class DebugTools
         {
             if (Phaser.Input.Keyboard.JustDown(this.powerUpKeys[i]))
             {
+                // Z..N: aktifkan satu power-up langsung (Z=Lane, X=AtkSpeed, C=Shield, V=Laser, B=Bomb, N=Life).
                 this.actions.powerUp(POWER_UP_KEYS[i]);
             }
         }

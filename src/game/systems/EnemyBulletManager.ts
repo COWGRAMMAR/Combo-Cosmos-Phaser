@@ -4,6 +4,8 @@ import { EnemyConfig } from '../config/EnemyConfig';
 import { EnemyBullet } from '../entities/bullet/EnemyBullet';
 import type { EnemyBulletSpawnOptions } from '../entities/bullet/EnemyBullet';
 import type { Player } from '../entities/player/Player';
+import type { AssetRef } from '../types/AssetRef';
+import { AssetManager } from './AssetManager';
 
 /**
  * Mengelola seluruh peluru musuh dalam satu loop.
@@ -18,6 +20,8 @@ export class EnemyBulletManager
     private readonly scene: Phaser.Scene;
     private readonly player: Player;
     private readonly onPlayerHit?: () => void;
+    /** Referensi tekstur peluru musuh hasil resolve manifest aset. */
+    private readonly bulletAsset: AssetRef;
     /** Free-list peluru idle: pop di spawn, push di despawn (O(1), tanpa scan linier). */
     private readonly _idle: EnemyBullet[] = [];
 
@@ -42,16 +46,17 @@ export class EnemyBulletManager
         this.scene = scene;
         this.player = player;
         this.onPlayerHit = onPlayerHit;
+        this.bulletAsset = AssetManager.resolve(AssetKeys.EnemyBullet);
 
         this.group = scene.add.group({
             classType: EnemyBullet,
             maxSize: EnemyConfig.bullet.poolSize,
-            defaultKey: AssetKeys.EnemyBullet
+            defaultKey: this.bulletAsset.texture
         });
 
         for (let i = 0; i < EnemyConfig.bullet.poolSize; i++)
         {
-            this.group.create(0, 0, AssetKeys.EnemyBullet, undefined, false, false);
+            this.group.create(0, 0, this.bulletAsset.texture, this.bulletAsset.frame, false, false);
             this._totalCreated++;
         }
 

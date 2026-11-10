@@ -2,7 +2,7 @@
 
 - **Status:** Fase 0 (fondasi class) + InputManager + Fase 1 (bullet foundation) + Fase 2–4 (survival, efek & power-up, dash) + Fase screen/scale/layer/game loop selesai
 - **Tanggal:** 2026-11-06
-- **Scope dokumen:** **hanya struktur folder/file**. Rencana class, field, method, dan urutan implementasi ada di `plans/2#-entities-class.md`. Rencana input ada di `plans/3#-input-manager.md`. Rencana screen/scale/layer/game loop ada di `plans/4#-screen-scale-layer-gameloop.md`. Kontrak bullet system ada di `doc/bullet-system.md`.
+- **Scope dokumen:** **hanya struktur folder/file**. Rencana class, field, method, dan urutan implementasi ada di `plans/2#-entities-class.md`. Rencana porting arsitektur ada di `plans/1#-bullet-hell-porting.md`. Rencana UI HUD ada di `plans/7#-ui-hud-slot-power-up-panel-kanan.md`. Kontrak bullet system ada di `doc/bullet-system.md`.
 
 Dokumen ini adalah **sumber kebenaran struktur file**. Jika isinya berbeda dengan kondisi repo, struktur dianggap belum selesai dikerjakan.
 
@@ -25,12 +25,14 @@ Combo-Cosmos-Phaser/
 ├─ plans/
 │  ├─ 1#-bullet-hell-porting.md   # (existing)
 │  ├─ 2#-entities-class.md        # rencana class Player & Enemy
-│  ├─ 3#-input-manager.md         # arsitektur InputManager
-│  └─ 4#-screen-scale-layer-gameloop.md # layout, waktu, pause, depth, HUD
+│  └─ 7#-ui-hud-slot-power-up-panel-kanan.md # UI HUD slot power-up (panel kiri & kanan)
 ├─ issues/                        # (dibuat saat ada bug)
 ├─ doc/
 │  ├─ struktur-file.md            # dokumen ini
-│  └─ bullet-system.md            # kontrak fondasi bullet untuk kerja paralel
+│  ├─ bullet-system.md            # kontrak fondasi bullet untuk kerja paralel
+│  ├─ asset-system.md             # arsitektur aset: manifest, resolve, animasi, peta migrasi atlas
+│  ├─ asset-system-alur-sederhana.md # alur aset sampai render + aturan main (bahasa sederhana, untuk manusia & AI)
+│  └─ debug-toggles.md            # daftar tombol debug, efek, isi overlay, cara menambah
 └─ src/
    ├─ main.ts                     # bootstrap DOM
    ├─ vite-env.d.ts
@@ -45,13 +47,14 @@ Combo-Cosmos-Phaser/
       │  ├─ DepthConfig.ts        # urutan layer render bernama
       │  ├─ HudConfig.ts          # warna/label placeholder HUD
       │  ├─ PauseConfig.ts        # warna/teks placeholder overlay pause
-      │  ├─ AssetKeys.ts          # konstanta key texture/audio
+      │  ├─ AssetKeys.ts          # key logis aset (texture) — sumber nama key untuk manifest
+      │  ├─ AssetManifest.ts      # data murni: entri file/placeholder, frame, dan tabel animasi
       │  ├─ GameEvents.ts         # konstanta nama event
       │  ├─ InputBindings.ts      # default binding action → key (data-driven)
       │  └─ PowerUpConfig.ts      # konfigurasi sistem power-up (stock, slot, spawn, bobot, item visual)
       ├─ scenes/
-      │  ├─ Boot.ts
-      │  ├─ Preloader.ts          # load asset + generate placeholder texture
+      │  ├─ Boot.ts               # preload aset boot lewat AssetManager
+      │  ├─ Preloader.ts          # preload aset main + generate placeholder + registrasi animasi
       │  ├─ MainMenu.ts
       │  ├─ Game.ts               # assembler: pool, overlap, update loop, resetRun
       │  ├─ Hud.ts                # scene paralel, dua kamera panel samping (placeholder TEMP)
@@ -77,12 +80,13 @@ Combo-Cosmos-Phaser/
       │     ├─ EnemyState.ts      # string enum
       │     └─ DummyEnemy.ts      # PLACEHOLDER musuh untuk uji damage
       ├─ systems/
+      │  ├─ AssetManager.ts       # satu pintu aset: preload manifest, placeholder, animasi, resolve key→AssetRef
       │  ├─ InputManager.ts       # implementasi IInputSource di atas KeyboardPlugin
       │  ├─ EnemyBulletManager.ts # satu loop untuk semua peluru musuh (shield-aware)
       │  ├─ EffectManager.ts      # satu timer durasi untuk semua efek (refresh, bukan stack)
       │  ├─ PowerUpManager.ts     # eksekusi efek power-up, delegasi ke buff class + slot manager
       │  ├─ PauseManager.ts       # pause/resume Game+Hud, auto-pause BLUR/HIDDEN
-      │  ├─ DebugTools.ts         # F1–F4 + 1–6, titik masuk sistem debug berikutnya
+      │  ├─ DebugTools.ts         # tombol debug (F1–F4, Z–N), detail di doc/debug-toggles.md
       │  └─ power-ups/            # sistem power-up (buff, slot, aktif, spawn)
       │     ├─ IPowerUpBuff.ts    # kontrak kelas buff (isValid, getWeight, apply, blocksNormalFire)
       │     ├─ PowerUpBuffType.ts # enum tipe buff: Lane, AtkSpeed, Shield, Laser, Nuke, Life
@@ -97,16 +101,21 @@ Combo-Cosmos-Phaser/
       │     ├─ LaserBuff.ts       # Slotted: laser lurus, blokir tembakan biasa
       │     └─ NukeBuff.ts        # Slotted: bom instan, damage semua musuh
       ├─ ui/
-      │  └─ DebugOverlay.ts       # teks statistik performa, pool, nyawa & status efek
+      │  ├─ DebugOverlay.ts       # teks statistik performa, pool, nyawa & status efek
+      │  ├─ HudManager.ts         # koordinator panel HUD kiri + kanan
+      │  ├─ HudLeftPanel.ts       # wadah panel kiri (placeholder untuk ekstensi)
+      │  ├─ HudRightPanel.ts      # panel kanan: HP + slot buff + daftar durasi buff
+      │  ├─ PowerUpSlotBox.ts     # komponen satu kotak slot buff
+      │  └─ ActiveBuffRow.ts      # komponen satu baris durasi buff aktif
       ├─ types/
       │  ├─ Team.ts               # enum Team
       │  ├─ EntityConfig.ts       # interface config konstruktor entity
+      │  ├─ AssetRef.ts           # referensi tekstur siap pakai: { texture, frame? }
       │  ├─ InputAction.ts        # enum aksi input lintas layer
       │  ├─ EffectType.ts         # enum jenis efek durasi
       │  └─ IInputSource.ts       # kontrak sumber input (tanpa Phaser)
       └─ utils/
-         ├─ fixedStep.ts          # helper loop fixed timestep (ekstraksi duplikat Game.ts & BaseEntity.ts)
-         └─ textures.ts           # generate placeholder texture
+         └─ fixedStep.ts          # helper loop fixed timestep (ekstraksi duplikat Game.ts & BaseEntity.ts)
 ```
 
 ---
@@ -167,7 +176,8 @@ berada di `entities/bullet/` karena dipakai bersama player dan enemy.
 ## 4. Referensi
 
 - Kontrak bullet system & aturan performa: `doc/bullet-system.md`
+- Arsitektur aset & peta migrasi atlas: `doc/asset-system.md`
+- Daftar tombol debug (F1–F4, Z–N) & isi overlay: `doc/debug-toggles.md`
 - Rencana class & implementasi: `plans/2#-entities-class.md`
-- Rencana input manager (dependency inversion, rebind, data-driven binding): `plans/3#-input-manager.md`
-- Rencana screen/scale/layer/game loop: `plans/4#-screen-scale-layer-gameloop.md`
+- Rencana UI HUD slot power-up: `plans/7#-ui-hud-slot-power-up-panel-kanan.md`
 - Rencana porting arsitektur (pooling, wave, difficulty, skill, profile): `plans/1#-bullet-hell-porting.md`
