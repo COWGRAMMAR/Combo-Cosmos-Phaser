@@ -21,6 +21,11 @@ import { InputManager } from '../systems/InputManager';
 import { PauseManager } from '../systems/PauseManager';
 import { PowerUpManager } from '../systems/PowerUpManager';
 import type { PowerUpType } from '../systems/PowerUpManager';
+import { PowerUpSlotManager } from '../systems/power-ups/PowerUpSlotManager';
+import { ActiveBuffManager } from '../systems/power-ups/ActiveBuffManager';
+import { PowerUpSpawnManager } from '../systems/power-ups/PowerUpSpawnManager';
+import type { PowerUpBuffType } from '../systems/power-ups/PowerUpBuffType';
+import type { PowerUpCategory } from '../systems/power-ups/PowerUpCategory';
 import { EffectType } from '../types/EffectType';
 import { Team } from '../types/Team';
 import { DebugOverlay } from '../ui/DebugOverlay';
@@ -41,6 +46,9 @@ export class Game extends Phaser.Scene
     private enemyBullets?: EnemyBulletManager;
     private effects?: EffectManager;
     private powerUps?: PowerUpManager;
+    private slotManager?: PowerUpSlotManager;
+    private activeBuffManager?: ActiveBuffManager;
+    private spawnManager?: PowerUpSpawnManager;
     private shockwave?: Shockwave;
     private shield?: Shield;
     private laser?: PlayerLaser;
@@ -184,7 +192,6 @@ export class Game extends Phaser.Scene
 
         this.player = new Player(this, spawn.playerX, spawn.playerY, AssetKeys.Player, {
             team: Team.Player,
-            maxHp: PlayerConfig.maxHp,
             moveSpeed: PlayerConfig.moveSpeed,
             bodyRadius: PlayerConfig.bodyRadius
         }, this.inputManager, this.weapon);
@@ -205,14 +212,21 @@ export class Game extends Phaser.Scene
             onEnd: (type: EffectType) => this.handleEffectEnd(type)
         });
 
+        this.slotManager = new PowerUpSlotManager();
+        this.activeBuffManager = new ActiveBuffManager(this.effects);
+
         this.powerUps = new PowerUpManager(
             this,
             this.player,
             this.weapon,
             this.effects,
             this.enemyBullets,
-            this.enemies
+            this.enemies,
+            this.slotManager,
+            this.activeBuffManager
         );
+
+        this.spawnManager = new PowerUpSpawnManager(this, this.player, this.powerUps.getBuffRegistry());
 
         this.shockwave = new Shockwave(this, this.enemyBullets);
         this.shield = new Shield(this);
@@ -247,8 +261,14 @@ export class Game extends Phaser.Scene
             powerUp: (kind: PowerUpType) => this.powerUps?.apply(kind)
         });
 
+        // Event power-up: item disentuh pemain dan power-up dipakai dari slot.
+        this.events.on(GameEvents.POWER_UP_COLLECTED, this.handlePowerUpCollected, this);
+        this.events.on(GameEvents.POWER_UP_USED, this.handlePowerUpUsed, this);
+
         this.pauseManager = new PauseManager(this);
         this.scene.launch('Hud');
+
+        this.spawnManager?.start();
 
         this.playerBulletMax = 0;
         this.gameOverPending = false;
@@ -274,13 +294,57 @@ export class Game extends Phaser.Scene
             }
         );
 
+        this.activeBuffManager?.update(delta);
+        this.spawnManager?.update(delta);
+        this.updateSlotKeybinds(delta);
+
         this.shield?.update(this.player?.x ?? 0, this.player?.y ?? 0);
         this.laser?.setPosition(this.player?.x ?? 0, this.player?.y ?? 0);
+
+        // Tembakan biasa diizinkan hanya jika tidak ada buff aktif yang memblokir (misalnya Laser).
+        this.weapon?.setFiringEnabled(this.activeBuffManager?.canFireNormal() ?? true);
 
         this.updateStats(delta);
 
         this.debugTools?.update();
         this.overlay?.update(this.stats);
+    }
+
+    /** Cek keybind slot: 1/2/3 pakai, Ctrl+1/2/3 buang. */
+    private updateSlotKeybinds (_delta: number): void
+    {
+        if (!this.slotManager || !this.activeBuffManager || !this.player || !this.weapon)
+        {
+            return;
+        }
+
+        const keyboard = this.input.keyboard;
+        if (!keyboard)
+        {
+            return;
+        }
+
+        for (let i = 0; i < 3; i++)
+        {
+            const key = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ONE + i);
+            if (Phaser.Input.Keyboard.JustDown(key))
+            {
+                const isCtrl = (keyboard as { event?: KeyboardEvent }).event?.ctrlKey ?? false;
+                if (isCtrl)
+                {
+                    this.slotManager.discard(i);
+                }
+                else
+                {
+                    const buff = this.slotManager.use(i);
+                    if (buff)
+                    {
+                        this.activeBuffManager.activate(buff, this.player, this.weapon, this);
+                        this.events.emit(GameEvents.POWER_UP_USED, i);
+                    }
+                }
+            }
+        }
     }
 
     /** Set ulang accumulator saat scene dijeda, mencegah burst saat kembali aktif. */
@@ -289,6 +353,8 @@ export class Game extends Phaser.Scene
         this._accumulatorMs = 0;
         this.player?.resetAccumulator();
         this.dummy?.resetAccumulator();
+        this.activeBuffManager?.pauseAll();
+        this.spawnManager?.stop();
     }
 
     /** Set ulang accumulator saat scene dilanjutkan, mencegah burst dari delta waktu jeda. */
@@ -297,6 +363,8 @@ export class Game extends Phaser.Scene
         this._accumulatorMs = 0;
         this.player?.resetAccumulator();
         this.dummy?.resetAccumulator();
+        this.activeBuffManager?.resumeAll();
+        this.spawnManager?.start();
     }
 
     /** Mengosongkan seluruh pool dan mengembalikan state ke awal run. */
@@ -307,6 +375,9 @@ export class Game extends Phaser.Scene
         this.dummy?.resetAccumulator();
 
         this.effects?.reset();
+        this.activeBuffManager?.reset();
+        this.slotManager?.reset();
+        this.spawnManager?.stop();
         this.weapon?.reset();
         this.weapon?.clearAll();
         this.enemyBullets?.reset();
@@ -324,6 +395,19 @@ export class Game extends Phaser.Scene
         this.player?.resetForPool(ScreenConfig.spawn.playerX, ScreenConfig.spawn.playerY);
     }
 
+    /** Item power-up disentuh pemain: delegate ke PowerUpManager untuk diterapkan atau masuk slot. */
+    private handlePowerUpCollected (type: PowerUpBuffType, _category: PowerUpCategory): void
+    {
+        this.powerUps?.applyBuffType(type);
+    }
+
+    /** Power-up dari slot diaktifkan pemain: aktifkan buff lewat ActiveBuffManager. */
+    private handlePowerUpUsed (_slotIndex: number): void
+    {
+        // Buff sudah diaktifkan di updateSlotKeybinds lewat activeBuffManager.activate();
+        // Event ini dipancarkan untuk konsumsi UI/HUD.
+    }
+
     /** Menerapkan efek samping saat sebuah efek durasi mulai. */
     private handleEffectStart (type: EffectType): void
     {
@@ -337,8 +421,9 @@ export class Game extends Phaser.Scene
                 this.shield?.start(this.player?.x ?? 0, this.player?.y ?? 0);
                 break;
             case EffectType.Laser:
+                // Blokir tembakan biasa diatur oleh ActiveBuffManager.canFireNormal() di update(),
+                // bukan di sini. Laser visual tetap diaktifkan/dimatikan lewat efek durasi.
                 this.laser?.activate();
-                this.weapon?.setFiringEnabled(false);
                 break;
         }
     }
@@ -357,7 +442,7 @@ export class Game extends Phaser.Scene
                 break;
             case EffectType.Laser:
                 this.laser?.deactivate();
-                this.weapon?.setFiringEnabled(true);
+                // Blokir tembakan biasa dilepaskan oleh ActiveBuffManager di update().
                 break;
         }
     }
@@ -471,8 +556,14 @@ export class Game extends Phaser.Scene
         this.respawnEvent?.remove(false);
         this.respawnEvent = undefined;
 
+        this.spawnManager?.stop();
+        this.activeBuffManager?.reset();
+        this.slotManager?.reset();
+
         this.events.off(GameEvents.PLAYER_HIT, this.handlePlayerHit);
         this.events.off(GameEvents.BOMB_USED, this.handleBombUsed);
+        this.events.off(GameEvents.POWER_UP_COLLECTED, this.handlePowerUpCollected, this);
+        this.events.off(GameEvents.POWER_UP_USED, this.handlePowerUpUsed, this);
         this.events.off(Phaser.Core.Events.PAUSE, this.handleScenePause, this);
         this.events.off(Phaser.Core.Events.RESUME, this.handleSceneResume, this);
     }

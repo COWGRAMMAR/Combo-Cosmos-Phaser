@@ -47,7 +47,8 @@ Combo-Cosmos-Phaser/
       │  ├─ PauseConfig.ts        # warna/teks placeholder overlay pause
       │  ├─ AssetKeys.ts          # konstanta key texture/audio
       │  ├─ GameEvents.ts         # konstanta nama event
-      │  └─ InputBindings.ts      # default binding action → key (data-driven)
+      │  ├─ InputBindings.ts      # default binding action → key (data-driven)
+      │  └─ PowerUpConfig.ts      # konfigurasi sistem power-up (stock, slot, spawn, bobot, item visual)
       ├─ scenes/
       │  ├─ Boot.ts
       │  ├─ Preloader.ts          # load asset + generate placeholder texture
@@ -79,9 +80,22 @@ Combo-Cosmos-Phaser/
       │  ├─ InputManager.ts       # implementasi IInputSource di atas KeyboardPlugin
       │  ├─ EnemyBulletManager.ts # satu loop untuk semua peluru musuh (shield-aware)
       │  ├─ EffectManager.ts      # satu timer durasi untuk semua efek (refresh, bukan stack)
-      │  ├─ PowerUpManager.ts     # eksekusi efek power-up lane/atk speed/shield/laser/bomb/life
+      │  ├─ PowerUpManager.ts     # eksekusi efek power-up, delegasi ke buff class + slot manager
       │  ├─ PauseManager.ts       # pause/resume Game+Hud, auto-pause BLUR/HIDDEN
-      │  └─ DebugTools.ts         # F1–F4 + 1–6, titik masuk sistem debug berikutnya
+      │  ├─ DebugTools.ts         # F1–F4 + 1–6, titik masuk sistem debug berikutnya
+      │  └─ power-ups/            # sistem power-up (buff, slot, aktif, spawn)
+      │     ├─ IPowerUpBuff.ts    # kontrak kelas buff (isValid, getWeight, apply, blocksNormalFire)
+      │     ├─ PowerUpBuffType.ts # enum tipe buff: Lane, AtkSpeed, Shield, Laser, Nuke, Life
+      │     ├─ PowerUpCategory.ts # enum kategori: AutoPickup, Slotted
+      │     ├─ PowerUpSlotManager.ts # inventory slot (3 slot, stack, keybind 1/2/3, Ctrl+1/2/3 buang)
+      │     ├─ ActiveBuffManager.ts # buff aktif dengan pause/resume durasi + flag blocksNormalFire
+      │     ├─ PowerUpSpawnManager.ts # timer spawn, pilihan bobot via isValid/getWeight, overlap
+      │     ├─ LaneBuff.ts        # AutoPickup: tambah jalur tembakan (max 5)
+      │     ├─ LifeBuff.ts        # AutoPickup: tambah nyawa (max 5)
+      │     ├─ AtkSpeedBuff.ts    # Slotted: tembak lebih cepat (fire-rate)
+      │     ├─ ShieldBuff.ts      # Slotted: kebal peluru musuh (shield)
+      │     ├─ LaserBuff.ts       # Slotted: laser lurus, blokir tembakan biasa
+      │     └─ NukeBuff.ts        # Slotted: bom instan, damage semua musuh
       ├─ ui/
       │  └─ DebugOverlay.ts       # teks statistik performa, pool, nyawa & status efek
       ├─ types/

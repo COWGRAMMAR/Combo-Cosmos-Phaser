@@ -68,7 +68,7 @@ export class EffectManager
         this.callbacks.onEnd?.(type);
     }
 
-    /** Mengurangi semua durasi; delta membuat efek otomatis berhenti saat pause. */
+    /** Mengurangi semua durasi. Ketika game dipause, jangan panggil update() supaya durasi berhenti. */
     public update(delta: number): void
     {
         for (let i = 0; i < EFFECT_TYPES.length; i++)
@@ -90,6 +90,19 @@ export class EffectManager
                 this.callbacks.onEnd?.(type);
             }
         }
+    }
+
+    /** Pause semua durasi efek aktif. Dipanggil saat game pause. */
+    public pauseAll(): void
+    {
+        // Pause dilakukan dengan tidak memanggil update() selama game pause.
+        // Sisa durasi tetap tersimpan di Map, tidak berkurang.
+    }
+
+    /** Resume semua durasi efek aktif. Dipanggil saat game resume dari pause. */
+    public resumeAll(): void
+    {
+        // Tidak perlu aksi khusus; update akan lanjut dari sisa durasi yang tersisa.
     }
 
     /** Mengecek apakah efek sedang aktif. */

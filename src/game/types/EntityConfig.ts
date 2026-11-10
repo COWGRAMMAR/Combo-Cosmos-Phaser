@@ -3,7 +3,7 @@ import type { Team } from './Team';
 export interface EntityConfig
 {
     team: Team;
-    maxHp: number;
+    maxHp?: number;
     moveSpeed: number;
     bodyRadius?: number;
 }

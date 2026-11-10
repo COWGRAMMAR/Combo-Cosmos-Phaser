@@ -7,8 +7,8 @@ import type { IDamageable } from './IDamageable';
 /** Kelas dasar entitas bertim dengan HP, damage, dan body fisika Arcade. */
 export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements IDamageable
 {
-    protected readonly maxHp: number;
-    private _hp: number;
+    protected readonly maxHp?: number;
+    private _hp: number = 0;
     public moveSpeed: number;
     public readonly team: Team;
     protected invulnerableRemainingMs: number = 0;
@@ -20,7 +20,7 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
         super(scene, x, y, texture);
 
         this.maxHp = config.maxHp;
-        this._hp = config.maxHp;
+        this._hp = config.maxHp ?? 0;
         this.moveSpeed = config.moveSpeed;
         this.team = config.team;
 
@@ -50,13 +50,14 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
     /** Nilai HP maksimum. */
     get maxHealth(): number
     {
-        return this.maxHp;
+        return this.maxHp ?? 0;
     }
 
     /** Rasio HP saat ini terhadap HP maksimum (0–1). */
     get hpRatio(): number
     {
-        return this.maxHp > 0 ? this._hp / this.maxHp : 0;
+        const max = this.maxHp;
+        return max !== undefined && max > 0 ? this._hp / max : 0;
     }
 
     /** True selama HP masih di atas nol. */
@@ -96,7 +97,7 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
     public resetForPool(x: number, y: number): void
     {
         this.setPosition(x, y);
-        this._hp = this.maxHp;
+        this._hp = this.maxHp ?? 0;
         this.invulnerableRemainingMs = 0;
         this.setActive(true);
         this.setVisible(true);

@@ -14,7 +14,7 @@ export class Player extends BaseEntity
     public entityState: PlayerState = PlayerState.Alive;
 
     private readonly inputSource: IInputSource;
-    private readonly weapon?: PlayerWeapon;
+    private readonly _weapon?: PlayerWeapon;
 
     private _lives: number = PlayerConfig.lives;
     private shieldActive: boolean = false;
@@ -43,7 +43,7 @@ export class Player extends BaseEntity
         super(scene, x, y, texture, config);
 
         this.inputSource = inputSource;
-        this.weapon = weapon;
+        this._weapon = weapon;
 
         this.setDepth(DepthConfig.player);
     }
@@ -52,6 +52,12 @@ export class Player extends BaseEntity
     get hitRadius(): number
     {
         return PlayerConfig.hitRadius;
+    }
+
+    /** Apakah pemain masih hidup (berbasis nyawa, bukan HP BaseEntity). */
+    get isAlive(): boolean
+    {
+        return this._lives > 0;
     }
 
     /** Sisa nyawa pemain pada run ini. */
@@ -64,6 +70,12 @@ export class Player extends BaseEntity
     get isShieldActive(): boolean
     {
         return this.shieldActive;
+    }
+
+    /** Referensi senjata pemain (undefined saat belum dilengkapi). */
+    get weapon(): PlayerWeapon | undefined
+    {
+        return this._weapon;
     }
 
     /**
@@ -188,7 +200,7 @@ export class Player extends BaseEntity
             this.entityState = PlayerState.Alive;
         }
 
-        this.weapon?.update(
+        this._weapon?.update(
             delta,
             this.x,
             this.y + PlayerConfig.weapon.muzzleOffsetY,

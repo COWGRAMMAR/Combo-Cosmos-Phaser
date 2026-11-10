@@ -76,5 +76,5 @@ export const PlayerConfig = {
         poolSize: 400,
         /** Offset titik keluar peluru dari pusat pemain (negatif = ke atas). */
         muzzleOffsetY: -20
-    }
+    },
 } as const;
