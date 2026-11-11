@@ -30,6 +30,9 @@ dist-ssr
 # Hasil coverage tes
 coverage/
 
+# Plan file (draft, tidak di-commit)
+plans/personal-nisko/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
