@@ -2,7 +2,7 @@
 
 - **Status:** ACC — dieksekusi 2026-11-05
 - **Tanggal:** 2026-11-05
-- **Struktur folder:** lihat `doc/struktur-file.md` (sumber kebenaran struktur file)
+- **Struktur folder:** lihat `docs/struktur-file.md` (sumber kebenaran struktur file)
 - **Scope:** abstraksi input pemain, migrasi movement Player, dan dokumentasi arsitektur untuk dilanjutkan.
 - **Tidak termasuk:** shooting, HUD, settings UI, persistence keybind, gamepad, touch.
 
@@ -108,7 +108,7 @@ Constructor injection membuat dependency terlihat di signature, dicek compiler, 
 | `src/game/entities/player/Player.ts` | Hapus `cursors` + `keyW/A/S/D`; constructor terima `IInputSource`; `updateEntity` pakai `getAxis` |
 | `src/game/scenes/Game.ts` | Buat `InputManager`, inject ke `Player`, destroy saat shutdown |
 | `AGENTS.md` | Tambah aturan arsitektur data-driven |
-| `doc/struktur-file.md` | Update status, tree, dan aturan data-driven |
+| `docs/struktur-file.md` | Update status, tree, dan aturan data-driven |
 
 ---
 
@@ -228,7 +228,7 @@ Konsekuensi yang harus diketahui:
 
 ## 8. Aturan data-driven
 
-Rencana ini mengikuti aturan yang ditambahkan ke `AGENTS.md` dan `doc/struktur-file.md`:
+Rencana ini mengikuti aturan yang ditambahkan ke `AGENTS.md` dan `docs/struktur-file.md`:
 
 - Semua nilai yang bisa di-tuning masuk `src/game/config/`.
 - `config/` hanya data murni (`as const`), tanpa logika, object Phaser, atau side effect.
@@ -261,7 +261,7 @@ Contoh yang sudah data-driven: `Balance`, `AssetKeys`, `GameEvents`, dan sekaran
 7. `Fire` terdaftar di binding dan bisa dicek lewat `isDown(InputAction.Fire)`, walau belum memicu tembakan.
 8. `rebind()` bisa dipanggil tanpa meninggalkan `Key` lama.
 9. Scene shutdown tidak meninggalkan key aktif.
-10. `doc/struktur-file.md` sudah memuat file baru.
+10. `docs/struktur-file.md` sudah memuat file baru.
 
 ---
 
@@ -281,5 +281,5 @@ Contoh yang sudah data-driven: `Balance`, `AssetKeys`, `GameEvents`, dan sekaran
 - Jangan import `InputManager` dari folder `entities`; gunakan `IInputSource`.
 - Jangan menaruh nama tombol fisik di `Player` atau entity lain.
 - Tambah action baru dengan urutan: `types/InputAction.ts` → `config/InputBindings.ts` → konsumen.
-- Setiap file baru wajib dicatat di `doc/struktur-file.md`.
+- Setiap file baru wajib dicatat di `docs/struktur-file.md`.
 - Jika binding dipersist, validasi nama tombol sebelum `addKey` dan sediakan fallback ke default.

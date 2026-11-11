@@ -2,7 +2,7 @@
 
 - **Status:** Fase 0 (fondasi class) + InputManager + Fase 1 (bullet foundation) + Fase 2–4 (survival, efek & power-up, dash) + Fase screen/scale/layer/game loop selesai
 - **Tanggal:** 2026-11-06
-- **Scope dokumen:** **hanya struktur folder/file**. Rencana class, field, method, dan urutan implementasi ada di `plans/2#-entities-class.md`. Rencana input ada di `plans/3#-input-manager.md`. Rencana screen/scale/layer/game loop ada di `plans/4#-screen-scale-layer-gameloop.md`. Kontrak bullet system ada di `doc/bullet-system.md`.
+- **Scope dokumen:** **hanya struktur folder/file**. Rencana class, field, method, dan urutan implementasi ada di `plans/2#-entities-class.md`. Rencana input ada di `plans/3#-input-manager.md`. Rencana screen/scale/layer/game loop ada di `plans/4#-screen-scale-layer-gameloop.md`. Kontrak bullet system ada di `docs/bullet-system.md`.
 
 Dokumen ini adalah **sumber kebenaran struktur file**. Jika isinya berbeda dengan kondisi repo, struktur dianggap belum selesai dikerjakan.
 
@@ -28,7 +28,7 @@ Combo-Cosmos-Phaser/
 │  ├─ 3#-input-manager.md         # arsitektur InputManager
 │  └─ 4#-screen-scale-layer-gameloop.md # layout, waktu, pause, depth, HUD
 ├─ issues/                        # (dibuat saat ada bug)
-├─ doc/
+├─ docs/
 │  ├─ struktur-file.md            # dokumen ini
 │  └─ bullet-system.md            # kontrak fondasi bullet untuk kerja paralel
 └─ src/
@@ -150,7 +150,7 @@ berada di `entities/bullet/` karena dipakai bersama player dan enemy.
 
 ## 4. Referensi
 
-- Kontrak bullet system & aturan performa: `doc/bullet-system.md`
+- Kontrak bullet system & aturan performa: `docs/bullet-system.md`
 - Rencana class & implementasi: `plans/2#-entities-class.md`
 - Rencana input manager (dependency inversion, rebind, data-driven binding): `plans/3#-input-manager.md`
 - Rencana screen/scale/layer/game loop: `plans/4#-screen-scale-layer-gameloop.md`
