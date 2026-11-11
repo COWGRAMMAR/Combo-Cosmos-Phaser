@@ -17,11 +17,10 @@ const config: Phaser.Types.Core.GameConfig = {
     width: ScreenConfig.width,
     height: ScreenConfig.height,
     parent: 'game-container',
-    backgroundColor: WorldConfig.letterbox.color,
+    backgroundColor: WorldConfig.background.color,
     scale: {
-        // Canvas mengikuti ukuran window (tidak di-upscale) supaya selalu tajam.
-        mode: Scale.RESIZE,
-        autoCenter: Scale.NO_CENTER
+        mode: Scale.FIT,
+        autoCenter: Scale.CENTER_BOTH
     },
     fps: {
         target: TimeConfig.targetFps,

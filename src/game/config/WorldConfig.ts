@@ -3,10 +3,6 @@ export const WorldConfig = {
     background: {
         color: 0x1b5e20
     },
-    /** Warna canvas di luar ruang desain (letterbox). */
-    letterbox: {
-        color: 0x000000
-    },
     debug: {
         enabled: true
     },
