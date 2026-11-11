@@ -1,38 +1,41 @@
 /**
- * Satu-satunya sumber kebenaran ukuran canvas dan tata letak layar.
+ * Satu-satunya sumber kebenaran ukuran desain dan tata letak layar.
+ * `width`/`height` adalah ukuran DESAIN, bukan ukuran canvas aktual: canvas
+ * mengikuti ukuran window lewat Scale.RESIZE, lalu tiap scene memakai zoom
+ * kamera agar ruang desain ini tetap 4:3 dan terpusat.
  * Semua koordinat gameplay memakai ruang lokal play area (0..810 x 0..1080).
  */
 export const ScreenConfig = {
-    /** Lebar canvas internal, dalam piksel. */
-    width: 1920,
-    /** Tinggi canvas internal, dalam piksel. */
+    /** Lebar ruang desain, dalam unit desain. */
+    width: 1440,
+    /** Tinggi ruang desain, dalam unit desain. */
     height: 1080,
-    /** Titik tengah canvas, dipakai scene menu dan loader. */
+    /** Titik tengah ruang desain, dipakai scene menu dan loader. */
     center: {
-        x: 960,
+        x: 720,
         y: 540
     },
-    /** Area bermain portrait di tengah canvas. */
+    /** Area bermain portrait di tengah ruang desain. */
     playArea: {
-        x: 555,
+        x: 315,
         y: 0,
         width: 810,
         height: 1080,
-        centerX: 960,
+        centerX: 720,
         centerY: 540
     },
-    /** Panel HUD di sisi kiri canvas. */
+    /** Panel HUD di sisi kiri ruang desain. */
     leftPanel: {
         x: 0,
         y: 0,
-        width: 555,
+        width: 315,
         height: 1080
     },
-    /** Panel HUD di sisi kanan canvas. */
+    /** Panel HUD di sisi kanan ruang desain. */
     rightPanel: {
-        x: 1365,
+        x: 1125,
         y: 0,
-        width: 555,
+        width: 315,
         height: 1080
     },
     /** Posisi spawn awal dalam koordinat lokal play area. */
