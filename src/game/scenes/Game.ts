@@ -235,7 +235,8 @@ export class Game extends Phaser.Scene
         this.events.off(GameEvents.BOMB_USED, this.handleBombUsed);
         this.events.on(GameEvents.BOMB_USED, this.handleBombUsed);
 
-        this.overlay = new DebugOverlay(this);
+        this.overlay = new DebugOverlay();
+        this.applyCameraLayout();
         this.debugTools = new DebugTools(this, {
             toggleOverlay: () => this.overlay?.toggle(),
             stress: (count: number) => this.spawnStressBullets(count),
@@ -267,6 +268,10 @@ export class Game extends Phaser.Scene
         );
         camera.setZoom(fit.scale);
         camera.centerOn(playArea.width / 2, playArea.height / 2);
+
+        // Overlay DOM ditempel ke sudut kiri atas viewport kamera (area hijau).
+        const canvasRect = this.scale.canvas.getBoundingClientRect();
+        this.overlay?.setPosition(canvasRect.left + camera.x + 8, canvasRect.top + camera.y + 8);
     }
 
     /** Menjalankan seluruh sistem per frame. */
