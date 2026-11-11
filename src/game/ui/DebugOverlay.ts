@@ -1,3 +1,5 @@
+import * as Phaser from 'phaser';
+import { DepthConfig } from '../config/DepthConfig';
 import { WorldConfig } from '../config/WorldConfig';
 
 /** Angka yang ditampilkan overlay debug; diisi ulang tiap frame oleh scene. */
@@ -23,34 +25,27 @@ export interface DebugStats
 
 /**
  * Overlay teks untuk memantau performa bullet dan jumlah pool.
- * Dibuat sebagai elemen DOM (position: fixed) supaya tidak ikut ter-zoom
- * atau ter-clip oleh kamera gameplay; posisinya ditempel ke sudut kiri atas
- * play area lewat setPosition().
- * String hanya dirakit saat overlay terlihat agar tidak membebani gameplay.
+ * Sengaja hanya membuat string saat overlay terlihat agar tidak membebani
+ * gameplay normal.
  */
 export class DebugOverlay
 {
-    private readonly element: HTMLDivElement;
+    private readonly text: Phaser.GameObjects.Text;
     private visible: boolean = WorldConfig.debug.enabled;
 
-    /** Membuat elemen overlay yang menempel di sudut kiri atas layar. */
-    constructor()
+    /** Membuat teks overlay yang menempel di kamera. */
+    constructor(scene: Phaser.Scene)
     {
-        this.element = document.createElement('div');
-        this.element.style.cssText =
-            'position:fixed;top:12px;left:12px;z-index:9999;' +
-            'font-family:monospace;font-size:14px;line-height:1.4;' +
-            'color:#ffffff;background:rgba(0,0,0,0.65);padding:6px 8px;' +
-            'white-space:pre;pointer-events:none;';
-        this.element.style.display = this.visible ? 'block' : 'none';
-        document.body.appendChild(this.element);
-    }
+        this.text = scene.add.text(12, 12, '', {
+            fontFamily: 'monospace',
+            fontSize: '14px',
+            color: '#ffffff',
+            backgroundColor: '#000000aa',
+            padding: { left: 8, right: 8, top: 6, bottom: 6 }
+        });
 
-    /** Menempelkan overlay ke koordinat layar (piksel viewport). */
-    public setPosition(x: number, y: number): void
-    {
-        this.element.style.left = `${x}px`;
-        this.element.style.top = `${y}px`;
+        this.text.setScrollFactor(0).setDepth(DepthConfig.worldUi);
+        this.text.setVisible(this.visible);
     }
 
     /** Status tampil atau tidaknya overlay. */
@@ -63,7 +58,7 @@ export class DebugOverlay
     public toggle(): void
     {
         this.visible = !this.visible;
-        this.element.style.display = this.visible ? 'block' : 'none';
+        this.text.setVisible(this.visible);
     }
 
     /** Memperbarui isi overlay; tidak melakukan apa pun saat disembunyikan. */
@@ -76,17 +71,18 @@ export class DebugOverlay
 
         const status = this.buildStatus(stats);
 
-        this.element.textContent =
+        this.text.setText(
             `FPS ${stats.fps.toFixed(0)} | frame ${stats.frameTimeMs.toFixed(1)} ms | lanes ${stats.lanes}\n` +
             `peluru pemain: ${stats.playerBulletsActive} aktif / max ${stats.playerBulletsMax} / overflow ${stats.playerBulletsOverflow}\n` +
             `peluru musuh : ${stats.enemyBulletsActive} aktif / max ${stats.enemyBulletsMax} / overflow ${stats.enemyBulletsOverflow}\n` +
-            `pemain kena : ${stats.playerHits} | nyawa ${stats.lives} | ${status}`;
+            `pemain kena : ${stats.playerHits} | nyawa ${stats.lives} | ${status}`
+        );
     }
 
-    /** Menghapus elemen overlay dari DOM. */
+    /** Menghapus objek teks dari scene. */
     public destroy(): void
     {
-        this.element.remove();
+        this.text.destroy();
     }
 
     /** Merangkai status efek yang sedang aktif dalam satu baris. */
