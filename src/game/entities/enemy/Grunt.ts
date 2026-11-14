@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 import { GruntConfig } from '../../config/GruntConfig';
 import type { IEnemyBulletSpawner } from '../../types/IEnemyBulletSpawner';
+import type { ITargetPosition } from '../../types/ITargetPosition';
 import { Team } from '../../types/Team';
 import { Enemy } from './Enemy';
 import { EnemyState } from './EnemyState';
@@ -14,6 +15,7 @@ import type { IMovementPattern } from './patterns/IMovementPattern';
 export class Grunt extends Enemy
 {
     private readonly bulletSpawner: IEnemyBulletSpawner;
+    private readonly target: ITargetPosition;
 
     private movement?: IMovementPattern;
 
@@ -25,7 +27,8 @@ export class Grunt extends Enemy
         x: number,
         y: number,
         texture: string,
-        bulletSpawner: IEnemyBulletSpawner
+        bulletSpawner: IEnemyBulletSpawner,
+        target: ITargetPosition
     )
     {
         super(scene, x, y, texture, {
@@ -36,6 +39,7 @@ export class Grunt extends Enemy
         });
 
         this.bulletSpawner = bulletSpawner;
+        this.target = target;
 
         const body = this.body as Phaser.Physics.Arcade.Body;
         body.setImmovable(true);
@@ -92,13 +96,42 @@ export class Grunt extends Enemy
         this.fire();
     }
 
-    /** Menembak satu peluru searah sudut gerak Grunt. */
+    /** Menembak satu peluru ke arah gerak Grunt atau ke posisi target. */
     private fire(): void
     {
-        const angleRad = this.movement?.angleRad ?? 0;
+        let directionX: number;
+        let directionY: number;
+
+        if (GruntConfig.weapon.aimMode === 'targeted')
+        {
+            // Target yang sudah tidak aktif (player mati) tidak perlu ditembaki.
+            if (!this.target.active)
+            {
+                return;
+            }
+
+            const deltaX = this.target.x - this.x;
+            const deltaY = this.target.y - this.y;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            if (distance <= 0)
+            {
+                return;
+            }
+
+            // Arah dikunci saat peluru ditembakkan; peluru tidak homing.
+            directionX = deltaX / distance;
+            directionY = deltaY / distance;
+        }
+        else
+        {
+            const angleRad = this.movement?.angleRad ?? 0;
+
+            directionX = Math.sin(angleRad);
+            directionY = Math.cos(angleRad);
+        }
+
         const speed = GruntConfig.weapon.bulletSpeed;
-        const directionX = Math.sin(angleRad);
-        const directionY = Math.cos(angleRad);
         const offset = GruntConfig.weapon.muzzleOffsetY;
 
         this.bulletSpawner.spawn(

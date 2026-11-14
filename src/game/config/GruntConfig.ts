@@ -1,3 +1,5 @@
+export type GruntAimMode = 'down' | 'targeted';
+
 /**
  * Nilai yang bisa diubah untuk Grunt (Tipe 1).
  * Parameter pola gerak ditambahkan per fase saat polanya benar-benar dipakai.
@@ -11,8 +13,13 @@ export const GruntConfig = {
     despawnY: 1128,
     poolSize: 96,
     weapon: {
+        /**
+         * Arah tembakan: 'down' mengikuti sudut gerak Grunt,
+         * 'targeted' mengarah ke posisi target saat peluru ditembakkan.
+         */
+        aimMode: 'targeted' as GruntAimMode,
         /** Jeda antar tembakan setelah tembakan pertama, dalam milidetik. */
-        fireIntervalMs: 1400,
+        fireIntervalMs: 1,
         /** Jeda sebelum tembakan pertama, dalam milidetik. */
         initialFireDelayMs: 700,
         bulletSpeed: 220,

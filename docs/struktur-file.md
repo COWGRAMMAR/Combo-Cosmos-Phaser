@@ -98,6 +98,7 @@ Combo-Cosmos-Phaser/
       │  ├─ InputAction.ts        # enum aksi input lintas layer
       │  ├─ EffectType.ts         # enum jenis efek durasi
       │  ├─ IEnemyBulletSpawner.ts # kontrak spawn peluru musuh untuk entity
+      │  ├─ ITargetPosition.ts    # kontrak posisi target tembakan musuh
       │  └─ IInputSource.ts       # kontrak sumber input (tanpa Phaser)
       └─ utils/
          └─ textures.ts           # generate placeholder texture

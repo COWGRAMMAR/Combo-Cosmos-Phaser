@@ -4,6 +4,7 @@ import { GruntConfig } from '../../config/GruntConfig';
 import { Grunt } from '../../entities/enemy/Grunt';
 import type { IMovementPattern } from '../../entities/enemy/patterns/IMovementPattern';
 import type { IEnemyBulletSpawner } from '../../types/IEnemyBulletSpawner';
+import type { ITargetPosition } from '../../types/ITargetPosition';
 
 /**
  * Pool Grunt yang diisi di awal dan dipakai ulang lewat spawn().
@@ -18,7 +19,7 @@ export class GruntPool
     private _overflowCount: number = 0;
 
     /** Membuat seluruh Grunt sekali di awal, lalu menonaktifkannya. */
-    constructor(scene: Phaser.Scene, bulletSpawner: IEnemyBulletSpawner)
+    constructor(scene: Phaser.Scene, bulletSpawner: IEnemyBulletSpawner, target: ITargetPosition)
     {
         this.group = scene.add.group({
             maxSize: GruntConfig.poolSize
@@ -26,7 +27,7 @@ export class GruntPool
 
         for (let i = 0; i < GruntConfig.poolSize; i++)
         {
-            const grunt = new Grunt(scene, 0, 0, AssetKeys.Enemy, bulletSpawner);
+            const grunt = new Grunt(scene, 0, 0, AssetKeys.Enemy, bulletSpawner, target);
 
             grunt.setActive(false);
             grunt.setVisible(false);

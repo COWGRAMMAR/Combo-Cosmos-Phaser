@@ -201,7 +201,7 @@ export class Game extends Phaser.Scene
         });
 
         // Pool harus dibuat sebelum PlayerLaser karena laser meng-cache daftar musuh.
-        const grunts = new GruntPool(this, this.enemyBullets);
+        const grunts = new GruntPool(this, this.enemyBullets, this.player);
 
         this.grunts = grunts;
         this.enemies = grunts.poolGroup;
