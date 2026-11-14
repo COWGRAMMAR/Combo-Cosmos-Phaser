@@ -79,8 +79,9 @@ export class Grunt extends Enemy
             return;
         }
 
-        // Grunt yang masih di atas layar belum boleh menembak.
-        if (this.y < 0)
+        // Grunt yang masih di atas play area belum boleh menembak.
+        // Batas atas diambil dari world bounds agar sama dengan sumber culling lain.
+        if (this.y < this.scene.physics.world.bounds.y)
         {
             return;
         }

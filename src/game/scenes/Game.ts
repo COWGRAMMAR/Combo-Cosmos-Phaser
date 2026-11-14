@@ -69,6 +69,7 @@ export class Game extends Phaser.Scene
         lanes: 0,
         lives: 0,
         gruntsActive: 0,
+        gruntsOverflow: 0,
         gruntScenario: '',
         invulnerable: false,
         shieldActive: false,
@@ -429,6 +430,7 @@ export class Game extends Phaser.Scene
         stats.lanes = weapon.laneCount;
         stats.lives = player.lives;
         stats.gruntsActive = this.grunts?.activeCount ?? 0;
+        stats.gruntsOverflow = this.grunts?.overflowCount ?? 0;
         stats.invulnerable = player.isInvulnerable();
         stats.shieldActive = player.isShieldActive;
         stats.fireRateActive = this.effects?.isActive(EffectType.FireRate) ?? false;

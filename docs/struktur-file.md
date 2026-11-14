@@ -1,6 +1,6 @@
 # Struktur File — Combo-Cosmos-Phaser
 
-- **Status:** Fase 0 (fondasi class) + InputManager + Fase 1 (bullet foundation) + Fase 2–4 (survival, efek & power-up, dash) + Fase screen/scale/layer/game loop selesai + Grunt Tipe 1 (tahap static)
+- **Status:** Fase 0 (fondasi class) + InputManager + Fase 1 (bullet foundation) + Fase 2–4 (survival, efek & power-up, dash) + Fase screen/scale/layer/game loop selesai + Grunt Tipe 1 (static, targeted, rain)
 - **Tanggal:** 2026-11-14
 - **Scope dokumen:** **hanya struktur folder/file**. Rencana class, field, method, dan urutan implementasi ada di `plans/2#-entities-class.md`. Rencana input ada di `plans/3#-input-manager.md`. Rencana screen/scale/layer/game loop ada di `plans/4#-screen-scale-layer-gameloop.md`. Kontrak bullet system ada di `docs/bullet-system.md`.
 
@@ -26,7 +26,11 @@ Combo-Cosmos-Phaser/
 │  ├─ 1#-bullet-hell-porting.md   # (existing)
 │  ├─ 2#-entities-class.md        # rencana class Player & Enemy
 │  ├─ 3#-input-manager.md         # arsitektur InputManager
-│  └─ 4#-screen-scale-layer-gameloop.md # layout, waktu, pause, depth, HUD
+│  ├─ 4#-screen-scale-layer-gameloop.md # layout, waktu, pause, depth, HUD
+│  └─ enemy/
+│     ├─ Ide Enemy.md             # desain pola gerak & serangan enemy
+│     ├─ Placeholder Enemy.md     # spesifikasi visual placeholder
+│     └─ Rencana Implementasi Grunt.md # rencana bertahap Grunt
 ├─ issues/                        # (dibuat saat ada bug)
 ├─ docs/
 │  ├─ struktur-file.md            # dokumen ini
@@ -39,8 +43,8 @@ Combo-Cosmos-Phaser/
       ├─ config/
       │  ├─ PlayerConfig.ts       # hp, hitbox, nyawa, weapon, shockwave, atk speed, shield, laser, dash, bomb
       │  ├─ EnemyConfig.ts        # hp musuh + bullet (speed/radius/pool/margin/lifetime)
-      │  ├─ GruntConfig.ts        # hp/radius/despawn/pool + parameter senjata Grunt
-      │  ├─ EnemyTestConfig.ts    # skenario tes Grunt, spawn static, reset key opsional
+      │  ├─ GruntConfig.ts        # hp/radius/despawn/pool + senjata & parameter Rain Grunt
+      │  ├─ EnemyTestConfig.ts    # skenario tes Grunt, spawn static, batch Rain, reset key opsional
       │  ├─ WorldConfig.ts        # background + flag debug + delay/layout bantu
       │  ├─ ScreenConfig.ts       # sumber kebenaran canvas, play area, panel HUD, spawn
       │  ├─ TimeConfig.ts         # target/batas FPS + delta maksimum
@@ -145,7 +149,7 @@ berada di `entities/bullet/` karena dipakai bersama player dan enemy.
 | 1  | Satu class = satu file, nama file = nama class (`PascalCase.ts`)                                       | pencarian mudah, diff git bersih         |
 | 2  | Arah dependensi folder: `scenes → systems → entities → types/utils/config`; `entities` tidak boleh import `systems`/`scenes` | anti circular import                     |
 | 3  | Tanpa barrel `index.ts` sampai benar-benar diperlukan                                                 | barrel memicu circular import + HMR lambat |
-| 4  | Maksimal 3 level nesting di dalam `src/`                                                             | lebih dari itu = pembagian tanggung jawab salah |
+| 4  | Maksimal 3 level folder di bawah `src/game/`; kedalaman terdalam yang diizinkan adalah `entities/enemy/patterns/` | lebih dari itu = pembagian tanggung jawab salah |
 | 5  | Folder sistem memakai `src/game/systems/`, **bukan** `src/core/`                                       | keputusan desain (lihat plan entities)   |
 | 6  | **Setiap penambahan/penghapusan/perpindahan file atau folder wajib langsung memperbarui dokumen ini**   | dokumen ini jadi sumber kebenaran struktur |
 | 7  | Semua nilai yang bisa di-tuning (balance, keybind, asset key, nama event, timing, ukuran/warna, tabel wave/spawn) wajib di `config/`; `scenes/`, `entities/`, `systems/` dilarang menyimpan magic number/string untuk nilai tersebut | data-driven, mudah diubah tanpa menyentuh logika |
