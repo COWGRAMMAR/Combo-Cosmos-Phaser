@@ -2,6 +2,7 @@ import * as Phaser from 'phaser';
 import { AssetKeys } from '../config/AssetKeys';
 import { DepthConfig } from '../config/DepthConfig';
 import { EnemyConfig } from '../config/EnemyConfig';
+import { EnemyTestConfig } from '../config/EnemyTestConfig';
 import { GameEvents } from '../config/GameEvents';
 import { PlayerConfig } from '../config/PlayerConfig';
 import { ScreenConfig } from '../config/ScreenConfig';
@@ -9,7 +10,7 @@ import { TimeConfig } from '../config/TimeConfig';
 import { WorldConfig } from '../config/WorldConfig';
 import { PlayerBullet } from '../entities/bullet/PlayerBullet';
 import { Shockwave } from '../entities/effects/Shockwave';
-import { DummyEnemy } from '../entities/enemy/DummyEnemy';
+import type { Enemy } from '../entities/enemy/Enemy';
 import { Player } from '../entities/player/Player';
 import { PlayerLaser } from '../entities/player/PlayerLaser';
 import { PlayerWeapon } from '../entities/player/PlayerWeapon';
@@ -20,6 +21,8 @@ import { InputManager } from '../systems/InputManager';
 import { PauseManager } from '../systems/PauseManager';
 import { PowerUpManager } from '../systems/PowerUpManager';
 import type { PowerUpType } from '../systems/PowerUpManager';
+import { GruntPool } from '../systems/enemy/GruntPool';
+import { GruntTestRunner } from '../systems/enemy/GruntTestRunner';
 import { EffectType } from '../types/EffectType';
 import { Team } from '../types/Team';
 import { DebugOverlay } from '../ui/DebugOverlay';
@@ -36,8 +39,9 @@ export class Game extends Phaser.Scene
     private inputManager?: InputManager;
     private player?: Player;
     private weapon?: PlayerWeapon;
-    private dummy?: DummyEnemy;
     private enemies?: Phaser.GameObjects.Group;
+    private grunts?: GruntPool;
+    private gruntTestRunner?: GruntTestRunner;
     private enemyBullets?: EnemyBulletManager;
     private effects?: EffectManager;
     private powerUps?: PowerUpManager;
@@ -46,9 +50,10 @@ export class Game extends Phaser.Scene
     private overlay?: DebugOverlay;
     private debugTools?: DebugTools;
     private pauseManager?: PauseManager;
-    private respawnEvent?: Phaser.Time.TimerEvent;
     private playerBulletMax: number = 0;
     private gameOverPending: boolean = false;
+    /** Frame terakhir saat tabrakan badan sudah memberi konsekuensi. */
+    private lastEnemyContactFrame: number = -1;
 
     // Objek statistik dipakai ulang tiap frame agar tidak ada alokasi di update().
     private readonly stats: DebugStats = {
@@ -63,6 +68,8 @@ export class Game extends Phaser.Scene
         playerHits: 0,
         lanes: 0,
         lives: 0,
+        gruntsActive: 0,
+        gruntScenario: '',
         invulnerable: false,
         shieldActive: false,
         fireRateActive: false,
@@ -70,78 +77,80 @@ export class Game extends Phaser.Scene
         dashReady: true
     };
 
-    /** Callback overlap peluru pemain dengan musuh; dibuat sekali, bukan per frame. */
-    private readonly handlePlayerBulletHitsEnemy: Phaser.Types.Physics.Arcade.ArcadePhysicsCallback = (bulletObject, enemyObject) =>
+    /**
+     * Callback overlap peluru pemain dengan musuh.
+     * Urutan argumen bisa berbeda tergantung container yang dipakai Phaser,
+     * jadi bullet dideteksi dari tipe objeknya, bukan dari posisi argumen.
+     */
+    private readonly handlePlayerBulletHitsEnemy: Phaser.Types.Physics.Arcade.ArcadePhysicsCallback = (objectA, objectB) =>
     {
-        const bullet = bulletObject as Phaser.GameObjects.GameObject & Partial<PlayerBullet>;
-        const enemy = enemyObject as DummyEnemy;
+        const bullet = objectA instanceof PlayerBullet
+            ? objectA
+            : objectB instanceof PlayerBullet
+                ? objectB
+                : null;
 
-        if (!(bullet instanceof PlayerBullet) || typeof bullet.deactivate !== 'function')
+        if (!bullet || !bullet.active)
         {
             return;
         }
 
-        if (!bullet.active || !enemy.active)
+        const enemy = (objectA === bullet ? objectB : objectA) as Enemy;
+
+        if (!enemy.active)
         {
             return;
         }
 
         bullet.deactivate();
         enemy.takeDamage(bullet.damage);
-
-        if (!enemy.active)
-        {
-            this.scheduleDummyRespawn();
-        }
     };
 
-    /** Shield pecah saat pemain menabrak musuh; tanpa shield, tabrakan diabaikan. */
-    private readonly handlePlayerTouchesEnemy: Phaser.Types.Physics.Arcade.ArcadePhysicsCallback = () =>
+    /**
+     * Tabrakan badan: musuh selalu hancur. Player hanya kehilangan nyawa
+     * jika tidak sedang kebal, memakai shield, atau dash. Shield pecah lebih dulu.
+     */
+    private readonly handlePlayerTouchesEnemy: Phaser.Types.Physics.Arcade.ArcadePhysicsCallback = (_playerObject, enemyObject) =>
     {
+        const player = this.player;
+        const enemy = enemyObject as Enemy;
+
+        if (!player || !player.active || !enemy.active)
+        {
+            return;
+        }
+
+        // Semua musuh yang menabrak tetap hancur, tetapi konsekuensinya
+        // dibatasi satu kali per frame agar tumpukan Grunt tidak menghabiskan nyawa.
+        enemy.die();
+
+        const frame = this.game.loop.frame;
+
+        if (this.lastEnemyContactFrame === frame)
+        {
+            return;
+        }
+
+        this.lastEnemyContactFrame = frame;
+
         if (this.effects?.isActive(EffectType.Shield))
         {
             this.effects.stop(EffectType.Shield);
+            return;
         }
+
+        if (player.isDamageImmune() || player.isDashing())
+        {
+            return;
+        }
+
+        this.damagePlayer();
     };
 
     /** Reaksi saat peluru musuh mengenai pemain. */
     private readonly handlePlayerHit = (): void =>
     {
-        const player = this.player;
-
-        if (!player || this.gameOverPending)
-        {
-            return;
-        }
-
-        const died = player.applyHit();
-
-        if (died)
-        {
-            this.gameOverPending = true;
-
-            this.events.emit(GameEvents.PLAYER_DIED);
-            this.events.emit(GameEvents.GAME_OVER);
-
-            this.time.delayedCall(WorldConfig.gameOverDelayMs, () =>
-            {
-                this.scene.start('GameOver');
-            });
-
-            return;
-        }
-
-        this.events.emit(GameEvents.PLAYER_DAMAGED, player.lives);
-        this.shockwave?.start(player.x, player.y);
-    };
-
-    /** Setelah bom, dummy yang mati dijadwalkan hidup lagi untuk pengujian. */
-    private readonly handleBombUsed = (): void =>
-    {
-        if (this.dummy && !this.dummy.active)
-        {
-            this.scheduleDummyRespawn();
-        }
+        this.damagePlayer();
     };
 
     /** Mendaftarkan scene Game. */
@@ -150,7 +159,7 @@ export class Game extends Phaser.Scene
         super('Game');
     }
 
-    /** Merakit pemain, pool peluru, musuh dummy, efek, power-up, dan alat debug. */
+    /** Merakit pemain, pool peluru, pool Grunt, efek, power-up, dan alat debug. */
     create (): void
     {
         const playArea = ScreenConfig.playArea;
@@ -186,14 +195,16 @@ export class Game extends Phaser.Scene
             bodyRadius: PlayerConfig.bodyRadius
         }, this.inputManager, this.weapon);
 
-        this.dummy = new DummyEnemy(this, spawn.enemyX, spawn.enemyY, AssetKeys.Enemy);
-        this.enemies = this.add.group();
-        this.enemies.add(this.dummy);
-
         this.enemyBullets = new EnemyBulletManager(this, this.player, () =>
         {
             this.events.emit(GameEvents.PLAYER_HIT);
         });
+
+        // Pool harus dibuat sebelum PlayerLaser karena laser meng-cache daftar musuh.
+        const grunts = new GruntPool(this, this.enemyBullets);
+
+        this.grunts = grunts;
+        this.enemies = grunts.poolGroup;
 
         this.laser = new PlayerLaser(this, this.player, this.enemies);
 
@@ -232,8 +243,9 @@ export class Game extends Phaser.Scene
         this.events.off(GameEvents.PLAYER_HIT, this.handlePlayerHit);
         this.events.on(GameEvents.PLAYER_HIT, this.handlePlayerHit);
 
-        this.events.off(GameEvents.BOMB_USED, this.handleBombUsed);
-        this.events.on(GameEvents.BOMB_USED, this.handleBombUsed);
+        const resetKey = EnemyTestConfig.enabled && EnemyTestConfig.resetKeyEnabled
+            ? EnemyTestConfig.resetKey
+            : undefined;
 
         this.overlay = new DebugOverlay();
         this.applyCameraLayout();
@@ -241,14 +253,24 @@ export class Game extends Phaser.Scene
             toggleOverlay: () => this.overlay?.toggle(),
             stress: (count: number) => this.spawnStressBullets(count),
             cycleLanes: () => this.weapon?.cycleLanes(),
-            powerUp: (kind: PowerUpType) => this.powerUps?.apply(kind)
-        });
+            powerUp: (kind: PowerUpType) => this.powerUps?.apply(kind),
+            resetEnemyTest: () =>
+            {
+                this.enemyBullets?.clearAll();
+                this.gruntTestRunner?.restart();
+            }
+        }, { resetKey });
+
+        this.gruntTestRunner = new GruntTestRunner(grunts);
+        this.gruntTestRunner.start();
 
         this.pauseManager = new PauseManager(this);
         this.scene.launch('Hud');
 
+        this.stats.gruntScenario = EnemyTestConfig.enabled ? EnemyTestConfig.scenario : 'off';
         this.playerBulletMax = 0;
         this.gameOverPending = false;
+        this.lastEnemyContactFrame = -1;
 
         this.events.once('shutdown', this.handleShutdown, this);
     }
@@ -300,14 +322,43 @@ export class Game extends Phaser.Scene
         this.shockwave?.stop();
         this.laser?.reset();
 
-        this.respawnEvent?.remove(false);
-        this.respawnEvent = undefined;
-
         this.playerBulletMax = 0;
         this.gameOverPending = false;
+        this.lastEnemyContactFrame = -1;
 
-        this.dummy?.respawn(ScreenConfig.spawn.enemyX, ScreenConfig.spawn.enemyY);
         this.player?.resetForPool(ScreenConfig.spawn.playerX, ScreenConfig.spawn.playerY);
+        this.gruntTestRunner?.start();
+    }
+
+    /** Mengurangi satu nyawa, lalu memicu game over atau efek damage. */
+    private damagePlayer (): void
+    {
+        const player = this.player;
+
+        if (!player || this.gameOverPending)
+        {
+            return;
+        }
+
+        const died = player.applyHit();
+
+        if (died)
+        {
+            this.gameOverPending = true;
+
+            this.events.emit(GameEvents.PLAYER_DIED);
+            this.events.emit(GameEvents.GAME_OVER);
+
+            this.time.delayedCall(WorldConfig.gameOverDelayMs, () =>
+            {
+                this.scene.start('GameOver');
+            });
+
+            return;
+        }
+
+        this.events.emit(GameEvents.PLAYER_DAMAGED, player.lives);
+        this.shockwave?.start(player.x, player.y);
     }
 
     /** Menerapkan efek samping saat sebuah efek durasi mulai. */
@@ -376,6 +427,7 @@ export class Game extends Phaser.Scene
         stats.playerHits = enemyBullets.playerHitCount;
         stats.lanes = weapon.laneCount;
         stats.lives = player.lives;
+        stats.gruntsActive = this.grunts?.activeCount ?? 0;
         stats.invulnerable = player.isInvulnerable();
         stats.shieldActive = player.isShieldActive;
         stats.fireRateActive = this.effects?.isActive(EffectType.FireRate) ?? false;
@@ -396,21 +448,6 @@ export class Game extends Phaser.Scene
 
             this.enemyBullets?.spawn(x, -margin, 0, speed);
         }
-    }
-
-    /** Menghidupkan lagi dummy setelah jeda supaya pengujian bisa diulang. */
-    private scheduleDummyRespawn (): void
-    {
-        if (this.respawnEvent)
-        {
-            return;
-        }
-
-        this.respawnEvent = this.time.delayedCall(EnemyConfig.respawnDelayMs, () =>
-        {
-            this.respawnEvent = undefined;
-            this.dummy?.respawn(ScreenConfig.spawn.enemyX, ScreenConfig.spawn.enemyY);
-        });
     }
 
     /** Melepas input, debug, efek, dan listener saat scene berhenti. */
@@ -444,12 +481,12 @@ export class Game extends Phaser.Scene
         this.laser?.destroy();
         this.laser = undefined;
 
-        this.respawnEvent?.remove(false);
-        this.respawnEvent = undefined;
+        this.gruntTestRunner = undefined;
+        this.grunts = undefined;
+        this.enemies = undefined;
 
         this.scale.off('resize', this.applyCameraLayout, this);
 
         this.events.off(GameEvents.PLAYER_HIT, this.handlePlayerHit);
-        this.events.off(GameEvents.BOMB_USED, this.handleBombUsed);
     }
 }

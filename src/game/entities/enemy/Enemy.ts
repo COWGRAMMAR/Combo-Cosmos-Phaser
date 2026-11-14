@@ -4,20 +4,19 @@ import type { EntityConfig } from '../../types/EntityConfig';
 import { BaseEntity } from '../BaseEntity';
 import { EnemyState } from './EnemyState';
 
-/** Entitas musuh statis yang belum memiliki pola serangan. */
+/**
+ * Kelas dasar musuh.
+ * Perilaku diam/tidak terdorong sengaja tidak dipasang di sini supaya
+ * subclass seperti Grunt bisa bergerak dengan velocity.
+ */
 export class Enemy extends BaseEntity
 {
     public entityState: EnemyState = EnemyState.Active;
 
-    /** Membuat body musuh tidak bergerak dan tidak terdorong. */
+    /** Menyiapkan sprite musuh pada layer render musuh. */
     constructor(scene: Phaser.Scene, x: number, y: number, texture: string, config: EntityConfig)
     {
         super(scene, x, y, texture, config);
-
-        const body = this.body as Phaser.Physics.Arcade.Body;
-        body.setImmovable(true);
-        body.moves = false;
-        this.setVelocity(0, 0);
 
         this.setDepth(DepthConfig.enemy);
     }

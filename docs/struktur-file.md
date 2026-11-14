@@ -1,14 +1,14 @@
 # Struktur File — Combo-Cosmos-Phaser
 
-- **Status:** Fase 0 (fondasi class) + InputManager + Fase 1 (bullet foundation) + Fase 2–4 (survival, efek & power-up, dash) + Fase screen/scale/layer/game loop selesai
-- **Tanggal:** 2026-11-06
+- **Status:** Fase 0 (fondasi class) + InputManager + Fase 1 (bullet foundation) + Fase 2–4 (survival, efek & power-up, dash) + Fase screen/scale/layer/game loop selesai + Grunt Tipe 1 (tahap static)
+- **Tanggal:** 2026-11-14
 - **Scope dokumen:** **hanya struktur folder/file**. Rencana class, field, method, dan urutan implementasi ada di `plans/2#-entities-class.md`. Rencana input ada di `plans/3#-input-manager.md`. Rencana screen/scale/layer/game loop ada di `plans/4#-screen-scale-layer-gameloop.md`. Kontrak bullet system ada di `docs/bullet-system.md`.
 
 Dokumen ini adalah **sumber kebenaran struktur file**. Jika isinya berbeda dengan kondisi repo, struktur dianggap belum selesai dikerjakan.
 
 ---
 
-## 1. Struktur Folder Saat Ini (verified 2026-11-06)
+## 1. Struktur Folder Saat Ini (verified 2026-11-14)
 
 ```
 Combo-Cosmos-Phaser/
@@ -39,6 +39,8 @@ Combo-Cosmos-Phaser/
       ├─ config/
       │  ├─ PlayerConfig.ts       # hp, hitbox, nyawa, weapon, shockwave, atk speed, shield, laser, dash, bomb
       │  ├─ EnemyConfig.ts        # hp musuh + bullet (speed/radius/pool/margin/lifetime)
+      │  ├─ GruntConfig.ts        # hp/radius/despawn/pool + parameter senjata Grunt
+      │  ├─ EnemyTestConfig.ts    # skenario tes Grunt, spawn static, reset key opsional
       │  ├─ WorldConfig.ts        # background + flag debug + delay/layout bantu
       │  ├─ ScreenConfig.ts       # sumber kebenaran canvas, play area, panel HUD, spawn
       │  ├─ TimeConfig.ts         # target/batas FPS + delta maksimum
@@ -71,23 +73,31 @@ Combo-Cosmos-Phaser/
       │  │  ├─ PlayerWeapon.ts    # cooldown + jalur tembakan (1–5) + multiplier cooldown
       │  │  └─ PlayerLaser.ts     # laser persisten, damage per interval (bukan pool)
       │  └─ enemy/
-      │     ├─ Enemy.ts
+      │     ├─ Enemy.ts           # base musuh (tanpa asumsi static)
       │     ├─ EnemyState.ts      # string enum
-      │     └─ DummyEnemy.ts      # PLACEHOLDER musuh untuk uji damage
+      │     ├─ DummyEnemy.ts      # PLACEHOLDER musuh diam untuk uji damage
+      │     ├─ Grunt.ts           # musuh Tipe 1: gerak via pattern + tembak + despawn
+      │     └─ patterns/
+      │        ├─ IMovementPattern.ts # kontrak pola gerak musuh
+      │        └─ LinearMovement.ts   # gerak lurus dengan speed + sudut
       ├─ systems/
       │  ├─ InputManager.ts       # implementasi IInputSource di atas KeyboardPlugin
       │  ├─ EnemyBulletManager.ts # satu loop untuk semua peluru musuh (shield-aware)
       │  ├─ EffectManager.ts      # satu timer durasi untuk semua efek (refresh, bukan stack)
       │  ├─ PowerUpManager.ts     # eksekusi efek power-up lane/atk speed/shield/laser/bomb/life
       │  ├─ PauseManager.ts       # pause/resume Game+Hud, auto-pause BLUR/HIDDEN
-      │  └─ DebugTools.ts         # F1–F4 + 1–6, titik masuk sistem debug berikutnya
+      │  ├─ DebugTools.ts         # F1–F4 + 1–6 + reset opsional, titik masuk debug berikutnya
+      │  └─ enemy/
+      │     ├─ GruntPool.ts       # pool prewarm Grunt + group untuk overlap/laser/bom
+      │     └─ GruntTestRunner.ts # skenario tes Grunt tanpa WaveManager
       ├─ ui/
-      │  └─ DebugOverlay.ts       # teks statistik performa, pool, nyawa & status efek
+      │  └─ DebugOverlay.ts       # teks statistik performa, pool, nyawa, efek & skenario Grunt
       ├─ types/
       │  ├─ Team.ts               # enum Team
       │  ├─ EntityConfig.ts       # interface config konstruktor entity
       │  ├─ InputAction.ts        # enum aksi input lintas layer
       │  ├─ EffectType.ts         # enum jenis efek durasi
+      │  ├─ IEnemyBulletSpawner.ts # kontrak spawn peluru musuh untuk entity
       │  └─ IInputSource.ts       # kontrak sumber input (tanpa Phaser)
       └─ utils/
          └─ textures.ts           # generate placeholder texture
@@ -102,10 +112,9 @@ Jangan dianggap ada sampai file-nya benar-benar dibuat.
 ```
 src/game/
 ├─ entities/enemy/patterns/
-│  ├─ IMovementPattern.ts         # kontrak pola gerak musuh
-│  ├─ LinearPattern.ts
 │  └─ HomingPattern.ts
 ├─ systems/
+│  ├─ enemy/ (formation Rain/Wall/Stream menyusul)
 │  ├─ ScoreManager.ts
 │  ├─ ComboManager.ts
 │  ├─ WaveManager.ts

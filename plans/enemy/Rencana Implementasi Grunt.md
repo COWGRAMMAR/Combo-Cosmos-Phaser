@@ -1,6 +1,6 @@
 # Rencana Implementasi Enemy Grunt
 
-- **Status:** draft, belum diimplementasikan
+- **Status:** Fase 1 diimplementasikan, menunggu verifikasi browser
 - **Tanggal:** 2026-11-14
 - **Scope:** Grunt (Tipe 1) end-to-end: spawn, gerak, menembak, ditembak, tabrakan, dan harness tes.
 - **Referensi:** `Ide Enemy.md`, `Placeholder Enemy.md`, `docs/struktur-file.md`, `docs/bullet-system.md`

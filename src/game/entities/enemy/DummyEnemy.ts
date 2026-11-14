@@ -20,6 +20,11 @@ export class DummyEnemy extends Enemy
             moveSpeed: EnemyConfig.moveSpeed,
             bodyRadius: EnemyConfig.bodyRadius
         });
+
+        const body = this.body as Phaser.Physics.Arcade.Body;
+        body.setImmovable(true);
+        body.moves = false;
+        this.setVelocity(0, 0);
     }
 
     /** Menghidupkan lagi dummy di posisi baru untuk pengujian berulang. */

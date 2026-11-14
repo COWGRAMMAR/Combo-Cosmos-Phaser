@@ -8,6 +8,14 @@ export interface DebugActions
     stress: (count: number) => void;
     cycleLanes: () => void;
     powerUp: (kind: PowerUpType) => void;
+    resetEnemyTest: () => void;
+}
+
+/** Opsi tombol debug yang berasal dari config. */
+export interface DebugOptions
+{
+    /** Nama key Phaser untuk reset skenario; undefined membuat tombol tidak didaftarkan. */
+    resetKey?: string;
 }
 
 /** Urutan power-up untuk tombol angka 1 sampai 6. */
@@ -33,9 +41,10 @@ export class DebugTools
     private readonly stress3000Key: Phaser.Input.Keyboard.Key;
     private readonly lanesKey: Phaser.Input.Keyboard.Key;
     private readonly powerUpKeys: Phaser.Input.Keyboard.Key[];
+    private readonly resetKey?: Phaser.Input.Keyboard.Key;
 
     /** Mendaftarkan tombol debug; melempar error kalau keyboard tidak tersedia. */
-    constructor(scene: Phaser.Scene, actions: DebugActions)
+    constructor(scene: Phaser.Scene, actions: DebugActions, options?: DebugOptions)
     {
         const keyboard = scene.input.keyboard;
 
@@ -61,6 +70,7 @@ export class DebugTools
         this.stress3000Key = keyboard.addKey(keyCodes.F3);
         this.lanesKey = keyboard.addKey(keyCodes.F4);
         this.powerUpKeys = numberCodes.map((code) => keyboard.addKey(code));
+        this.resetKey = options?.resetKey ? keyboard.addKey(options.resetKey) : undefined;
     }
 
     /** Memeriksa tombol debug sekali per frame. */
@@ -93,6 +103,11 @@ export class DebugTools
                 this.actions.powerUp(POWER_UP_KEYS[i]);
             }
         }
+
+        if (this.resetKey && Phaser.Input.Keyboard.JustDown(this.resetKey))
+        {
+            this.actions.resetEnemyTest();
+        }
     }
 
     /** Melepas seluruh tombol debug dari keyboard. */
@@ -113,6 +128,11 @@ export class DebugTools
         for (let i = 0; i < this.powerUpKeys.length; i++)
         {
             keyboard.removeKey(this.powerUpKeys[i]);
+        }
+
+        if (this.resetKey)
+        {
+            keyboard.removeKey(this.resetKey);
         }
     }
 }
