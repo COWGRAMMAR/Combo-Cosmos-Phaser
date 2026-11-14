@@ -302,6 +302,7 @@ export class Game extends Phaser.Scene
         const safeDelta = Math.min(delta, TimeConfig.maxDeltaMs);
 
         this.enemyBullets?.update(safeDelta);
+        this.gruntTestRunner?.update(safeDelta);
         this.effects?.update(safeDelta);
         this.shockwave?.update(safeDelta);
         this.laser?.update(safeDelta);

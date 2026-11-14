@@ -11,6 +11,8 @@ export const GruntConfig = {
     moveSpeed: 0,
     /** Batas Y untuk membuang Grunt yang sudah melewati bawah play area. */
     despawnY: 1128,
+    /** Jarak spawn di atas play area; spawn memakai y = -spawnMargin. */
+    spawnMargin: 48,
     poolSize: 96,
     weapon: {
         /**
@@ -19,11 +21,23 @@ export const GruntConfig = {
          */
         aimMode: 'targeted' as GruntAimMode,
         /** Jeda antar tembakan setelah tembakan pertama, dalam milidetik. */
-        fireIntervalMs: 1,
+        fireIntervalMs: 1000,
         /** Jeda sebelum tembakan pertama, dalam milidetik. */
         initialFireDelayMs: 700,
-        bulletSpeed: 220,
+        bulletSpeed: 250,
         /** Jarak muzzle dari pusat Grunt, searah sudut tembak. */
         muzzleOffsetY: 18
+    },
+
+    rain: {
+        /** Batas kiri/kanan posisi X acak saat spawn. */
+        spawnXMin: 48,
+        spawnXMax: 762,
+        /** Jeda dasar antar spawn, dalam milidetik. */
+        intervalMs: 1500,
+        /** Variasi acak jeda spawn, plus-minus dalam milidetik. */
+        jitterMs: 500,
+        moveSpeed: 140,
+        moveAngleDeg: 0
     }
 } as const;

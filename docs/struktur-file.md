@@ -89,7 +89,9 @@ Combo-Cosmos-Phaser/
       │  ├─ DebugTools.ts         # F1–F4 + 1–6 + reset opsional, titik masuk debug berikutnya
       │  └─ enemy/
       │     ├─ GruntPool.ts       # pool prewarm Grunt + group untuk overlap/laser/bom
-      │     └─ GruntTestRunner.ts # skenario tes Grunt tanpa WaveManager
+      │     ├─ GruntTestRunner.ts # skenario tes Grunt tanpa WaveManager
+      │     ├─ IGruntFormation.ts  # kontrak formasi spawn tes
+      │     └─ RainFormation.ts    # formasi hujan: unit muncul berkala, X acak
       ├─ ui/
       │  └─ DebugOverlay.ts       # teks statistik performa, pool, nyawa, efek & skenario Grunt
       ├─ types/
@@ -115,7 +117,7 @@ src/game/
 ├─ entities/enemy/patterns/
 │  └─ HomingPattern.ts
 ├─ systems/
-│  ├─ enemy/ (formation Rain/Wall/Stream menyusul)
+│  ├─ enemy/ (formation Wall/Stream menyusul)
 │  ├─ ScoreManager.ts
 │  ├─ ComboManager.ts
 │  ├─ WaveManager.ts
