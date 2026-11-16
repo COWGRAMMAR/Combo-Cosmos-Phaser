@@ -1,6 +1,6 @@
 # Struktur File — Combo-Cosmos-Phaser
 
-- **Status:** Fase 0 (fondasi class) + InputManager + Fase 1 (bullet foundation) + Fase 2–4 (survival, efek & power-up, dash) + Fase screen/scale/layer/game loop selesai + Grunt Tipe 1 (static, targeted, rain, wall, stream lurus)
+- **Status:** Fase 0 (fondasi class) + InputManager + Fase 1 (bullet foundation) + Fase 2–4 (survival, efek & power-up, dash) + Fase screen/scale/layer/game loop selesai + Grunt Tipe 1 (pola single/wall/stream + rain berbasis pola)
 - **Tanggal:** 2026-11-14
 - **Scope dokumen:** **hanya struktur folder/file**. Rencana class, field, method, dan urutan implementasi ada di `plans/2#-entities-class.md`. Rencana input ada di `plans/3#-input-manager.md`. Rencana screen/scale/layer/game loop ada di `plans/4#-screen-scale-layer-gameloop.md`. Kontrak bullet system ada di `docs/bullet-system.md`.
 
@@ -43,8 +43,8 @@ Combo-Cosmos-Phaser/
       ├─ config/
       │  ├─ PlayerConfig.ts       # hp, hitbox, nyawa, weapon, shockwave, atk speed, shield, laser, dash, bomb
       │  ├─ EnemyConfig.ts        # hp musuh + bullet (speed/radius/pool/margin/lifetime)
-      │  ├─ GruntConfig.ts        # hp/radius/despawn/pool + senjata & parameter Rain/Wall/Stream Grunt
-      │  ├─ EnemyTestConfig.ts    # skenario tes Grunt (static/rain/wall/stream), batch Rain, reset key opsional
+      │  ├─ GruntConfig.ts        # hp/radius/despawn/pool + senjata & parameter pola Single/Wall/Stream + rain (termasuk spawnX override)
+      │  ├─ EnemyTestConfig.ts    # skenario tes Grunt (single/wall/stream/rain) + reset key opsional
       │  ├─ WorldConfig.ts        # background + flag debug + delay/layout bantu
       │  ├─ ScreenConfig.ts       # sumber kebenaran canvas, play area, panel HUD, spawn
       │  ├─ TimeConfig.ts         # target/batas FPS + delta maksimum
@@ -95,9 +95,10 @@ Combo-Cosmos-Phaser/
       │     ├─ GruntPool.ts       # pool prewarm Grunt + group untuk overlap/laser/bom
       │     ├─ GruntTestRunner.ts # skenario tes Grunt tanpa WaveManager
       │     ├─ IGruntFormation.ts  # kontrak formasi spawn tes
-      │     ├─ RainFormation.ts    # formasi hujan: unit muncul berkala, X acak
-      │     ├─ WallFormation.ts    # formasi dinding: satu baris unit, diulang berkala
-      │     └─ StreamFormation.ts  # formasi kolom: unit muncul berurutan di satu X
+      │     ├─ SingleFormation.ts  # pola dasar: satu unit meluncur ke bawah
+      │     ├─ RainFormation.ts    # rain: mengulang satu jenis pola dasar
+      │     ├─ WallFormation.ts    # pola dasar: satu baris unit, sekali per run
+      │     └─ StreamFormation.ts  # pola dasar: satu kolom, unit muncul berurutan
       ├─ ui/
       │  └─ DebugOverlay.ts       # teks statistik performa, pool, nyawa, efek & skenario Grunt
       ├─ types/

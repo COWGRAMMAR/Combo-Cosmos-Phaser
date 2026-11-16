@@ -1,5 +1,8 @@
 export type GruntAimMode = 'down' | 'targeted';
 
+/** Jenis pola dasar yang bisa diulang oleh RainFormation. */
+export type GruntRainType = 'single' | 'wall' | 'stream';
+
 /**
  * Nilai yang bisa diubah untuk Grunt (Tipe 1).
  * Parameter pola gerak ditambahkan per fase saat polanya benar-benar dipakai.
@@ -29,21 +32,29 @@ export const GruntConfig = {
         muzzleOffsetY: 18
     },
 
-    rain: {
-        /** Batas kiri/kanan posisi X acak saat spawn. */
-        spawnXMin: 48,
-        spawnXMax: 762,
-        /** Jeda dasar antar spawn, dalam milidetik. */
-        intervalMs: 1500,
-        /** Variasi acak jeda spawn, plus-minus dalam milidetik. */
-        jitterMs: 500,
+    single: {
+        /** X spawn unit tunggal; 405 adalah tengah play area. */
+        spawnX: 405,
         moveSpeed: 140,
         moveAngleDeg: 0
     },
 
+    rain: {
+        /** Jenis pola dasar yang diulang; bukan rotasi otomatis. */
+        type: 'wall' as GruntRainType,
+        /** X spawn untuk semua pola saat mode rain; menggantikan X bawaan pola. */
+        spawnX: 450,
+        /** Berapa pola yang dimunculkan sebelum rain selesai. */
+        count: 10,
+        /** Jeda setelah satu pola selesai, sebelum pola berikutnya, dalam milidetik. */
+        intervalMs: 1000,
+        /** Variasi acak jeda, plus-minus dalam milidetik; 0 membuat jeda tetap. */
+        jitterMs: 0
+    },
+
     wall: {
         /** Jumlah Grunt dalam satu baris. */
-        count: 8,
+        count: 3,
         /** Jarak antar pusat Grunt dalam baris. */
         spacing: 84,
         /** X pusat baris; 405 adalah tengah play area. */
@@ -54,7 +65,7 @@ export const GruntConfig = {
 
     stream: {
         /** Jumlah Grunt dalam satu kolom. */
-        count: 20,
+        count: 10,
         /** Jarak vertikal antar Grunt dalam kolom. */
         spacing: 72,
         /** Jeda antar unit dalam satu kolom, dalam milidetik. */

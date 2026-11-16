@@ -1,31 +1,22 @@
 /** Skenario tes Grunt yang bisa dipilih tanpa WaveManager. */
 export type EnemyTestScenario =
-    | 'static'
-    | 'rain'
+    | 'single'
     | 'wall'
-    | 'stream-straight'
-    | 'stream-diagonal';
+    | 'stream'
+    | 'rain';
 
 /**
  * Konfigurasi harness tes enemy.
  * Ubah `scenario` lalu tekan tombol reset untuk menjalankan skenario dari awal.
- * Skenario 'static', 'rain', 'wall', dan 'stream-straight' sudah tersedia;
- * 'stream-diagonal' menyusul.
+ * Skenario single/wall/stream memunculkan satu pola dasar; rain mengulang
+ * jenis pola yang dipilih di `GruntConfig.rain`.
  */
 export const EnemyTestConfig = {
     /** Matikan untuk menonaktifkan spawn tes dan tombol reset. */
     enabled: true,
-    scenario: 'stream-straight' as EnemyTestScenario,
+    scenario: 'rain' as EnemyTestScenario,
     /** Nama key Phaser untuk memunculkan ulang skenario. */
     resetKey: 'R',
     /** False membuat skenario tetap berjalan sekali, tetapi tombol reset tidak didaftarkan. */
-    resetKeyEnabled: true,
-    staticSpawn: {
-        x: 405,
-        y: 180,
-        speed: 0,
-        angleDeg: 0
-    },
-    /** Jumlah unit per batch tes Rain. */
-    rainCount: 100
+    resetKeyEnabled: true
 } as const;

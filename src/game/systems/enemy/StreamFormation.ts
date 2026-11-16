@@ -25,15 +25,17 @@ export class StreamFormation implements IGruntFormation
     private readonly pool: GruntPool;
     private readonly config: IStreamConfig;
     private readonly movement: LinearMovement;
+    private readonly spawnX: number;
 
     private spawned: number = 0;
     private spawnRemainingMs: number = 0;
 
-    /** Menyiapkan formasi; unit baru muncul saat start()/update(). */
-    constructor(pool: GruntPool, config: IStreamConfig)
+    /** Menyiapkan formasi; `spawnX` bisa ditimpa dari luar (dipakai RainFormation). */
+    constructor(pool: GruntPool, config: IStreamConfig, spawnX: number = config.spawnX)
     {
         this.pool = pool;
         this.config = config;
+        this.spawnX = spawnX;
         this.movement = new LinearMovement(config.moveSpeed, config.moveAngleDeg);
     }
 
@@ -78,6 +80,6 @@ export class StreamFormation implements IGruntFormation
     {
         const y = -GruntConfig.spawnMargin - this.spawned * this.config.spacing;
 
-        this.pool.spawn(this.config.spawnX, y, this.movement);
+        this.pool.spawn(this.spawnX, y, this.movement);
     }
 }

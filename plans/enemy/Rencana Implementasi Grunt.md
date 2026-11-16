@@ -1,6 +1,6 @@
 # Rencana Implementasi Enemy Grunt
 
-- **Status:** Fase 1–5 diimplementasikan, menunggu verifikasi browser
+- **Status:** Fase 1–5 + rain berbasis pola dasar diimplementasikan, menunggu verifikasi browser
 - **Tanggal:** 2026-11-14
 - **Scope:** Grunt (Tipe 1) end-to-end: spawn, gerak, menembak, ditembak, tabrakan, dan harness tes.
 - **Referensi:** `Ide Enemy.md`, `Placeholder Enemy.md`, `docs/struktur-file.md`, `docs/bullet-system.md`
@@ -10,7 +10,7 @@
 ## 1. Keputusan yang Sudah Dikunci
 
 1. Milestone hanya **Grunt**. Tipe 2 dan Boss ditunda.
-2. Urutan fase: **static → targeted shot → Rain → Horizontal Wall → Vertical Line lurus → Vertical Line diagonal**.
+2. Urutan fase: **static → targeted shot → Rain → Horizontal Wall → Vertical Line lurus → Rain berbasis pola**. Vertical Line diagonal dibatalkan.
 3. Belum ada WaveManager. Pengujian memakai **config skenario + reset key**, spawn **sekali per run tes**.
 4. Peluru awal lurus ke bawah; targeted ditambahkan setelah fase static lewat config `aimMode`.
 5. Peluru non-targeted mengikuti sudut gerak Grunt.
@@ -70,9 +70,10 @@ Game
 | `src/game/entities/enemy/patterns/LinearMovement.ts` | Gerak linear dengan speed + sudut |
 | `src/game/systems/enemy/GruntPool.ts` | Pool prewarm + group untuk overlap/laser |
 | `src/game/systems/enemy/IGruntFormation.ts` | Kontrak formation tes |
-| `src/game/systems/enemy/RainFormation.ts` | Spawn Rain |
+| `src/game/systems/enemy/SingleFormation.ts` | Pola dasar satu unit |
+| `src/game/systems/enemy/RainFormation.ts` | Mengulang satu jenis pola dasar (rain) |
 | `src/game/systems/enemy/WallFormation.ts` | Spawn Horizontal Wall |
-| `src/game/systems/enemy/StreamFormation.ts` | Spawn Vertical Line lurus/diagonal |
+| `src/game/systems/enemy/StreamFormation.ts` | Spawn Vertical Line lurus |
 | `src/game/systems/enemy/GruntTestRunner.ts` | Memilih dan menjalankan skenario tes |
 
 ### 3.3 File yang diubah
@@ -93,11 +94,11 @@ Game
 
 ### 4.1 `GruntConfig.ts`
 
-Semua nilai yang bisa di-tune ada di sini. Gunakan union type agar `aimMode` dan arah diagonal bisa diganti tanpa error perbandingan TypeScript.
+Semua nilai yang bisa di-tune ada di sini. Gunakan union type agar `aimMode` dan `rain.type` bisa diganti tanpa error perbandingan TypeScript.
 
 ```ts
 export type GruntAimMode = 'down' | 'targeted';
-export type DiagonalDirection = 'ltr' | 'rtl';
+export type GruntRainType = 'single' | 'wall' | 'stream';
 
 export const GruntConfig = {
     maxHp: 30,
@@ -114,13 +115,18 @@ export const GruntConfig = {
         muzzleOffsetY: 18
     },
 
-    rain: {
-        spawnXMin: 48,
-        spawnXMax: 762,
-        intervalMs: 350,
-        jitterMs: 150,
+    single: {
+        spawnX: 405,
         moveSpeed: 140,
         moveAngleDeg: 0
+    },
+
+    rain: {
+        type: 'single' as GruntRainType,
+        spawnX: 405,
+        count: 10,
+        intervalMs: 1000,
+        jitterMs: 0
     },
 
     wall: {
@@ -138,16 +144,6 @@ export const GruntConfig = {
         spawnX: 405,
         moveSpeed: 150,
         moveAngleDeg: 0
-    },
-
-    streamDiagonal: {
-        count: 6,
-        spacing: 72,
-        streamDelayMs: 200,
-        spawnX: 48,
-        moveSpeed: 150,
-        moveAngleDeg: 30,
-        direction: 'ltr' as DiagonalDirection
     }
 } as const;
 ```
@@ -157,28 +153,24 @@ Catatan:
 - `spawnMargin` dipakai untuk spawn di atas layar; `despawnY` untuk membuang Grunt yang keluar bawah.
 - `bodyRadius: 20` disamakan dengan tekstur lingkaran placeholder saat ini.
 - `moveAngleDeg` adalah sudut dari vertikal; `0` berarti lurus ke bawah.
-- `direction: 'ltr'` berarti kiri-atas ke kanan-bawah; `'rtl'` sebaliknya.
+- `rain.type` memilih pola dasar yang diulang; `count` jumlah pola per run.
+- `rain.spawnX` menggantikan X bawaan pola saat mode rain: X unit (single), pusat baris (wall), dan X kolom (stream).
 - Nilai damage player tidak ditambahkan ke config karena `Player.applyHit()` selalu mengurangi 1 nyawa.
 
 ### 4.2 `EnemyTestConfig.ts`
 
 ```ts
 export type EnemyTestScenario =
-    | 'static'
-    | 'rain'
+    | 'single'
     | 'wall'
-    | 'stream-straight'
-    | 'stream-diagonal';
+    | 'stream'
+    | 'rain';
 
 export const EnemyTestConfig = {
     enabled: true,
-    scenario: 'static' as EnemyTestScenario,
+    scenario: 'rain' as EnemyTestScenario,
     resetKey: 'R',
-    resetKeyEnabled: true,
-    staticSpawn: { x: 405, y: 180 },
-
-    // Khusus tes, bukan parameter wave produksi:
-    rainCount: 12
+    resetKeyEnabled: true
 } as const;
 ```
 
@@ -187,7 +179,8 @@ Perilaku:
 - `enabled: false` → tidak ada spawn tes dan reset key tidak didaftarkan.
 - `resetKeyEnabled: false` → skenario tetap berjalan sekali saat mulai, tetapi tombol reset tidak aktif.
 - `resetKey` berupa string key Phaser, misalnya `'R'`, `'F6'`, atau `'T'`.
-- `rainCount` adalah nilai batch tes karena belum ada WaveManager; Wall dan Stream muncul sekali per run.
+- Skenario `single`/`wall`/`stream` memunculkan satu pola dasar sekali per run.
+- Skenario `rain` mengulang jenis pola dari `GruntConfig.rain` sebanyak `rain.count`.
 
 ---
 
@@ -211,7 +204,7 @@ Perilaku:
 - `aimMode: 'targeted'`:
   - Arah dihitung dari muzzle ke posisi player saat peluru ditembakkan.
   - Tidak homing; peluru bergerak lurus setelah diluncurkan.
-- Muzzle default di `x`, `y + muzzleOffsetY`; untuk diagonal, offset diterapkan sepanjang arah tembak.
+- Muzzle default di `x`, `y + muzzleOffsetY`; offset diterapkan sepanjang arah tembak.
 - Peluru tetap memakai `EnemyBulletManager.spawn()`. Kalau pool penuh, spawn mengembalikan `null` dan Grunt tidak melakukan apa-apa.
 
 ### 5.3 Ditembak dan mati
@@ -263,7 +256,7 @@ Perilaku:
    - Simpan array cache dan `Group`.
    - Sediakan `spawn()`, `reset()`, `activeCount`, dan `group`.
 7. Tambah `GruntTestRunner`:
-   - Skenario `static`: spawn satu Grunt di `EnemyTestConfig.staticSpawn`.
+   - Skenario `static`: spawn satu Grunt di `EnemyTestConfig.staticSpawn` (kemudian diganti skenario `single` pada revisi Fase 6).
    - `start()` dipanggil sekali dari `Game.create()`.
 8. Wiring `Game`:
    - Buat `GruntPool` setelah `EnemyBulletManager` dan `Player`, sebelum `PlayerLaser`.
@@ -312,6 +305,8 @@ Perilaku:
 - [ ] Player yang berpindah posisi setelah peluru diluncurkan tidak mengubah arah peluru.
 
 ### Fase 3 — Rain
+
+**Catatan revisi:** implementasi di bawah adalah rain lama (unit acak). Pada Fase 6, rain diganti menjadi pengulang pola dasar, sehingga `rainCount`, `spawnXMin`, dan `spawnXMax` dihapus.
 
 **Tujuan:** Rain spawn berulang dengan posisi X acak dan parameter yang bisa diubah dari config.
 
@@ -368,7 +363,7 @@ Perilaku:
    - Unit ke-`i` spawn di `y = -spawnMargin - i * spacing`.
    - Jeda antar unit `streamDelayMs`.
 2. Kolom hanya muncul sekali; pengulangan diserahkan ke WaveManager saat sudah ada.
-3. `GruntTestRunner` memilih `StreamFormation` saat `scenario: 'stream-straight'`.
+3. `GruntTestRunner` memilih `StreamFormation` saat `scenario: 'stream'`.
 
 **Kriteria selesai:**
 
@@ -378,27 +373,31 @@ Perilaku:
 - [x] Kolom hanya muncul sekali per run.
 - [x] Peluru mengikuti sudut gerak (default ke bawah).
 
-### Fase 6 — Vertical Line Diagonal
+### Fase 6 — Rain Berbasis Pola
 
-**Tujuan:** Stream yang sama bisa bergerak diagonal dengan arah dan sudut yang bisa diatur.
+**Tujuan:** Tiga pola dasar (single, wall, stream) dipakai ulang oleh rain; rain memilih satu jenis pola lewat config dan mengulanginya sejumlah `rain.count`.
 
 **Langkah:**
 
-1. Perluas `StreamFormation`:
-   - `moveAngleDeg` 0–80.
-   - `direction: 'ltr' | 'rtl'`.
-   - `spawnX` menentukan titik awal; untuk `ltr` biasanya 48, untuk `rtl` 762.
-   - Arah velocity: `ltr` = sudut positif, `rtl` = sudut negatif.
-2. Peluru mengikuti `angleRad` movement.
-3. `GruntTestRunner` memilih `StreamFormation` saat `scenario: 'stream-diagonal'`.
+1. Tambah `SingleFormation` (satu Grunt di `single.spawnX`, meluncur ke bawah).
+2. `WallFormation` dan `StreamFormation` tetap muncul sekali saat dipakai sebagai skenario sendiri.
+3. Tulis ulang `RainFormation` menjadi scheduler:
+   - Pilih jenis pola dari `GruntConfig.rain.type` (`single`/`wall`/`stream`).
+   - Gunakan `GruntConfig.rain.spawnX` sebagai X pola, menggantikan X bawaan pola.
+   - Munculkan pola satu per satu sampai `rain.count`.
+   - Pola berikutnya baru dimulai setelah pola sebelumnya selesai, dengan jeda `intervalMs ± jitterMs`.
+4. `GruntTestRunner` memilih `SingleFormation`/`WallFormation`/`StreamFormation`/`RainFormation` sesuai skenario.
+5. Hapus skenario `static`, `stream-straight`, dan `stream-diagonal` beserta config yang tidak terpakai.
 
 **Kriteria selesai:**
 
-- [ ] Mengubah `moveAngleDeg` mengubah kemiringan gerak.
-- [ ] `ltr` dan `rtl` menghasilkan arah yang berlawanan.
-- [ ] Peluru keluar sejajar dengan arah gerak.
-- [ ] Grunt despawn setelah melewati batas bawah atau keluar sisi layar.
-- [ ] Tidak ada error saat sudut 0 atau 80.
+- [ ] Skenario `single`, `wall`, `stream` memunculkan tepat satu pola.
+- [ ] `rain` dengan `type: 'single'` memunculkan `count` unit satu per satu.
+- [ ] `rain` dengan `type: 'wall'` memunculkan `count` baris berurutan.
+- [ ] `rain` dengan `type: 'stream'` memunculkan `count` kolom berurutan.
+- [ ] Rain berhenti setelah `count` pola; tidak ada spawn tambahan.
+- [ ] Mengubah `rain.spawnX` memindahkan seluruh pola rain ke X tersebut.
+- [ ] `R` mengulang rangkaian dari awal.
 
 ### Fase 7 — Pembersihan dan Dokumentasi
 

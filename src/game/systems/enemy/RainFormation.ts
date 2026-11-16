@@ -1,74 +1,119 @@
 import * as Phaser from 'phaser';
-import { EnemyTestConfig } from '../../config/EnemyTestConfig';
 import { GruntConfig } from '../../config/GruntConfig';
-import { LinearMovement } from '../../entities/enemy/patterns/LinearMovement';
 import { GruntPool } from './GruntPool';
 import type { IGruntFormation } from './IGruntFormation';
+import { SingleFormation } from './SingleFormation';
+import { StreamFormation } from './StreamFormation';
+import { WallFormation } from './WallFormation';
 
 /**
- * Formasi hujan Grunt: sejumlah unit muncul satu per satu dengan X acak.
- * Semua unit memakai gerak lurus yang sama, jadi satu instance LinearMovement
- * dipakai bersama (instance ini tidak menyimpan state per unit).
+ * Formasi hujan pola: memunculkan satu jenis pola dasar (single/wall/stream)
+ * berulang sebanyak `rain.count`, dengan jeda setelah tiap pola selesai.
+ * Jenis pola dipilih lewat config, bukan rotasi otomatis.
+ * Pola berikutnya baru dimulai setelah pola sebelumnya selesai.
  */
 export class RainFormation implements IGruntFormation
 {
     private readonly pool: GruntPool;
-    private readonly movement: LinearMovement;
 
     private remaining: number = 0;
-    private spawnRemainingMs: number = 0;
+    private delayRemainingMs: number = 0;
+    private active?: IGruntFormation;
 
-    /** Menyiapkan formasi; spawn baru terjadi saat start()/update(). */
+    /** Menyiapkan rangkaian pola; pola baru muncul saat start()/update(). */
     constructor(pool: GruntPool)
     {
         this.pool = pool;
-        this.movement = new LinearMovement(GruntConfig.rain.moveSpeed, GruntConfig.rain.moveAngleDeg);
     }
 
-    /** True kalau seluruh batch sudah dimunculkan. */
+    /** True kalau semua pola sudah dimunculkan dan pola terakhir selesai. */
     public get finished(): boolean
     {
-        return this.remaining <= 0;
+        return this.remaining <= 0 && !this.active;
     }
 
-    /** Memulai batch baru dan langsung memunculkan unit pertama. */
+    /** Memulai rangkaian pola dan langsung memunculkan pola pertama. */
     public start(): void
     {
-        this.remaining = EnemyTestConfig.rainCount;
-        this.spawnRemainingMs = 0;
+        this.remaining = GruntConfig.rain.count;
+        this.delayRemainingMs = 0;
+        this.active = undefined;
 
         this.update(0);
     }
 
-    /** Menghitung mundur jeda spawn; tidak mengalokasikan objek per frame. */
+    /** Menjalankan pola aktif, lalu menghitung jeda sebelum pola berikutnya. */
     public update(delta: number): void
     {
+        if (this.active)
+        {
+            this.active.update(delta);
+
+            if (!this.active.finished)
+            {
+                return;
+            }
+
+            this.active = undefined;
+            this.delayRemainingMs = this.nextDelayMs();
+            return;
+        }
+
         if (this.remaining <= 0)
         {
             return;
         }
 
-        this.spawnRemainingMs -= delta;
+        this.delayRemainingMs -= delta;
 
-        if (this.spawnRemainingMs > 0)
+        if (this.delayRemainingMs > 0)
         {
             return;
         }
 
-        this.spawnOne();
+        this.startNextPattern();
+    }
+
+    /** Memunculkan pola berikutnya sesuai jenis yang dipilih di config. */
+    private startNextPattern(): void
+    {
         this.remaining -= 1;
 
+        const pattern = this.createPattern();
+
+        this.active = pattern;
+        pattern.start();
+
+        // Pola instan (single/wall) langsung selesai; jeda berikutnya dimulai sekarang.
+        if (pattern.finished)
+        {
+            this.active = undefined;
+            this.delayRemainingMs = this.nextDelayMs();
+        }
+    }
+
+    /** Membuat pola dasar baru sesuai `rain.type`, dengan X dari config rain. */
+    private createPattern(): IGruntFormation
+    {
+        const spawnX = GruntConfig.rain.spawnX;
+
+        switch (GruntConfig.rain.type)
+        {
+            case 'wall':
+                return new WallFormation(this.pool, spawnX);
+            case 'stream':
+                return new StreamFormation(this.pool, GruntConfig.stream, spawnX);
+            default:
+                return new SingleFormation(this.pool, spawnX);
+        }
+    }
+
+    /** Jeda setelah satu pola selesai, dengan variasi acak opsional. */
+    private nextDelayMs(): number
+    {
         const jitterMs = GruntConfig.rain.jitterMs;
         const intervalMs = GruntConfig.rain.intervalMs + Phaser.Math.Between(-jitterMs, jitterMs);
 
-        this.spawnRemainingMs = Math.max(0, intervalMs);
-    }
-
-    /** Memunculkan satu Grunt di X acak, dari atas play area. */
-    private spawnOne(): void
-    {
-        const x = Phaser.Math.FloatBetween(GruntConfig.rain.spawnXMin, GruntConfig.rain.spawnXMax);
-
-        this.pool.spawn(x, -GruntConfig.spawnMargin, this.movement);
+        return Math.max(0, intervalMs);
     }
 }

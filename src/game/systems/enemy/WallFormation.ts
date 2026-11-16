@@ -12,13 +12,15 @@ export class WallFormation implements IGruntFormation
 {
     private readonly pool: GruntPool;
     private readonly movement: LinearMovement;
+    private readonly centerX: number;
 
     private spawned: boolean = false;
 
-    /** Menyiapkan formasi; baris baru muncul saat start(). */
-    constructor(pool: GruntPool)
+    /** Menyiapkan formasi; `centerX` bisa ditimpa dari luar (dipakai RainFormation). */
+    constructor(pool: GruntPool, centerX: number = GruntConfig.wall.centerX)
     {
         this.pool = pool;
+        this.centerX = centerX;
         this.movement = new LinearMovement(GruntConfig.wall.moveSpeed, GruntConfig.wall.moveAngleDeg);
     }
 
@@ -40,12 +42,12 @@ export class WallFormation implements IGruntFormation
     /** Baris tunggal tidak punya spawn lanjutan, jadi tidak ada yang dihitung per frame. */
     public update(_delta: number): void {}
 
-    /** Memunculkan satu baris Grunt yang terpusat di `wall.centerX`. */
+    /** Memunculkan satu baris Grunt yang terpusat di `centerX`. */
     private spawnRow(): void
     {
         const count = GruntConfig.wall.count;
         const spacing = GruntConfig.wall.spacing;
-        const startX = GruntConfig.wall.centerX - ((count - 1) * spacing) / 2;
+        const startX = this.centerX - ((count - 1) * spacing) / 2;
         const y = -GruntConfig.spawnMargin;
 
         for (let i = 0; i < count; i++)

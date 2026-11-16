@@ -1,16 +1,16 @@
 import { EnemyTestConfig } from '../../config/EnemyTestConfig';
 import { GruntConfig } from '../../config/GruntConfig';
-import { LinearMovement } from '../../entities/enemy/patterns/LinearMovement';
 import { GruntPool } from './GruntPool';
 import type { IGruntFormation } from './IGruntFormation';
 import { RainFormation } from './RainFormation';
+import { SingleFormation } from './SingleFormation';
 import { StreamFormation } from './StreamFormation';
 import { WallFormation } from './WallFormation';
 
 /**
  * Menjalankan satu skenario tes Grunt tanpa WaveManager.
  * Skenario dimulai sekali per start(); tombol reset memanggil restart().
- * Skenario Stream diagonal ditambahkan pada fase implementasi berikutnya.
+ * Skenario single/wall/stream memunculkan pola sekali, rain mengulanginya.
  */
 export class GruntTestRunner
 {
@@ -36,17 +36,17 @@ export class GruntTestRunner
 
         switch (EnemyTestConfig.scenario)
         {
-            case 'static':
-                this.spawnStatic();
-                break;
-            case 'rain':
-                this.startFormation(new RainFormation(this.pool));
+            case 'single':
+                this.startFormation(new SingleFormation(this.pool));
                 break;
             case 'wall':
                 this.startFormation(new WallFormation(this.pool));
                 break;
-            case 'stream-straight':
+            case 'stream':
                 this.startFormation(new StreamFormation(this.pool, GruntConfig.stream));
+                break;
+            case 'rain':
+                this.startFormation(new RainFormation(this.pool));
                 break;
             default:
                 break;
@@ -75,17 +75,5 @@ export class GruntTestRunner
     {
         this.formation = formation;
         formation.start();
-    }
-
-    /** Satu Grunt diam di atas tengah play area. */
-    private spawnStatic(): void
-    {
-        const spawn = EnemyTestConfig.staticSpawn;
-
-        this.pool.spawn(
-            spawn.x,
-            spawn.y,
-            new LinearMovement(spawn.speed, spawn.angleDeg)
-        );
     }
 }
