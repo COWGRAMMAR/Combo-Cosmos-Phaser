@@ -1,6 +1,6 @@
 # Rencana Implementasi Enemy Grunt
 
-- **Status:** Fase 1–4 diimplementasikan, menunggu verifikasi browser
+- **Status:** Fase 1–5 diimplementasikan, menunggu verifikasi browser
 - **Tanggal:** 2026-11-14
 - **Scope:** Grunt (Tipe 1) end-to-end: spawn, gerak, menembak, ditembak, tabrakan, dan harness tes.
 - **Referensi:** `Ide Enemy.md`, `Placeholder Enemy.md`, `docs/struktur-file.md`, `docs/bullet-system.md`
@@ -379,11 +379,11 @@ Perilaku:
 
 **Kriteria selesai:**
 
-- [ ] Unit membentuk satu kolom vertikal.
-- [ ] Jarak vertikal sesuai `spacing`.
-- [ ] Urutan kemunculan sesuai `streamDelayMs`.
-- [ ] Formasi berulang sesuai `formationRepeat` dan interval.
-- [ ] Peluru mengikuti sudut gerak (default ke bawah).
+- [x] Unit membentuk satu kolom vertikal.
+- [x] Jarak vertikal sesuai `spacing`.
+- [x] Urutan kemunculan sesuai `streamDelayMs`.
+- [x] Formasi berulang sesuai `formationRepeat` dan interval.
+- [x] Peluru mengikuti sudut gerak (default ke bawah).
 
 ### Fase 6 — Vertical Line Diagonal
 

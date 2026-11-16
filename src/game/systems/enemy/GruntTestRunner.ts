@@ -1,14 +1,16 @@
 import { EnemyTestConfig } from '../../config/EnemyTestConfig';
+import { GruntConfig } from '../../config/GruntConfig';
 import { LinearMovement } from '../../entities/enemy/patterns/LinearMovement';
 import { GruntPool } from './GruntPool';
 import type { IGruntFormation } from './IGruntFormation';
 import { RainFormation } from './RainFormation';
+import { StreamFormation } from './StreamFormation';
 import { WallFormation } from './WallFormation';
 
 /**
  * Menjalankan satu skenario tes Grunt tanpa WaveManager.
  * Skenario dimulai sekali per start(); tombol reset memanggil restart().
- * Skenario Stream ditambahkan pada fase implementasi berikutnya.
+ * Skenario Stream diagonal ditambahkan pada fase implementasi berikutnya.
  */
 export class GruntTestRunner
 {
@@ -42,6 +44,9 @@ export class GruntTestRunner
                 break;
             case 'wall':
                 this.startFormation(new WallFormation(this.pool));
+                break;
+            case 'stream-straight':
+                this.startFormation(new StreamFormation(this.pool, GruntConfig.stream));
                 break;
             default:
                 break;

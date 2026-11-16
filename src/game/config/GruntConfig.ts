@@ -52,5 +52,20 @@ export const GruntConfig = {
         formationIntervalMs: 2000,
         moveSpeed: 120,
         moveAngleDeg: 0
+    },
+
+    stream: {
+        /** Jumlah Grunt dalam satu kolom. */
+        count: 20,
+        /** Jarak vertikal antar Grunt dalam kolom. */
+        spacing: 72,
+        /** Jeda antar unit dalam satu kolom, dalam milidetik. */
+        streamDelayMs: 200,
+        /** X kolom; 405 adalah tengah play area. */
+        spawnX: 405,
+        /** Jeda antar kolom, dalam milidetik. */
+        formationIntervalMs: 2000,
+        moveSpeed: 150,
+        moveAngleDeg: 0
     }
 } as const;
