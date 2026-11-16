@@ -1,6 +1,6 @@
 # Struktur File — Combo-Cosmos-Phaser
 
-- **Status:** Fase 0 (fondasi class) + InputManager + Fase 1 (bullet foundation) + Fase 2–4 (survival, efek & power-up, dash) + Fase screen/scale/layer/game loop selesai + Grunt Tipe 1 (static, targeted, rain)
+- **Status:** Fase 0 (fondasi class) + InputManager + Fase 1 (bullet foundation) + Fase 2–4 (survival, efek & power-up, dash) + Fase screen/scale/layer/game loop selesai + Grunt Tipe 1 (static, targeted, rain, wall)
 - **Tanggal:** 2026-11-14
 - **Scope dokumen:** **hanya struktur folder/file**. Rencana class, field, method, dan urutan implementasi ada di `plans/2#-entities-class.md`. Rencana input ada di `plans/3#-input-manager.md`. Rencana screen/scale/layer/game loop ada di `plans/4#-screen-scale-layer-gameloop.md`. Kontrak bullet system ada di `docs/bullet-system.md`.
 
@@ -43,8 +43,8 @@ Combo-Cosmos-Phaser/
       ├─ config/
       │  ├─ PlayerConfig.ts       # hp, hitbox, nyawa, weapon, shockwave, atk speed, shield, laser, dash, bomb
       │  ├─ EnemyConfig.ts        # hp musuh + bullet (speed/radius/pool/margin/lifetime)
-      │  ├─ GruntConfig.ts        # hp/radius/despawn/pool + senjata & parameter Rain Grunt
-      │  ├─ EnemyTestConfig.ts    # skenario tes Grunt, spawn static, batch Rain, reset key opsional
+      │  ├─ GruntConfig.ts        # hp/radius/despawn/pool + senjata & parameter Rain/Wall Grunt
+      │  ├─ EnemyTestConfig.ts    # skenario tes Grunt (static/rain/wall), batch Rain, reset key opsional
       │  ├─ WorldConfig.ts        # background + flag debug + delay/layout bantu
       │  ├─ ScreenConfig.ts       # sumber kebenaran canvas, play area, panel HUD, spawn
       │  ├─ TimeConfig.ts         # target/batas FPS + delta maksimum
@@ -95,7 +95,8 @@ Combo-Cosmos-Phaser/
       │     ├─ GruntPool.ts       # pool prewarm Grunt + group untuk overlap/laser/bom
       │     ├─ GruntTestRunner.ts # skenario tes Grunt tanpa WaveManager
       │     ├─ IGruntFormation.ts  # kontrak formasi spawn tes
-      │     └─ RainFormation.ts    # formasi hujan: unit muncul berkala, X acak
+      │     ├─ RainFormation.ts    # formasi hujan: unit muncul berkala, X acak
+      │     └─ WallFormation.ts    # formasi dinding: satu baris unit, diulang berkala
       ├─ ui/
       │  └─ DebugOverlay.ts       # teks statistik performa, pool, nyawa, efek & skenario Grunt
       ├─ types/
@@ -121,7 +122,7 @@ src/game/
 ├─ entities/enemy/patterns/
 │  └─ HomingPattern.ts
 ├─ systems/
-│  ├─ enemy/ (formation Wall/Stream menyusul)
+│  ├─ enemy/ (formation Stream menyusul)
 │  ├─ ScoreManager.ts
 │  ├─ ComboManager.ts
 │  ├─ WaveManager.ts

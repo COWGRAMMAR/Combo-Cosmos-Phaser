@@ -19,7 +19,7 @@ export const GruntConfig = {
          * Arah tembakan: 'down' mengikuti sudut gerak Grunt,
          * 'targeted' mengarah ke posisi target saat peluru ditembakkan.
          */
-        aimMode: 'targeted' as GruntAimMode,
+        aimMode: 'down' as GruntAimMode,
         /** Jeda antar tembakan setelah tembakan pertama, dalam milidetik. */
         fireIntervalMs: 1000,
         /** Jeda sebelum tembakan pertama, dalam milidetik. */
@@ -38,6 +38,19 @@ export const GruntConfig = {
         /** Variasi acak jeda spawn, plus-minus dalam milidetik. */
         jitterMs: 500,
         moveSpeed: 140,
+        moveAngleDeg: 0
+    },
+
+    wall: {
+        /** Jumlah Grunt dalam satu baris. */
+        count: 8,
+        /** Jarak antar pusat Grunt dalam baris. */
+        spacing: 84,
+        /** X pusat baris; 405 adalah tengah play area. */
+        centerX: 405,
+        /** Jeda antar baris, dalam milidetik. */
+        formationIntervalMs: 2000,
+        moveSpeed: 120,
         moveAngleDeg: 0
     }
 } as const;

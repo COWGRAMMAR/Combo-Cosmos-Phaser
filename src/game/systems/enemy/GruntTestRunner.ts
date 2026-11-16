@@ -3,11 +3,12 @@ import { LinearMovement } from '../../entities/enemy/patterns/LinearMovement';
 import { GruntPool } from './GruntPool';
 import type { IGruntFormation } from './IGruntFormation';
 import { RainFormation } from './RainFormation';
+import { WallFormation } from './WallFormation';
 
 /**
  * Menjalankan satu skenario tes Grunt tanpa WaveManager.
  * Skenario dimulai sekali per start(); tombol reset memanggil restart().
- * Skenario Wall/Stream ditambahkan pada fase implementasi berikutnya.
+ * Skenario Stream ditambahkan pada fase implementasi berikutnya.
  */
 export class GruntTestRunner
 {
@@ -38,6 +39,9 @@ export class GruntTestRunner
                 break;
             case 'rain':
                 this.startFormation(new RainFormation(this.pool));
+                break;
+            case 'wall':
+                this.startFormation(new WallFormation(this.pool));
                 break;
             default:
                 break;

@@ -9,12 +9,12 @@ export type EnemyTestScenario =
 /**
  * Konfigurasi harness tes enemy.
  * Ubah `scenario` lalu tekan tombol reset untuk menjalankan skenario dari awal.
- * Skenario 'static' dan 'rain' sudah tersedia; Wall/Stream menyusul.
+ * Skenario 'static', 'rain', dan 'wall' sudah tersedia; Stream menyusul.
  */
 export const EnemyTestConfig = {
     /** Matikan untuk menonaktifkan spawn tes dan tombol reset. */
     enabled: true,
-    scenario: 'rain' as EnemyTestScenario,
+    scenario: 'wall' as EnemyTestScenario,
     /** Nama key Phaser untuk memunculkan ulang skenario. */
     resetKey: 'R',
     /** False membuat skenario tetap berjalan sekali, tetapi tombol reset tidak didaftarkan. */
@@ -28,5 +28,5 @@ export const EnemyTestConfig = {
     /** Jumlah unit per batch tes Rain. */
     rainCount: 100,
     /** Berapa formasi yang dimunculkan sekali run pada tes Wall/Stream. */
-    formationRepeat: 2
+    formationRepeat: 10
 } as const;
