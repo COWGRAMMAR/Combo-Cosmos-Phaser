@@ -1,4 +1,3 @@
-import { EnemyTestConfig } from '../../config/EnemyTestConfig';
 import { GruntConfig } from '../../config/GruntConfig';
 import { LinearMovement } from '../../entities/enemy/patterns/LinearMovement';
 import { GruntPool } from './GruntPool';
@@ -11,16 +10,15 @@ export interface IStreamConfig
     readonly spacing: number;
     readonly streamDelayMs: number;
     readonly spawnX: number;
-    readonly formationIntervalMs: number;
     readonly moveSpeed: number;
     readonly moveAngleDeg: number;
 }
 
 /**
  * Formasi garis vertikal: Grunt muncul satu per satu dalam satu kolom,
- * lalu kolom berikutnya menyusul setelah jeda formasi.
- * Seluruh unit memakai gerak lurus yang sama, jadi satu instance LinearMovement
- * dipakai bersama (instance ini tidak menyimpan state per unit).
+ * sekali per run. Seluruh unit memakai gerak lurus yang sama, jadi satu
+ * instance LinearMovement dipakai bersama (instance ini tidak menyimpan
+ * state per unit).
  */
 export class StreamFormation implements IGruntFormation
 {
@@ -28,8 +26,7 @@ export class StreamFormation implements IGruntFormation
     private readonly config: IStreamConfig;
     private readonly movement: LinearMovement;
 
-    private rowsRemaining: number = 0;
-    private unitsSpawned: number = 0;
+    private spawned: number = 0;
     private spawnRemainingMs: number = 0;
 
     /** Menyiapkan formasi; unit baru muncul saat start()/update(). */
@@ -40,17 +37,16 @@ export class StreamFormation implements IGruntFormation
         this.movement = new LinearMovement(config.moveSpeed, config.moveAngleDeg);
     }
 
-    /** True kalau seluruh kolom sudah dimunculkan. */
+    /** True kalau seluruh unit satu kolom sudah dimunculkan. */
     public get finished(): boolean
     {
-        return this.rowsRemaining <= 0;
+        return this.spawned >= this.config.count;
     }
 
-    /** Memulai rangkaian kolom baru dan langsung memunculkan unit pertama. */
+    /** Memulai kolom baru dan langsung memunculkan unit pertama. */
     public start(): void
     {
-        this.rowsRemaining = EnemyTestConfig.formationRepeat;
-        this.unitsSpawned = 0;
+        this.spawned = 0;
         this.spawnRemainingMs = 0;
 
         this.update(0);
@@ -59,7 +55,7 @@ export class StreamFormation implements IGruntFormation
     /** Menghitung mundur jeda spawn; tidak mengalokasikan objek per frame. */
     public update(delta: number): void
     {
-        if (this.rowsRemaining <= 0)
+        if (this.spawned >= this.config.count)
         {
             return;
         }
@@ -72,23 +68,15 @@ export class StreamFormation implements IGruntFormation
         }
 
         this.spawnUnit();
-        this.unitsSpawned += 1;
+        this.spawned += 1;
 
-        if (this.unitsSpawned < this.config.count)
-        {
-            this.spawnRemainingMs = this.config.streamDelayMs;
-            return;
-        }
-
-        this.unitsSpawned = 0;
-        this.rowsRemaining -= 1;
-        this.spawnRemainingMs = this.config.formationIntervalMs;
+        this.spawnRemainingMs = this.config.streamDelayMs;
     }
 
     /** Memunculkan satu unit pada kolom vertikal di `spawnX`. */
     private spawnUnit(): void
     {
-        const y = -GruntConfig.spawnMargin - this.unitsSpawned * this.config.spacing;
+        const y = -GruntConfig.spawnMargin - this.spawned * this.config.spacing;
 
         this.pool.spawn(this.config.spawnX, y, this.movement);
     }

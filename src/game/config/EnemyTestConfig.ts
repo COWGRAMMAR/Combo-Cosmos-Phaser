@@ -27,7 +27,5 @@ export const EnemyTestConfig = {
         angleDeg: 0
     },
     /** Jumlah unit per batch tes Rain. */
-    rainCount: 100,
-    /** Berapa formasi yang dimunculkan sekali run pada tes Wall/Stream. */
-    formationRepeat: 1
+    rainCount: 100
 } as const;

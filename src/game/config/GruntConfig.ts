@@ -48,8 +48,6 @@ export const GruntConfig = {
         spacing: 84,
         /** X pusat baris; 405 adalah tengah play area. */
         centerX: 405,
-        /** Jeda antar baris, dalam milidetik. */
-        formationIntervalMs: 2000,
         moveSpeed: 120,
         moveAngleDeg: 0
     },
@@ -63,8 +61,6 @@ export const GruntConfig = {
         streamDelayMs: 200,
         /** X kolom; 405 adalah tengah play area. */
         spawnX: 405,
-        /** Jeda antar kolom, dalam milidetik. */
-        formationIntervalMs: 2000,
         moveSpeed: 150,
         moveAngleDeg: 0
     }

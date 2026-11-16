@@ -1,12 +1,10 @@
-import { EnemyTestConfig } from '../../config/EnemyTestConfig';
 import { GruntConfig } from '../../config/GruntConfig';
 import { LinearMovement } from '../../entities/enemy/patterns/LinearMovement';
 import { GruntPool } from './GruntPool';
 import type { IGruntFormation } from './IGruntFormation';
 
 /**
- * Formasi dinding horizontal: satu baris Grunt muncul bersamaan, lalu diulang
- * sebanyak `formationRepeat` dengan jeda `wall.formationIntervalMs`.
+ * Formasi dinding horizontal: satu baris Grunt muncul bersamaan, sekali per run.
  * Seluruh unit memakai gerak lurus yang sama, jadi satu instance LinearMovement
  * dipakai bersama (instance ini tidak menyimpan state per unit).
  */
@@ -15,51 +13,32 @@ export class WallFormation implements IGruntFormation
     private readonly pool: GruntPool;
     private readonly movement: LinearMovement;
 
-    private rowsRemaining: number = 0;
-    private spawnRemainingMs: number = 0;
+    private spawned: boolean = false;
 
-    /** Menyiapkan formasi; baris baru muncul saat start()/update(). */
+    /** Menyiapkan formasi; baris baru muncul saat start(). */
     constructor(pool: GruntPool)
     {
         this.pool = pool;
         this.movement = new LinearMovement(GruntConfig.wall.moveSpeed, GruntConfig.wall.moveAngleDeg);
     }
 
-    /** True kalau seluruh baris sudah dimunculkan. */
+    /** True kalau baris sudah dimunculkan. */
     public get finished(): boolean
     {
-        return this.rowsRemaining <= 0;
+        return this.spawned;
     }
 
-    /** Memulai rangkaian baris baru dan langsung memunculkan baris pertama. */
+    /** Memunculkan baris sekali; tidak ada spawn lanjutan. */
     public start(): void
     {
-        this.rowsRemaining = EnemyTestConfig.formationRepeat;
-        this.spawnRemainingMs = 0;
-
-        this.update(0);
-    }
-
-    /** Menghitung mundur jeda antar baris; tidak mengalokasikan objek per frame. */
-    public update(delta: number): void
-    {
-        if (this.rowsRemaining <= 0)
-        {
-            return;
-        }
-
-        this.spawnRemainingMs -= delta;
-
-        if (this.spawnRemainingMs > 0)
-        {
-            return;
-        }
+        this.spawned = false;
 
         this.spawnRow();
-        this.rowsRemaining -= 1;
-
-        this.spawnRemainingMs = GruntConfig.wall.formationIntervalMs;
+        this.spawned = true;
     }
+
+    /** Baris tunggal tidak punya spawn lanjutan, jadi tidak ada yang dihitung per frame. */
+    public update(_delta: number): void {}
 
     /** Memunculkan satu baris Grunt yang terpusat di `wall.centerX`. */
     private spawnRow(): void

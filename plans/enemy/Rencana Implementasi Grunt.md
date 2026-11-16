@@ -127,7 +127,6 @@ export const GruntConfig = {
         count: 8,
         spacing: 84,
         centerX: 405,
-        formationIntervalMs: 2000,
         moveSpeed: 120,
         moveAngleDeg: 0
     },
@@ -137,7 +136,6 @@ export const GruntConfig = {
         spacing: 72,
         streamDelayMs: 200,
         spawnX: 405,
-        formationIntervalMs: 2000,
         moveSpeed: 150,
         moveAngleDeg: 0
     },
@@ -147,7 +145,6 @@ export const GruntConfig = {
         spacing: 72,
         streamDelayMs: 200,
         spawnX: 48,
-        formationIntervalMs: 2000,
         moveSpeed: 150,
         moveAngleDeg: 30,
         direction: 'ltr' as DiagonalDirection
@@ -181,8 +178,7 @@ export const EnemyTestConfig = {
     staticSpawn: { x: 405, y: 180 },
 
     // Khusus tes, bukan parameter wave produksi:
-    rainCount: 12,
-    formationRepeat: 2
+    rainCount: 12
 } as const;
 ```
 
@@ -191,7 +187,7 @@ Perilaku:
 - `enabled: false` → tidak ada spawn tes dan reset key tidak didaftarkan.
 - `resetKeyEnabled: false` → skenario tetap berjalan sekali saat mulai, tetapi tombol reset tidak aktif.
 - `resetKey` berupa string key Phaser, misalnya `'R'`, `'F6'`, atau `'T'`.
-- `rainCount` dan `formationRepeat` adalah nilai batch tes karena belum ada WaveManager.
+- `rainCount` adalah nilai batch tes karena belum ada WaveManager; Wall dan Stream muncul sekali per run.
 
 ---
 
@@ -342,7 +338,7 @@ Perilaku:
 
 ### Fase 4 — Horizontal Wall
 
-**Tujuan:** Satu baris Grunt muncul bersamaan, bergerak turun, dan formasi bisa diulang.
+**Tujuan:** Satu baris Grunt muncul bersamaan, bergerak turun, sekali per run.
 
 **Langkah:**
 
@@ -350,17 +346,15 @@ Perilaku:
    - Spawn `wall.count` unit.
    - Posisi X terpusat di `wall.centerX` dengan jarak `wall.spacing`.
    - Semua unit memakai movement yang sama.
-2. Ulangi formasi sebanyak `EnemyTestConfig.formationRepeat`.
-3. Jeda antar formasi memakai `wall.formationIntervalMs`.
-4. `GruntTestRunner` memilih `WallFormation` saat `scenario: 'wall'`.
+2. Baris hanya muncul sekali; pengulangan diserahkan ke WaveManager saat sudah ada.
+3. `GruntTestRunner` memilih `WallFormation` saat `scenario: 'wall'`.
 
 **Kriteria selesai:**
 
 - [x] Jumlah unit per baris sesuai `count`.
 - [x] Jarak horizontal sesuai `spacing`.
 - [x] Baris terpusat di `centerX`.
-- [x] Formasi berikutnya muncul setelah `formationIntervalMs`.
-- [x] Jumlah formasi sesuai `formationRepeat`.
+- [x] Baris hanya muncul sekali per run.
 - [x] Peluru mengikuti sudut gerak (default ke bawah).
 
 ### Fase 5 — Vertical Line Lurus
@@ -373,16 +367,15 @@ Perilaku:
    - Spawn `stream.count` unit pada `stream.spawnX`.
    - Unit ke-`i` spawn di `y = -spawnMargin - i * spacing`.
    - Jeda antar unit `streamDelayMs`.
-2. Ulangi formasi sebanyak `EnemyTestConfig.formationRepeat`.
-3. Jeda antar formasi `stream.formationIntervalMs`.
-4. `GruntTestRunner` memilih `StreamFormation` saat `scenario: 'stream-straight'`.
+2. Kolom hanya muncul sekali; pengulangan diserahkan ke WaveManager saat sudah ada.
+3. `GruntTestRunner` memilih `StreamFormation` saat `scenario: 'stream-straight'`.
 
 **Kriteria selesai:**
 
 - [x] Unit membentuk satu kolom vertikal.
 - [x] Jarak vertikal sesuai `spacing`.
 - [x] Urutan kemunculan sesuai `streamDelayMs`.
-- [x] Formasi berulang sesuai `formationRepeat` dan interval.
+- [x] Kolom hanya muncul sekali per run.
 - [x] Peluru mengikuti sudut gerak (default ke bawah).
 
 ### Fase 6 — Vertical Line Diagonal
