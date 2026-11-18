@@ -103,9 +103,13 @@ AssetManager.ensureAnimations(this); // frame animasi harus sudah ada
 ```ts
 // Game.ts (composition root)
 this.weapon = new PlayerWeapon(this, AssetManager.resolve(AssetKeys.PlayerBullet));
-this.player = new Player(this, x, y, AssetManager.resolve(AssetKeys.Player), config, input, this.weapon);
-this.dummy  = new DummyEnemy(this, x, y, AssetManager.resolve(AssetKeys.Enemy));
+this.player = new Player(this, spawn.playerX, spawn.playerY, AssetManager.resolve(AssetKeys.Player), config, input, this.weapon);
+this.grunts = new GruntPool(this, this.enemyBullets, this.player, AssetManager.resolve(AssetKeys.Enemy));
+this.explosions = new EnemyExplosionPool(this, AssetManager.resolve(AssetKeys.EnemyExplosion));
 ```
+
+`DummyEnemy` tetap ada sebagai alat debug, tetapi tidak dibuat oleh `Game`; contoh di atas
+memakai `Grunt` yang benar-benar berjalan.
 
 ### Menambah aset baru (placeholder)
 
@@ -129,7 +133,8 @@ Tambahkan entri di `AssetManifest.animations`, ekspos key-nya lewat `AnimKeys`, 
 | Konsumen | Key | Cara |
 |---|---|---|
 | `Game.ts` → `Player` | `AssetKeys.Player` | `resolve()` → constructor `AssetRef` |
-| `Game.ts` → `DummyEnemy` | `AssetKeys.Enemy` | `resolve()` → constructor `AssetRef` |
+| `Game.ts` → `GruntPool` (Grunt) | `AssetKeys.Enemy` | `resolve()` → constructor `AssetRef`, diteruskan pool ke tiap Grunt |
+| `Game.ts` → `EnemyExplosionPool` | `AssetKeys.EnemyExplosion` | `resolve()` → constructor `AssetRef` → sprite pool |
 | `Game.ts` → `PlayerWeapon` | `AssetKeys.PlayerBullet` | `resolve()` → constructor `AssetRef` → `group.create(x, y, texture, frame)` |
 | `EnemyBulletManager` | `AssetKeys.EnemyBullet` | `resolve()` internal di constructor |
 | `Preloader` | `AssetKeys.Background` | `add.image(...)` |
@@ -151,6 +156,7 @@ di dalam bullet.
 |---|---|---|---|
 | `Player` + `PlayerIdleAlt` | 2 tekstur 48×48, animasi `player-idle` | 1 atlas dengan frame `idle-0`, `idle-1`, dst. | Hapus `PlayerIdleAlt`, ubah `frames` animasi ke `{ texture: '<atlas>', frame: 'idle-0' }` |
 | `Enemy` | lingkaran kuning 48×48 | sprite musuh (boleh dari atlas yang sama) | Tidak ada |
+| `EnemyExplosion` | lingkaran merah 48×48 + cincin (warna dari `EnemyConfig.explosion`) | spritesheet efek ledakan | Tidak ada; durasi & skala dari `EnemyConfig.explosion` |
 | `PlayerBullet` | lingkaran radius `PlayerConfig.weapon.bulletRadius` | sprite peluru kecil | Tidak ada |
 | `EnemyBullet` | lingkaran radius `EnemyConfig.bullet.radius` | sprite peluru musuh | Tidak ada |
 | `Background` | `public/assets/bg.png` | artwork final (ukuran sama atau di-scale di scene) | Tidak ada |
@@ -176,7 +182,7 @@ di dalam bullet.
 
 ### 6.3 Apa yang TIDAK perlu diubah saat migrasi
 
-- Signature `BaseEntity`, `Player`, `Enemy`, `DummyEnemy` (sudah menerima `AssetRef`).
+- Signature `BaseEntity`, `Player`, `Enemy`, `DummyEnemy` (sudah menerima `AssetRef`; `DummyEnemy` tidak di-wire ke `Game`).
 - Constructor `PlayerBullet`/`EnemyBullet` (tetap `texture, frame`).
 - `PlayerWeapon`/`EnemyBulletManager` (sudah menyimpan `AssetRef` dan meneruskan `frame`).
 - Ukuran hitbox (lihat bagian 8).

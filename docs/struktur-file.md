@@ -83,7 +83,7 @@ Combo-Cosmos-Phaser/
       │  └─ enemy/
       │     ├─ Enemy.ts           # base musuh: hit flash (tint) + event kematian, tanpa asumsi static
       │     ├─ EnemyState.ts      # string enum
-      │     ├─ DummyEnemy.ts      # PLACEHOLDER musuh diam untuk uji damage
+      │     ├─ DummyEnemy.ts      # alat debug musuh diam; TIDAK di-wire ke Game
       │     ├─ Grunt.ts           # musuh Tipe 1: gerak via pattern + tembak + despawn
       │     └─ patterns/
       │        ├─ IMovementPattern.ts # kontrak pola gerak musuh
@@ -183,7 +183,7 @@ berada di `entities/bullet/` karena dipakai bersama player dan enemy.
 | 5  | Folder sistem memakai `src/game/systems/`, **bukan** `src/core/`                                       | keputusan desain (lihat plan entities)   |
 | 6  | **Setiap penambahan/penghapusan/perpindahan file atau folder wajib langsung memperbarui dokumen ini**   | dokumen ini jadi sumber kebenaran struktur |
 | 7  | Semua nilai yang bisa di-tuning (balance, keybind, asset key, nama event, timing, ukuran/warna, tabel wave/spawn) wajib di `config/`; `scenes/`, `entities/`, `systems/` dilarang menyimpan magic number/string untuk nilai tersebut | data-driven, mudah diubah tanpa menyentuh logika |
-| 8  | `config/` hanya data murni (`as const`), tanpa logika, object Phaser, atau side effect; boleh import dari `types/` saja | config tetap deklaratif dan aman diimpor |
+| 8  | `config/` hanya data murni (`as const`), tanpa logika, object Phaser, atau side effect; boleh import dari `types/` dan config lain yang juga murni data | config tetap deklaratif dan aman diimpor |
 | 9  | `types/` adalah lapisan terbawah: vocabulary/interface/enum lintas layer; tidak boleh import `config/`/`systems/`/`entities/`/`scenes/` | mencegah dependensi melingkar |
 | 10 | Nilai runtime (hp saat ini, score, combo) **bukan** config | state berubah tiap frame, bukan data desain |
 | 11 | Peluru pemain memakai body Arcade Physics; peluru musuh **tanpa body** dan dihitung manual oleh `EnemyBulletManager` | ribuan peluru musuh tetap ringan |

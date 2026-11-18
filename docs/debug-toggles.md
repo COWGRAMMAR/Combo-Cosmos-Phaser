@@ -34,13 +34,13 @@ Memanggil `DebugOverlay.toggle()`: teks overlay disembunyikan/ditampilkan. Overl
 
 Saat overlay disembunyikan, `DebugOverlay.update()` langsung `return` sehingga tidak ada string yang dibangun tiap frame — biaya performa nol.
 
-Lokasi: `Game.ts:262` → `this.overlay?.toggle()`.
+Lokasi: `Game.create()` → `this.overlay?.toggle()`.
 
 ### F2 — Stress test ringan (1000 peluru)
 
 Memanggil `spawnStressBullets(1000)`: 1000 peluru musuh dibuat di `x` acak dalam play area, `y = -offScreenMargin`, kecepatan `EnemyConfig.bullet.speed`. Dipakai untuk melihat baseline FPS dan `spawn ms` saat beban normal.
 
-Lokasi: `Game.ts:263` → `spawnStressBullets(count)` (`Game.ts:510`).
+Lokasi: `Game.create()` → `this.spawnStressBullets(count)`.
 
 ### F3 — Stress test berat (3000 peluru)
 
@@ -52,7 +52,7 @@ Memanggil `PlayerWeapon.cycleLanes()`: `lanes` naik satu, dan kalau sudah mencap
 
 Efeknya: pola tembakan berubah langsung (1 peluru → 2 peluru sejajar → dst). Nilai ini **bukan** permanen antar run: `resetForPool()` mengembalikan ke nilai config.
 
-Lokasi: `Game.ts:264` → `PlayerWeapon.cycleLanes()` (`PlayerWeapon.ts:100`).
+Lokasi: `Game.create()` → `this.weapon?.cycleLanes()` (`PlayerWeapon.cycleLanes()`).
 
 ### R — Ulangi skenario tes Grunt
 
@@ -113,10 +113,10 @@ Status di baris 6 dirakit dari: `dash siap` / `dash cooldown`, lalu tambahan `ke
 | Hal | Lokasi | Catatan |
 | --- | ------ | ------- |
 | Tombol & pengecekan | `src/game/systems/DebugTools.ts` | Hardcode sengaja, bukan `InputAction` |
-| Aksi yang dipanggil | `src/game/scenes/Game.ts:261-265` | Satu-satunya tempat `new DebugTools(...)` |
+| Aksi yang dipanggil | `Game.create()` | Satu-satunya tempat `new DebugTools(...)` |
 | Overlay | `src/game/ui/DebugOverlay.ts` | Visibilitas awal dari `WorldConfig.debug.enabled` |
-| Default overlay tampil | `src/game/config/WorldConfig.ts:6-8` | `debug.enabled: true` |
-| Stress test | `Game.ts:510` `spawnStressBullets()` | Jumlah datang dari tombol, bukan config |
+| Default overlay tampil | `src/game/config/WorldConfig.ts` (`debug.enabled`) | `debug.enabled: true` |
+| Stress test | `Game.spawnStressBullets()` | Jumlah datang dari tombol, bukan config |
 | Slot & pemakaian | `PowerUpConfig`, `PowerUpSlotManager` | Lihat `docs/asset-system.md` untuk aset; sistem power-up ada di `src/game/systems/power-ups/` |
 
 Tombol debug **tidak** didaftarkan di `InputAction`/`InputBindings` supaya keybind gameplay tetap bersih dan tombol debug bisa dicabut tanpa menyentuh sistem input pemain.
@@ -138,8 +138,8 @@ Tombol debug **tidak** didaftarkan di `InputAction`/`InputBindings` supaya keybi
 
 ## 6. Cara menambah tombol debug baru
 
-1. Tambah aksi di `DebugActions` (`DebugTools.ts:5-11`) — misal `teleportPlayer: () => void`.
-2. Implementasikan aksi itu di call site `Game.ts:261-265`.
+1. Tambah aksi di `DebugActions` (`DebugTools.ts`) — misal `teleportPlayer: () => void`.
+2. Implementasikan aksi itu di call site `Game.create()`.
 3. Tambah field `Key` di `DebugTools`, daftarkan lewat `keyboard.addKey(...)` di constructor.
 4. Tambah blok `JustDown` di `update()` dengan komentar satu baris: tombol apa, efek apa.
 5. Tambah `keyboard.removeKey(...)` di `destroy()` agar tidak bocor saat scene restart.
