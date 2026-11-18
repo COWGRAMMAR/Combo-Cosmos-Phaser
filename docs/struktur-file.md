@@ -34,6 +34,7 @@ Combo-Cosmos-Phaser/
 │  ├─ bullet-system.md            # kontrak fondasi bullet untuk kerja paralel
 │  ├─ asset-system.md             # arsitektur aset: manifest, resolve, animasi, peta migrasi atlas
 │  ├─ asset-system-alur-sederhana.md # alur aset sampai render + aturan main (bahasa sederhana, untuk manusia & AI)
+│  ├─ panduan-uji-grunt.md        # cara memunculkan Grunt, checklist verifikasi, tuning cepat
 │  └─ debug-toggles.md            # daftar tombol debug, efek, isi overlay, cara menambah
 └─ src/
    ├─ main.ts                     # bootstrap DOM
@@ -196,6 +197,7 @@ berada di `entities/bullet/` karena dipakai bersama player dan enemy.
 ## 4. Referensi
 
 - Kontrak bullet system & aturan performa: `docs/bullet-system.md`
+- Panduan uji enemy Grunt (skenario, checklist, tuning): `docs/panduan-uji-grunt.md`
 - Arsitektur aset & peta migrasi atlas: `docs/asset-system.md`
 - Alur aset sampai render (versi sederhana): `docs/asset-system-alur-sederhana.md`
 - Daftar tombol debug (F1–F4, Z–N) & isi overlay: `docs/debug-toggles.md`

@@ -2,6 +2,7 @@
 
 Status: terverifikasi 2026-11-18 terhadap `src/game/systems/DebugTools.ts`.
 Dokumen ini menjawab satu pertanyaan: **tombol apa saja yang bisa dipakai saat game berjalan, dan apa efeknya.**
+Untuk urutan uji Grunt memakai tombol-tombol ini, lihat `docs/panduan-uji-grunt.md`.
 
 ---
 
