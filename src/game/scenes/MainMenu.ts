@@ -1,4 +1,5 @@
 import { Scene, GameObjects } from 'phaser';
+import { AssetKeys } from '../config/AssetKeys';
 import { ScreenConfig } from '../config/ScreenConfig';
 import { bindDesignCamera } from '../utils/designCamera';
 
@@ -23,10 +24,10 @@ export class MainMenu extends Scene
     {
         const center = ScreenConfig.center;
 
-        this.background = this.add.image(center.x, center.y, 'background')
+        this.background = this.add.image(center.x, center.y, AssetKeys.Background)
             .setDisplaySize(ScreenConfig.width, ScreenConfig.height);
 
-        this.logo = this.add.image(center.x, center.y + LOGO_OFFSET_Y, 'logo')
+        this.logo = this.add.image(center.x, center.y + LOGO_OFFSET_Y, AssetKeys.Logo)
             .setDisplaySize(500, 108);
 
         this.title = this.add.text(center.x, center.y + TITLE_OFFSET_Y, 'Main Menu', {

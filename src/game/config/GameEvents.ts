@@ -11,4 +11,8 @@ export const GameEvents = {
     GAME_OVER: 'game-over',
     /** Permintaan resume dari overlay pause. */
     PAUSE_RESUME: 'pause-resume',
+    /** Dipancarkan saat pemain menyentuh item power-up. */
+    POWER_UP_COLLECTED: 'power-up-collected',
+    /** Dipancarkan saat pemain menggunakan power-up dari slot. */
+    POWER_UP_USED: 'power-up-used',
 } as const;

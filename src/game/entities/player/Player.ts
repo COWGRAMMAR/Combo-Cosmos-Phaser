@@ -1,6 +1,8 @@
 import * as Phaser from 'phaser';
 import { DepthConfig } from '../../config/DepthConfig';
+import { AnimKeys } from '../../config/AssetManifest';
 import { PlayerConfig } from '../../config/PlayerConfig';
+import type { AssetRef } from '../../types/AssetRef';
 import type { EntityConfig } from '../../types/EntityConfig';
 import type { IInputSource } from '../../types/IInputSource';
 import { InputAction } from '../../types/InputAction';
@@ -14,7 +16,7 @@ export class Player extends BaseEntity
     public entityState: PlayerState = PlayerState.Alive;
 
     private readonly inputSource: IInputSource;
-    private readonly weapon?: PlayerWeapon;
+    private readonly _weapon?: PlayerWeapon;
 
     private _lives: number = PlayerConfig.lives;
     private shieldActive: boolean = false;
@@ -24,29 +26,43 @@ export class Player extends BaseEntity
     private dashDirX: number = 0;
     private dashDirY: number = 0;
 
+    private _inputAxisX: number = 0;
+    private _inputAxisY: number = 0;
+    private _inputDashJustDown: boolean = false;
+    private _inputFireDown: boolean = false;
+
     /** Menyimpan sumber input yang di-inject oleh scene. */
     constructor(
         scene: Phaser.Scene,
         x: number,
         y: number,
-        texture: string,
+        asset: AssetRef,
         config: EntityConfig,
         inputSource: IInputSource,
         weapon?: PlayerWeapon
     )
     {
-        super(scene, x, y, texture, config);
+        super(scene, x, y, asset, config);
 
         this.inputSource = inputSource;
-        this.weapon = weapon;
+        this._weapon = weapon;
 
         this.setDepth(DepthConfig.player);
+
+        // Animasi placeholder; hanya mengganti frame, tidak menyentuh alpha dash/invuln.
+        this.play(AnimKeys.PlayerIdle);
     }
 
     /** Radius hitbox kecil untuk tabrakan peluru musuh. */
     get hitRadius(): number
     {
         return PlayerConfig.hitRadius;
+    }
+
+    /** Apakah pemain masih hidup (berbasis nyawa, bukan HP BaseEntity). */
+    get isAlive(): boolean
+    {
+        return this._lives > 0;
     }
 
     /** Sisa nyawa pemain pada run ini. */
@@ -59,6 +75,12 @@ export class Player extends BaseEntity
     get isShieldActive(): boolean
     {
         return this.shieldActive;
+    }
+
+    /** Referensi senjata pemain (undefined saat belum dilengkapi). */
+    get weapon(): PlayerWeapon | undefined
+    {
+        return this._weapon;
     }
 
     /**
@@ -133,11 +155,20 @@ export class Player extends BaseEntity
         return this.dashCooldownRemainingMs <= 0;
     }
 
-    /** Membaca aksi gerak dari sumber input, lalu menerapkan velocity. */
+    /** Tangkap snapshot input sekali per frame sebelum loop fixed-step berjalan. */
+    protected override captureFrameInput(): void
+    {
+        this._inputAxisX = this.inputSource.getAxis(InputAction.MoveLeft, InputAction.MoveRight);
+        this._inputAxisY = this.inputSource.getAxis(InputAction.MoveUp, InputAction.MoveDown);
+        this._inputDashJustDown = this.inputSource.isJustDown(InputAction.Dash);
+        this._inputFireDown = this.inputSource.isDown(InputAction.Fire);
+    }
+
+    /** Membaca snapshot input per frame, lalu menerapkan velocity. */
     protected updateEntity(_time: number, delta: number): void
     {
-        const axisX = this.inputSource.getAxis(InputAction.MoveLeft, InputAction.MoveRight);
-        const axisY = this.inputSource.getAxis(InputAction.MoveUp, InputAction.MoveDown);
+        const axisX = this._inputAxisX;
+        const axisY = this._inputAxisY;
 
         if (this.dashRemainingMs > 0)
         {
@@ -174,11 +205,11 @@ export class Player extends BaseEntity
             this.entityState = PlayerState.Alive;
         }
 
-        this.weapon?.update(
+        this._weapon?.update(
             delta,
             this.x,
             this.y + PlayerConfig.weapon.muzzleOffsetY,
-            this.inputSource.isDown(InputAction.Fire)
+            this._inputFireDown
         );
     }
 
@@ -213,7 +244,7 @@ export class Player extends BaseEntity
     /** Memulai dash hanya jika cooldown siap dan ada arah input. */
     private tryStartDash(axisX: number, axisY: number): void
     {
-        if (!this.inputSource.isJustDown(InputAction.Dash))
+        if (!this._inputDashJustDown)
         {
             return;
         }

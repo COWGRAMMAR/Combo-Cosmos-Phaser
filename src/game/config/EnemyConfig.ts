@@ -4,7 +4,7 @@
  */
 export const EnemyConfig = {
     maxHp: 100,
-    moveSpeed: 0,
+    moveSpeed: 10,
     bodyRadius: 20,
     /** Jeda sebelum dummy musuh muncul lagi, dalam milidetik. */
     respawnDelayMs: 1000,
@@ -13,9 +13,9 @@ export const EnemyConfig = {
         speed: 180,
         radius: 5,
         /** Pool harus muat untuk stress test 3000 peluru. */
-        poolSize: 8192,
+        poolSize: 10000,
         /** Jarak di luar layar sebelum peluru dianggap keluar. */
-        offScreenMargin: 32,
+        offScreenMargin: 16,
         /** Batas umur peluru sebagai pengaman kalau tidak pernah keluar layar. */
         maxLifetimeMs: 15000
     }
