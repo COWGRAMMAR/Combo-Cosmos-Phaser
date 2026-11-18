@@ -6,8 +6,6 @@ export const EnemyConfig = {
     maxHp: 100,
     moveSpeed: 10,
     bodyRadius: 20,
-    /** Jeda sebelum dummy musuh muncul lagi, dalam milidetik. */
-    respawnDelayMs: 1000,
     /** Umpan balik visual saat musuh terkena damage. */
     hitFlash: {
         /** Warna siluet saat tertembak; memakai bentuk asli tekstur. */
