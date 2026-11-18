@@ -6,7 +6,16 @@ export type GruntAimMode = 'down' | 'targeted';
 export type GruntRainType = 'single' | 'wall' | 'stream';
 
 /** X tengah play area dalam koordinat lokal gameplay. */
-const PLAY_CENTER_X = ScreenConfig.playArea.width / 2;
+const PLAY_CENTER_X = ScreenConfig.playArea.centerX;
+
+/** Tinggi play area dalam koordinat lokal gameplay. */
+const PLAY_HEIGHT = ScreenConfig.playArea.height;
+
+/**
+ * Jarak Grunt di luar batas play area, dipakai dua arah:
+ * spawn di atas (`-OFF_SCREEN_MARGIN`) dan despawn di bawah (`PLAY_HEIGHT + margin`).
+ */
+const OFF_SCREEN_MARGIN = 48;
 
 /**
  * Nilai yang bisa diubah untuk Grunt (Tipe 1).
@@ -18,9 +27,9 @@ export const GruntConfig = {
     /** Nilai dasar BaseEntity; kecepatan sebenarnya diatur oleh movement pattern. */
     moveSpeed: 0,
     /** Batas Y untuk membuang Grunt yang sudah melewati bawah play area. */
-    despawnY: 1128,
+    despawnY: PLAY_HEIGHT + OFF_SCREEN_MARGIN,
     /** Jarak spawn di atas play area; spawn memakai y = -spawnMargin. */
-    spawnMargin: 48,
+    spawnMargin: OFF_SCREEN_MARGIN,
     poolSize: 96,
     weapon: {
         /**
@@ -47,8 +56,12 @@ export const GruntConfig = {
     rain: {
         /** Jenis pola dasar yang diulang; bukan rotasi otomatis. */
         type: 'wall' as GruntRainType,
-        /** X spawn untuk semua pola saat mode rain; menggantikan X bawaan pola. */
-        spawnX: 450,
+        /**
+         * X spawn untuk semua pola saat mode rain; menggantikan X bawaan pola.
+         * Default di tengah play area; geser nilainya (mis. `PLAY_CENTER_X - 80`)
+         * untuk menguji bahwa override benar-benar bekerja.
+         */
+        spawnX: PLAY_CENTER_X,
         /** Berapa pola yang dimunculkan sebelum rain selesai. */
         count: 10,
         /** Jeda setelah satu pola selesai, sebelum pola berikutnya, dalam milidetik. */

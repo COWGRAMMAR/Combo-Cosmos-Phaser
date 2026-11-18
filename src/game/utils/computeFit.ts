@@ -14,7 +14,7 @@ export interface FitResult {
 }
 
 /**
- * Menghitung skala dan offset agar ruang desain 4:3 muat di window dan terpusat.
+ * Menghitung skala dan offset agar ruang desain muat di window dan terpusat.
  * Dipakai semua scene supaya tata letak konsisten di ukuran window apa pun.
  */
 export function computeFit(windowWidth: number, windowHeight: number): FitResult {

@@ -315,7 +315,7 @@ export class Game extends Phaser.Scene
         this.events.on(Phaser.Core.Events.RESUME, this.handleSceneResume, this);
     }
 
-    /** Menyesuaikan viewport dan zoom kamera agar play area tetap 4:3 dan tajam. */
+    /** Menyesuaikan viewport dan zoom kamera agar play area tetap utuh dan tajam. */
     private applyCameraLayout (): void
     {
         const playArea = ScreenConfig.playArea;

@@ -1,7 +1,7 @@
 # Rencana Implementasi Enemy Grunt
 
-- **Status:** Fase 1–5 + rain berbasis pola dasar diimplementasikan, menunggu verifikasi browser
-- **Tanggal:** 2026-11-14
+- **Status:** Fase 1–5 + rain berbasis pola dasar diimplementasikan dan sudah diselaraskan dengan `main` (sistem aset + play area 1060×1080), menunggu verifikasi browser
+- **Tanggal:** 2026-11-18
 - **Scope:** Grunt (Tipe 1) end-to-end: spawn, gerak, menembak, ditembak, tabrakan, dan harness tes.
 - **Referensi:** `Ide Enemy.md`, `Placeholder Enemy.md`, `docs/struktur-file.md`, `docs/bullet-system.md`
 
@@ -100,11 +100,16 @@ Semua nilai yang bisa di-tune ada di sini. Gunakan union type agar `aimMode` dan
 export type GruntAimMode = 'down' | 'targeted';
 export type GruntRainType = 'single' | 'wall' | 'stream';
 
+// Koordinat lokal play area; nilainya diturunkan dari ScreenConfig, bukan ditulis manual.
+const PLAY_CENTER_X = ScreenConfig.playArea.centerX; // 530
+const PLAY_HEIGHT = ScreenConfig.playArea.height;   // 1080
+const OFF_SCREEN_MARGIN = 48;
+
 export const GruntConfig = {
     maxHp: 30,
     bodyRadius: 20,
-    spawnMargin: 48,
-    despawnY: 1128,
+    spawnMargin: OFF_SCREEN_MARGIN,
+    despawnY: PLAY_HEIGHT + OFF_SCREEN_MARGIN,
     poolSize: 96,
 
     weapon: {
@@ -116,14 +121,14 @@ export const GruntConfig = {
     },
 
     single: {
-        spawnX: 405,
+        spawnX: PLAY_CENTER_X,
         moveSpeed: 140,
         moveAngleDeg: 0
     },
 
     rain: {
         type: 'single' as GruntRainType,
-        spawnX: 405,
+        spawnX: PLAY_CENTER_X,
         count: 10,
         intervalMs: 1000,
         jitterMs: 0
@@ -132,7 +137,7 @@ export const GruntConfig = {
     wall: {
         count: 8,
         spacing: 84,
-        centerX: 405,
+        centerX: PLAY_CENTER_X,
         moveSpeed: 120,
         moveAngleDeg: 0
     },
@@ -141,7 +146,7 @@ export const GruntConfig = {
         count: 6,
         spacing: 72,
         streamDelayMs: 200,
-        spawnX: 405,
+        spawnX: PLAY_CENTER_X,
         moveSpeed: 150,
         moveAngleDeg: 0
     }
@@ -150,7 +155,8 @@ export const GruntConfig = {
 
 Catatan:
 
-- `spawnMargin` dipakai untuk spawn di atas layar; `despawnY` untuk membuang Grunt yang keluar bawah.
+- Semua X pola mengikuti tengah play area (`ScreenConfig.playArea.centerX` = 530 dalam ruang lokal 1060×1080). Jangan menulis angka absolut supaya tidak basi saat ukuran layar berubah lagi.
+- `spawnMargin` dipakai untuk spawn di atas layar; `despawnY` diturunkan dari tinggi play area + margin yang sama.
 - `bodyRadius: 20` disamakan dengan tekstur lingkaran placeholder saat ini.
 - `moveAngleDeg` adalah sudut dari vertikal; `0` berarti lurus ke bawah.
 - `rain.type` memilih pola dasar yang diulang; `count` jumlah pola per run.
@@ -277,7 +283,7 @@ Perilaku:
 
 **Kriteria selesai:**
 
-- [ ] Grunt muncul di `x=405`, `y=180`.
+- [ ] Grunt muncul di `x=530` (tengah play area) dan `y=-48` (tepat di atas play area).
 - [ ] Peluru player mengurangi HP Grunt; Grunt hilang setelah HP habis.
 - [ ] Grunt menembak lurus ke bawah setelah delay awal.
 - [ ] Peluru Grunt mengenai player: nyawa 3 → 2 dan i-frame aktif.
@@ -324,7 +330,7 @@ Perilaku:
 
 **Kriteria selesai:**
 
-- [ ] Mengubah `spawnXMin`/`spawnXMax` mengubah sebaran horizontal.
+- [x] ~~Mengubah `spawnXMin`/`spawnXMax` mengubah sebaran horizontal.~~ Dihapus di Fase 6: rain sekarang memakai `rain.spawnX` dan tidak lagi mengacak X.
 - [ ] Mengubah `intervalMs`/`jitterMs` mengubah ritme spawn.
 - [ ] Mengubah `moveSpeed`/`moveAngleDeg` mengubah gerak.
 - [ ] Semua unit despawn setelah melewati `despawnY`.
