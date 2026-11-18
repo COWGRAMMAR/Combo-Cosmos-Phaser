@@ -27,8 +27,7 @@ Combo-Cosmos-Phaser/
 │  ├─ 2#-entities-class.md        # rencana class Player & Enemy
 │  └─ enemy/
 │     ├─ Ide Enemy.md             # desain pola gerak & serangan enemy
-│     ├─ Placeholder Enemy.md     # spesifikasi visual placeholder
-│     └─ Rencana Implementasi Grunt.md # rencana bertahap Grunt
+│     └─ Placeholder Enemy.md     # spesifikasi visual placeholder
 ├─ issues/                        # (dibuat saat ada bug)
 ├─ docs/
 │  ├─ struktur-file.md            # dokumen ini
