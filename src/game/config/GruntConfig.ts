@@ -36,7 +36,7 @@ export const GruntConfig = {
          * Arah tembakan: 'down' mengikuti sudut gerak Grunt,
          * 'targeted' mengarah ke posisi target saat peluru ditembakkan.
          */
-        aimMode: 'down' as GruntAimMode,
+        aimMode: 'targeted' as GruntAimMode,
         /** Jeda antar tembakan setelah tembakan pertama, dalam milidetik. */
         fireIntervalMs: 1000,
         /** Jeda sebelum tembakan pertama, dalam milidetik. */
