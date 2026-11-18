@@ -152,7 +152,7 @@ Centang yang sudah benar. Kalau ada satu yang gagal, lihat bagian 7.
 ### 5.6 Pool, stress, reset
 
 - [ ] Overlay `F1` menampilkan `grunt: N aktif / overflow M | skenario X`.
-- [ ] `F2`/`F3` (1000/3000 peluru musuh) tidak menghentikan Grunt; frame time tetap wajar.
+- [ ] `F2`/`F3` (100/3000 peluru musuh) tidak menghentikan Grunt; frame time tetap wajar.
 - [ ] `R` saat banyak Grunt: semua hilang, peluru musuh bersih, pola mulai dari awal.
 - [ ] `ESC` pause lalu resume: tidak ada ledakan/flash yang "melompat", timer tidak jalan saat pause.
 - [ ] Setelah `R` berkali-kali: tidak ada Grunt "hantu" (aktif tapi tak terlihat) dan tidak ada warna sisa.
