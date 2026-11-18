@@ -92,6 +92,22 @@ export class InputManager implements IInputSource
         return [...(this.currentBindings.get(action) ?? [])];
     }
 
+    /** Mereset state tombol satu action agar tidak terbaca sebagai "baru ditekan" lagi. */
+    public clearJustDown(action: InputAction): void
+    {
+        const keys = this.keysByAction.get(action);
+
+        if (!keys)
+        {
+            return;
+        }
+
+        for (const key of keys)
+        {
+            key.reset();
+        }
+    }
+
     /** Melepas seluruh Key yang dikelola manager dan menonaktifkan instance. */
     public destroy(): void
     {

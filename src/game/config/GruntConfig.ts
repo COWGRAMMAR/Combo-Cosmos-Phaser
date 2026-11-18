@@ -1,7 +1,12 @@
+import { ScreenConfig } from './ScreenConfig';
+
 export type GruntAimMode = 'down' | 'targeted';
 
 /** Jenis pola dasar yang bisa diulang oleh RainFormation. */
 export type GruntRainType = 'single' | 'wall' | 'stream';
+
+/** X tengah play area dalam koordinat lokal gameplay. */
+const PLAY_CENTER_X = ScreenConfig.playArea.width / 2;
 
 /**
  * Nilai yang bisa diubah untuk Grunt (Tipe 1).
@@ -33,8 +38,8 @@ export const GruntConfig = {
     },
 
     single: {
-        /** X spawn unit tunggal; 405 adalah tengah play area. */
-        spawnX: 405,
+        /** X spawn unit tunggal; mengikuti tengah play area. */
+        spawnX: PLAY_CENTER_X,
         moveSpeed: 140,
         moveAngleDeg: 0
     },
@@ -57,8 +62,8 @@ export const GruntConfig = {
         count: 3,
         /** Jarak antar pusat Grunt dalam baris. */
         spacing: 84,
-        /** X pusat baris; 405 adalah tengah play area. */
-        centerX: 405,
+        /** X pusat baris; mengikuti tengah play area. */
+        centerX: PLAY_CENTER_X,
         moveSpeed: 120,
         moveAngleDeg: 0
     },
@@ -70,8 +75,8 @@ export const GruntConfig = {
         spacing: 72,
         /** Jeda antar unit dalam satu kolom, dalam milidetik. */
         streamDelayMs: 200,
-        /** X kolom; 405 adalah tengah play area. */
-        spawnX: 405,
+        /** X kolom; mengikuti tengah play area. */
+        spawnX: PLAY_CENTER_X,
         moveSpeed: 150,
         moveAngleDeg: 0
     }

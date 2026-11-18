@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { GruntConfig } from '../../config/GruntConfig';
+import type { AssetRef } from '../../types/AssetRef';
 import type { IEnemyBulletSpawner } from '../../types/IEnemyBulletSpawner';
 import type { ITargetPosition } from '../../types/ITargetPosition';
 import { Team } from '../../types/Team';
@@ -26,12 +27,12 @@ export class Grunt extends Enemy
         scene: Phaser.Scene,
         x: number,
         y: number,
-        texture: string,
+        asset: AssetRef,
         bulletSpawner: IEnemyBulletSpawner,
         target: ITargetPosition
     )
     {
-        super(scene, x, y, texture, {
+        super(scene, x, y, asset, {
             team: Team.Enemy,
             maxHp: GruntConfig.maxHp,
             moveSpeed: GruntConfig.moveSpeed,

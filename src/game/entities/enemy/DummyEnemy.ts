@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { EnemyConfig } from '../../config/EnemyConfig';
+import type { AssetRef } from '../../types/AssetRef';
 import { Team } from '../../types/Team';
 import { Enemy } from './Enemy';
 import { EnemyState } from './EnemyState';
@@ -12,9 +13,9 @@ import { EnemyState } from './EnemyState';
 export class DummyEnemy extends Enemy
 {
     /** Membuat musuh diam dengan konfigurasi default dari EnemyConfig. */
-    constructor(scene: Phaser.Scene, x: number, y: number, texture: string)
+    constructor(scene: Phaser.Scene, x: number, y: number, asset: AssetRef)
     {
-        super(scene, x, y, texture, {
+        super(scene, x, y, asset, {
             team: Team.Enemy,
             maxHp: EnemyConfig.maxHp,
             moveSpeed: EnemyConfig.moveSpeed,

@@ -1,8 +1,8 @@
 import * as Phaser from 'phaser';
-import { AssetKeys } from '../../config/AssetKeys';
 import { GruntConfig } from '../../config/GruntConfig';
 import { Grunt } from '../../entities/enemy/Grunt';
 import type { IMovementPattern } from '../../entities/enemy/patterns/IMovementPattern';
+import type { AssetRef } from '../../types/AssetRef';
 import type { IEnemyBulletSpawner } from '../../types/IEnemyBulletSpawner';
 import type { ITargetPosition } from '../../types/ITargetPosition';
 
@@ -19,7 +19,12 @@ export class GruntPool
     private _overflowCount: number = 0;
 
     /** Membuat seluruh Grunt sekali di awal, lalu menonaktifkannya. */
-    constructor(scene: Phaser.Scene, bulletSpawner: IEnemyBulletSpawner, target: ITargetPosition)
+    constructor(
+        scene: Phaser.Scene,
+        bulletSpawner: IEnemyBulletSpawner,
+        target: ITargetPosition,
+        asset: AssetRef
+    )
     {
         this.group = scene.add.group({
             maxSize: GruntConfig.poolSize
@@ -27,7 +32,7 @@ export class GruntPool
 
         for (let i = 0; i < GruntConfig.poolSize; i++)
         {
-            const grunt = new Grunt(scene, 0, 0, AssetKeys.Enemy, bulletSpawner, target);
+            const grunt = new Grunt(scene, 0, 0, asset, bulletSpawner, target);
 
             grunt.setActive(false);
             grunt.setVisible(false);

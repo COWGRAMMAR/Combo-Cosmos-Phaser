@@ -11,6 +11,9 @@ export interface DebugStats
     enemyBulletsActive: number;
     enemyBulletsMax: number;
     enemyBulletsOverflow: number;
+    enemyBulletsTotalCreated: number;
+    enemyBulletsCreatedThisFrame: number;
+    enemyBulletsSpawnMs: number;
     playerHits: number;
     lanes: number;
     lives: number;
@@ -83,6 +86,7 @@ export class DebugOverlay
             `FPS ${stats.fps.toFixed(0)} | frame ${stats.frameTimeMs.toFixed(1)} ms | lanes ${stats.lanes}\n` +
             `peluru pemain: ${stats.playerBulletsActive} aktif / max ${stats.playerBulletsMax} / overflow ${stats.playerBulletsOverflow}\n` +
             `peluru musuh : ${stats.enemyBulletsActive} aktif / max ${stats.enemyBulletsMax} / overflow ${stats.enemyBulletsOverflow}\n` +
+            `total dibuat : ${stats.enemyBulletsTotalCreated} / frame ${stats.enemyBulletsCreatedThisFrame} / spawn ${stats.enemyBulletsSpawnMs.toFixed(2)} ms\n` +
             `grunt        : ${stats.gruntsActive} aktif / overflow ${stats.gruntsOverflow} | skenario ${stats.gruntScenario}\n` +
             `pemain kena : ${stats.playerHits} | nyawa ${stats.lives} | ${status}`;
     }

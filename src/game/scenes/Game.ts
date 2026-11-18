@@ -4,17 +4,21 @@ import { DepthConfig } from '../config/DepthConfig';
 import { EnemyConfig } from '../config/EnemyConfig';
 import { EnemyTestConfig } from '../config/EnemyTestConfig';
 import { GameEvents } from '../config/GameEvents';
+import { SLOT_INPUT_ACTIONS } from '../config/InputBindings';
 import { PlayerConfig } from '../config/PlayerConfig';
+import { PowerUpConfig } from '../config/PowerUpConfig';
 import { ScreenConfig } from '../config/ScreenConfig';
-import { TimeConfig } from '../config/TimeConfig';
+import { runFixedStepsWithTimeConfig } from '../utils/fixedStep';
 import { WorldConfig } from '../config/WorldConfig';
 import { PlayerBullet } from '../entities/bullet/PlayerBullet';
+import { Shield } from '../entities/effects/Shield';
 import { Shockwave } from '../entities/effects/Shockwave';
 import type { Enemy } from '../entities/enemy/Enemy';
 import { Player } from '../entities/player/Player';
 import { PlayerLaser } from '../entities/player/PlayerLaser';
 import { PlayerWeapon } from '../entities/player/PlayerWeapon';
 import { DebugTools } from '../systems/DebugTools';
+import { AssetManager } from '../systems/AssetManager';
 import { EffectManager } from '../systems/EffectManager';
 import { EnemyBulletManager } from '../systems/EnemyBulletManager';
 import { InputManager } from '../systems/InputManager';
@@ -23,7 +27,13 @@ import { PowerUpManager } from '../systems/PowerUpManager';
 import type { PowerUpType } from '../systems/PowerUpManager';
 import { GruntPool } from '../systems/enemy/GruntPool';
 import { GruntTestRunner } from '../systems/enemy/GruntTestRunner';
+import { PowerUpSlotManager } from '../systems/power-ups/PowerUpSlotManager';
+import { ActiveBuffManager } from '../systems/power-ups/ActiveBuffManager';
+import { PowerUpSpawnManager } from '../systems/power-ups/PowerUpSpawnManager';
+import type { PowerUpBuffType } from '../systems/power-ups/PowerUpBuffType';
+import type { PowerUpCategory } from '../systems/power-ups/PowerUpCategory';
 import { EffectType } from '../types/EffectType';
+import { InputAction } from '../types/InputAction';
 import { Team } from '../types/Team';
 import { DebugOverlay } from '../ui/DebugOverlay';
 import { computeFit } from '../utils/computeFit';
@@ -45,7 +55,11 @@ export class Game extends Phaser.Scene
     private enemyBullets?: EnemyBulletManager;
     private effects?: EffectManager;
     private powerUps?: PowerUpManager;
+    private slotManager?: PowerUpSlotManager;
+    private activeBuffManager?: ActiveBuffManager;
+    private spawnManager?: PowerUpSpawnManager;
     private shockwave?: Shockwave;
+    private shield?: Shield;
     private laser?: PlayerLaser;
     private overlay?: DebugOverlay;
     private debugTools?: DebugTools;
@@ -54,6 +68,7 @@ export class Game extends Phaser.Scene
     private gameOverPending: boolean = false;
     /** Frame terakhir saat tabrakan badan sudah memberi konsekuensi. */
     private lastEnemyContactFrame: number = -1;
+    private _accumulatorMs: number = 0;
 
     // Objek statistik dipakai ulang tiap frame agar tidak ada alokasi di update().
     private readonly stats: DebugStats = {
@@ -65,6 +80,9 @@ export class Game extends Phaser.Scene
         enemyBulletsActive: 0,
         enemyBulletsMax: 0,
         enemyBulletsOverflow: 0,
+        enemyBulletsTotalCreated: 0,
+        enemyBulletsCreatedThisFrame: 0,
+        enemyBulletsSpawnMs: 0,
         playerHits: 0,
         lanes: 0,
         lives: 0,
@@ -187,11 +205,10 @@ export class Game extends Phaser.Scene
         this.inputManager?.destroy();
         this.inputManager = new InputManager(this);
 
-        this.weapon = new PlayerWeapon(this);
+        this.weapon = new PlayerWeapon(this, AssetManager.resolve(AssetKeys.PlayerBullet));
 
-        this.player = new Player(this, spawn.playerX, spawn.playerY, AssetKeys.Player, {
+        this.player = new Player(this, spawn.playerX, spawn.playerY, AssetManager.resolve(AssetKeys.Player), {
             team: Team.Player,
-            maxHp: PlayerConfig.maxHp,
             moveSpeed: PlayerConfig.moveSpeed,
             bodyRadius: PlayerConfig.bodyRadius
         }, this.inputManager, this.weapon);
@@ -202,7 +219,12 @@ export class Game extends Phaser.Scene
         });
 
         // Pool harus dibuat sebelum PlayerLaser karena laser meng-cache daftar musuh.
-        const grunts = new GruntPool(this, this.enemyBullets, this.player);
+        const grunts = new GruntPool(
+            this,
+            this.enemyBullets,
+            this.player,
+            AssetManager.resolve(AssetKeys.Enemy)
+        );
 
         this.grunts = grunts;
         this.enemies = grunts.poolGroup;
@@ -214,16 +236,24 @@ export class Game extends Phaser.Scene
             onEnd: (type: EffectType) => this.handleEffectEnd(type)
         });
 
+        this.slotManager = new PowerUpSlotManager();
+        this.activeBuffManager = new ActiveBuffManager(this.effects);
+
         this.powerUps = new PowerUpManager(
             this,
             this.player,
             this.weapon,
             this.effects,
             this.enemyBullets,
-            this.enemies
+            this.enemies,
+            this.slotManager,
+            this.activeBuffManager
         );
 
+        this.spawnManager = new PowerUpSpawnManager(this, this.player, this.powerUps.getBuffRegistry());
+
         this.shockwave = new Shockwave(this, this.enemyBullets);
+        this.shield = new Shield(this);
 
         this.physics.add.overlap(
             this.weapon.bulletGroup,
@@ -265,15 +295,24 @@ export class Game extends Phaser.Scene
         this.gruntTestRunner = new GruntTestRunner(grunts);
         this.gruntTestRunner.start();
 
+        // Event power-up: item disentuh pemain dan power-up dipakai dari slot.
+        this.events.on(GameEvents.POWER_UP_COLLECTED, this.handlePowerUpCollected, this);
+        this.events.on(GameEvents.POWER_UP_USED, this.handlePowerUpUsed, this);
+
         this.pauseManager = new PauseManager(this);
         this.scene.launch('Hud');
 
         this.stats.gruntScenario = EnemyTestConfig.enabled ? EnemyTestConfig.scenario : 'off';
+        this.spawnManager?.start();
         this.playerBulletMax = 0;
         this.gameOverPending = false;
         this.lastEnemyContactFrame = -1;
 
         this.events.once('shutdown', this.handleShutdown, this);
+
+        // Reset accumulator saat scene pause/resume agar sisa delta tidak menjadi burst.
+        this.events.on(Phaser.Core.Events.PAUSE, this.handleScenePause, this);
+        this.events.on(Phaser.Core.Events.RESUME, this.handleSceneResume, this);
     }
 
     /** Menyesuaikan viewport dan zoom kamera agar play area tetap 4:3 dan tajam. */
@@ -300,28 +339,138 @@ export class Game extends Phaser.Scene
     /** Menjalankan seluruh sistem per frame. */
     update (_time: number, delta: number): void
     {
-        const safeDelta = Math.min(delta, TimeConfig.maxDeltaMs);
+        this._accumulatorMs = runFixedStepsWithTimeConfig(
+            this._accumulatorMs,
+            delta,
+            (fixedStepMs) => {
+                this.enemyBullets?.update(fixedStepMs);
+                this.effects?.update(fixedStepMs);
+                this.activeBuffManager?.update(fixedStepMs);
+                this.shockwave?.update(fixedStepMs);
+                this.laser?.update(fixedStepMs);
+            }
+        );
 
-        this.enemyBullets?.update(safeDelta);
-        this.gruntTestRunner?.update(safeDelta);
-        this.effects?.update(safeDelta);
-        this.shockwave?.update(safeDelta);
-        this.laser?.update(safeDelta);
+        // Spawn pola Grunt memakai delta frame, bukan fixed-step, agar jeda pola
+        // tetap mengikuti waktu nyata.
+        this.gruntTestRunner?.update(delta);
 
-        this.updateStats(safeDelta);
+        this.spawnManager?.update(delta);
+
+        if (this.inputManager?.isJustDown(InputAction.Pause))
+        {
+            this.pauseManager?.pause();
+        }
+
+        this.updateSlotKeybinds();
+
+        this.shield?.update(this.player?.x ?? 0, this.player?.y ?? 0);
+        this.laser?.setPosition(this.player?.x ?? 0, this.player?.y ?? 0);
+
+        // Tembakan biasa diizinkan hanya jika tidak ada buff aktif yang memblokir (misalnya Laser).
+        this.weapon?.setFiringEnabled(this.activeBuffManager?.canFireNormal() ?? true);
+
+        this.updateStats(delta);
 
         this.debugTools?.update();
         this.overlay?.update(this.stats);
     }
 
+    /** Getter read-only slot manager untuk konsumsi UI/HUD (UI hanya baca, tidak mengubah gameplay). */
+    public getSlotManager(): PowerUpSlotManager | undefined
+    {
+        return this.slotManager;
+    }
+
+    /** Getter read-only active buff manager untuk konsumsi UI/HUD (UI hanya baca, tidak mengubah gameplay). */
+    public getActiveBuffManager(): ActiveBuffManager | undefined
+    {
+        return this.activeBuffManager;
+    }
+
+    /** Getter read-only player untuk konsumsi UI/HUD (UI hanya baca, tidak mengubah gameplay). */
+    public getPlayer(): Player | undefined
+    {
+        return this.player;
+    }
+
+    /** Cek keybind slot: 1/2/3 pakai, tahan E lalu tekan 1/2/3 untuk membuang. */
+    private updateSlotKeybinds (): void
+    {
+        if (!this.slotManager || !this.activeBuffManager || !this.player || !this.weapon)
+        {
+            return;
+        }
+
+        const input = this.inputManager;
+
+        if (!input)
+        {
+            return;
+        }
+
+        const discard = input.isDown(InputAction.DiscardModifier);
+        const slotCount = Math.min(SLOT_INPUT_ACTIONS.length, PowerUpConfig.slotCount);
+
+        for (let i = 0; i < slotCount; i++)
+        {
+            if (!input.isJustDown(SLOT_INPUT_ACTIONS[i]))
+            {
+                continue;
+            }
+
+            if (discard)
+            {
+                this.slotManager.discard(i);
+                continue;
+            }
+
+            const buff = this.slotManager.use(i);
+
+            if (buff)
+            {
+                this.activeBuffManager.activate(buff, this.player, this.weapon, this);
+                this.events.emit(GameEvents.POWER_UP_USED, i);
+            }
+        }
+    }
+
+    /** Set ulang accumulator saat scene dijeda, mencegah burst saat kembali aktif. */
+    private handleScenePause (): void
+    {
+        this._accumulatorMs = 0;
+        this.player?.resetAccumulator();
+        this.activeBuffManager?.pauseAll();
+        this.spawnManager?.stop();
+    }
+
+    /** Set ulang accumulator saat scene dilanjutkan, mencegah burst dari delta waktu jeda. */
+    private handleSceneResume (): void
+    {
+        this._accumulatorMs = 0;
+        this.player?.resetAccumulator();
+        this.activeBuffManager?.resumeAll();
+        this.spawnManager?.start();
+
+        // ESC bisa masih tertahan saat resume; reset agar tidak langsung memicu pause lagi.
+        this.inputManager?.clearJustDown(InputAction.Pause);
+    }
+
     /** Mengosongkan seluruh pool dan mengembalikan state ke awal run. */
     public resetRun (): void
     {
+        this._accumulatorMs = 0;
+        this.player?.resetAccumulator();
+
         this.effects?.reset();
+        this.activeBuffManager?.reset();
+        this.slotManager?.reset();
+        this.spawnManager?.stop();
         this.weapon?.reset();
         this.weapon?.clearAll();
         this.enemyBullets?.reset();
         this.shockwave?.stop();
+        this.shield?.stop();
         this.laser?.reset();
 
         this.playerBulletMax = 0;
@@ -363,6 +512,19 @@ export class Game extends Phaser.Scene
         this.shockwave?.start(player.x, player.y);
     }
 
+    /** Item power-up disentuh pemain: delegate ke PowerUpManager untuk diterapkan atau masuk slot. */
+    private handlePowerUpCollected (type: PowerUpBuffType, _category: PowerUpCategory): void
+    {
+        this.powerUps?.applyBuffType(type);
+    }
+
+    /** Power-up dari slot diaktifkan pemain: aktifkan buff lewat ActiveBuffManager. */
+    private handlePowerUpUsed (_slotIndex: number): void
+    {
+        // Buff sudah diaktifkan di updateSlotKeybinds lewat activeBuffManager.activate();
+        // Event ini dipancarkan untuk konsumsi UI/HUD.
+    }
+
     /** Menerapkan efek samping saat sebuah efek durasi mulai. */
     private handleEffectStart (type: EffectType): void
     {
@@ -373,8 +535,11 @@ export class Game extends Phaser.Scene
                 break;
             case EffectType.Shield:
                 this.player?.setShield(true);
+                this.shield?.start(this.player?.x ?? 0, this.player?.y ?? 0);
                 break;
             case EffectType.Laser:
+                // Blokir tembakan biasa diatur oleh ActiveBuffManager.canFireNormal() di update(),
+                // bukan di sini. Laser visual tetap diaktifkan/dimatikan lewat efek durasi.
                 this.laser?.activate();
                 break;
         }
@@ -390,9 +555,11 @@ export class Game extends Phaser.Scene
                 break;
             case EffectType.Shield:
                 this.player?.setShield(false);
+                this.shield?.stop();
                 break;
             case EffectType.Laser:
                 this.laser?.deactivate();
+                // Blokir tembakan biasa dilepaskan oleh ActiveBuffManager di update().
                 break;
         }
     }
@@ -426,6 +593,9 @@ export class Game extends Phaser.Scene
         stats.enemyBulletsActive = enemyBullets.activeCount;
         stats.enemyBulletsMax = enemyBullets.maxActive;
         stats.enemyBulletsOverflow = enemyBullets.overflowCount;
+        stats.enemyBulletsTotalCreated = enemyBullets.totalCreated;
+        stats.enemyBulletsCreatedThisFrame = enemyBullets.createdThisFrame;
+        stats.enemyBulletsSpawnMs = enemyBullets.spawnMsThisFrame;
         stats.playerHits = enemyBullets.playerHitCount;
         stats.lanes = weapon.laneCount;
         stats.lives = player.lives;
@@ -481,6 +651,9 @@ export class Game extends Phaser.Scene
         this.shockwave?.destroy();
         this.shockwave = undefined;
 
+        this.shield?.destroy();
+        this.shield = undefined;
+
         this.laser?.destroy();
         this.laser = undefined;
 
@@ -488,8 +661,15 @@ export class Game extends Phaser.Scene
         this.grunts = undefined;
         this.enemies = undefined;
 
+        this.spawnManager?.stop();
+        this.activeBuffManager?.reset();
+        this.slotManager?.reset();
         this.scale.off('resize', this.applyCameraLayout, this);
 
         this.events.off(GameEvents.PLAYER_HIT, this.handlePlayerHit);
+        this.events.off(GameEvents.POWER_UP_COLLECTED, this.handlePowerUpCollected, this);
+        this.events.off(GameEvents.POWER_UP_USED, this.handlePowerUpUsed, this);
+        this.events.off(Phaser.Core.Events.PAUSE, this.handleScenePause, this);
+        this.events.off(Phaser.Core.Events.RESUME, this.handleSceneResume, this);
     }
 }

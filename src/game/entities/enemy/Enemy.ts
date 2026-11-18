@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { DepthConfig } from '../../config/DepthConfig';
+import type { AssetRef } from '../../types/AssetRef';
 import type { EntityConfig } from '../../types/EntityConfig';
 import { BaseEntity } from '../BaseEntity';
 import { EnemyState } from './EnemyState';
@@ -14,9 +15,9 @@ export class Enemy extends BaseEntity
     public entityState: EnemyState = EnemyState.Active;
 
     /** Menyiapkan sprite musuh pada layer render musuh. */
-    constructor(scene: Phaser.Scene, x: number, y: number, texture: string, config: EntityConfig)
+    constructor(scene: Phaser.Scene, x: number, y: number, asset: AssetRef, config: EntityConfig)
     {
-        super(scene, x, y, texture, config);
+        super(scene, x, y, asset, config);
 
         this.setDepth(DepthConfig.enemy);
     }

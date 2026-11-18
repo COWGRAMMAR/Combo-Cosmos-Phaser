@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import { AssetKeys } from '../config/AssetKeys';
 import { ScreenConfig } from '../config/ScreenConfig';
 import { bindDesignCamera } from '../utils/designCamera';
 
@@ -23,7 +24,7 @@ export class GameOver extends Scene
 
         const center = ScreenConfig.center;
 
-        this.background = this.add.image(center.x, center.y, 'background')
+        this.background = this.add.image(center.x, center.y, AssetKeys.Background)
             .setDisplaySize(ScreenConfig.width, ScreenConfig.height);
         this.background.setAlpha(0.5);
 

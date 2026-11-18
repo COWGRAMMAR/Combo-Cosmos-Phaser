@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
-import { AssetKeys } from '../../config/AssetKeys';
 import { PlayerConfig } from '../../config/PlayerConfig';
+import type { AssetRef } from '../../types/AssetRef';
 import { PlayerBullet } from '../bullet/PlayerBullet';
 
 /**
@@ -11,33 +11,47 @@ import { PlayerBullet } from '../bullet/PlayerBullet';
 export class PlayerWeapon
 {
     private readonly scene: Phaser.Scene;
+    /** Referensi tekstur peluru yang sudah di-resolve oleh pemanggil (scene). */
+    private readonly bulletAsset: AssetRef;
     private readonly group: Phaser.Physics.Arcade.Group;
     /** Cache semua peluru agar loop tidak membuat array baru setiap frame. */
     private readonly bullets: PlayerBullet[];
+    /** Free-list peluru idle: pop di fire, push di deactivate (O(1), tanpa scan linier). */
+    private readonly _idle: PlayerBullet[] = [];
     private cooldownRemainingMs: number = 0;
     private lanes: number = PlayerConfig.weapon.lanes;
     private cooldownMultiplier: number = 1;
     private _overflowCount: number = 0;
+    /** Saat false (misalnya efek Laser aktif), peluru biasa tidak dapat ditembak. */
+    private _firingEnabled: boolean = true;
 
     /**
      * Membuat pool peluru pemain dan mengisinya di awal.
      * Pool diisi awal supaya group tidak membuat objek baru saat gameplay berjalan.
+     * Referensi aset diterima dari scene karena entities tidak boleh mengakses systems.
      */
-    constructor(scene: Phaser.Scene)
+    constructor(scene: Phaser.Scene, bulletAsset: AssetRef)
     {
         this.scene = scene;
+        this.bulletAsset = bulletAsset;
         this.group = scene.physics.add.group({
             classType: PlayerBullet,
             maxSize: PlayerConfig.weapon.poolSize,
-            defaultKey: AssetKeys.PlayerBullet
+            defaultKey: this.bulletAsset.texture
         });
 
         for (let i = 0; i < PlayerConfig.weapon.poolSize; i++)
         {
-            this.group.create(0, 0, AssetKeys.PlayerBullet, undefined, false, false);
+            this.group.create(0, 0, this.bulletAsset.texture, this.bulletAsset.frame, false, false);
         }
 
         this.bullets = Array.from(this.group.children) as PlayerBullet[];
+
+        // Semua peluru pre-warm mulai dalam keadaan idle, siap dipakai lewat free-list.
+        for (const bullet of this.bullets)
+        {
+            this._idle.push(bullet);
+        }
     }
 
     /** Pool peluru pemain untuk didaftarkan ke collision. */
@@ -73,7 +87,7 @@ export class PlayerWeapon
             this.cooldownRemainingMs = Math.max(0, this.cooldownRemainingMs - delta);
         }
 
-        if (!firing || this.cooldownRemainingMs > 0)
+        if (!firing || !this._firingEnabled || this.cooldownRemainingMs > 0)
         {
             return;
         }
@@ -106,6 +120,12 @@ export class PlayerWeapon
         this.cooldownMultiplier = multiplier > 0 ? multiplier : 1;
     }
 
+    /** Mengaktifkan atau menonaktifkan kemampuan menembak peluru biasa. */
+    public setFiringEnabled(enabled: boolean): void
+    {
+        this._firingEnabled = enabled;
+    }
+
     /** Mengembalikan cooldown, jalur, dan penghitung overflow ke kondisi awal. */
     public reset(): void
     {
@@ -113,6 +133,7 @@ export class PlayerWeapon
         this.lanes = PlayerConfig.weapon.lanes;
         this.cooldownMultiplier = 1;
         this._overflowCount = 0;
+        this._firingEnabled = true;
     }
 
     /** Menonaktifkan semua peluru pemain yang masih aktif. */
@@ -123,6 +144,7 @@ export class PlayerWeapon
             if (this.bullets[i].active)
             {
                 this.bullets[i].deactivate();
+                this._idle.push(this.bullets[i]);
             }
         }
     }
@@ -152,6 +174,7 @@ export class PlayerWeapon
                 bullet.x - bullet.radius > bounds.right
             ) {
                 bullet.deactivate();
+                this._idle.push(bullet);
             }
         }
     }
@@ -167,7 +190,7 @@ export class PlayerWeapon
         for (let i = 0; i < laneCount; i++)
         {
             const laneX = x + (i - laneCenter) * spacing;
-            const bullet = this.group.get(laneX, y) as PlayerBullet | null;
+            const bullet = this._idle.pop() as PlayerBullet | null;
 
             if (!bullet)
             {

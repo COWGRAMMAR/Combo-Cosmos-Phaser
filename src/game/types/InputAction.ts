@@ -9,5 +9,10 @@ export enum InputAction
     MoveLeft = 'move-left',
     MoveRight = 'move-right',
     Fire = 'fire',
-    Dash = 'dash'
+    Dash = 'dash',
+    Slot1 = 'slot-1',
+    Slot2 = 'slot-2',
+    Slot3 = 'slot-3',
+    DiscardModifier = 'discard-modifier',
+    Pause = 'pause'
 }

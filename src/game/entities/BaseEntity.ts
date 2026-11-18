@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
-import { TimeConfig } from '../config/TimeConfig';
+import { runFixedStepsWithTimeConfig } from '../utils/fixedStep';
+import type { AssetRef } from '../types/AssetRef';
 import type { EntityConfig } from '../types/EntityConfig';
 import type { Team } from '../types/Team';
 import type { IDamageable } from './IDamageable';
@@ -7,19 +8,20 @@ import type { IDamageable } from './IDamageable';
 /** Kelas dasar entitas bertim dengan HP, damage, dan body fisika Arcade. */
 export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements IDamageable
 {
-    protected readonly maxHp: number;
-    private _hp: number;
+    protected readonly maxHp?: number;
+    private _hp: number = 0;
     public moveSpeed: number;
     public readonly team: Team;
     protected invulnerableRemainingMs: number = 0;
+    private _accumulatorMs: number = 0;
 
     /** Menyiapkan sprite, HP, tim, dan body fisika entitas. */
-    constructor(scene: Phaser.Scene, x: number, y: number, texture: string, config: EntityConfig)
+    constructor(scene: Phaser.Scene, x: number, y: number, asset: AssetRef, config: EntityConfig)
     {
-        super(scene, x, y, texture);
+        super(scene, x, y, asset.texture, asset.frame);
 
         this.maxHp = config.maxHp;
-        this._hp = config.maxHp;
+        this._hp = config.maxHp ?? 0;
         this.moveSpeed = config.moveSpeed;
         this.team = config.team;
 
@@ -49,13 +51,14 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
     /** Nilai HP maksimum. */
     get maxHealth(): number
     {
-        return this.maxHp;
+        return this.maxHp ?? 0;
     }
 
     /** Rasio HP saat ini terhadap HP maksimum (0–1). */
     get hpRatio(): number
     {
-        return this.maxHp > 0 ? this._hp / this.maxHp : 0;
+        const max = this.maxHp;
+        return max !== undefined && max > 0 ? this._hp / max : 0;
     }
 
     /** True selama HP masih di atas nol. */
@@ -81,16 +84,7 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
         }
     }
 
-    /** Menambah HP tanpa melebihi nilai maksimum. */
-    public heal(amount: number): void
-    {
-        if (!this.isAlive || amount <= 0)
-        {
-            return;
-        }
 
-        this._hp = Math.min(this.maxHp, this._hp + amount);
-    }
 
     /** True jika sisa durasi kebal masih berjalan. */
     public isInvulnerable(): boolean
@@ -98,17 +92,13 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
         return this.invulnerableRemainingMs > 0;
     }
 
-    /** True jika target masih hidup dan berasal dari tim berbeda. */
-    public canDamage(target: BaseEntity): boolean
-    {
-        return target.isAlive && target.team !== this.team;
-    }
+
 
     /** Mengaktifkan ulang entitas di posisi baru untuk dipakai dari object pool. */
     public resetForPool(x: number, y: number): void
     {
         this.setPosition(x, y);
-        this._hp = this.maxHp;
+        this._hp = this.maxHp ?? 0;
         this.invulnerableRemainingMs = 0;
         this.setActive(true);
         this.setVisible(true);
@@ -118,19 +108,34 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
         body.reset(x, y);
     }
 
+    /** Tangkap snapshot input sekali per frame sebelum loop fixed-step; override di subclass yang butuh input. */
+    protected captureFrameInput(): void {}
+
+    /** Set ulang accumulator fixed-step agar sisa delta tidak menjadi burst setelah pause/reset. */
+    public resetAccumulator(): void
+    {
+        this._accumulatorMs = 0;
+    }
+
     /** Memanggil updateEntity() setiap frame setelah update dasar Phaser. */
     public preUpdate(time: number, delta: number): void
     {
         super.preUpdate(time, delta);
 
-        const safeDelta = Math.min(delta, TimeConfig.maxDeltaMs);
+        this.captureFrameInput();
 
-        if (this.invulnerableRemainingMs > 0)
-        {
-            this.invulnerableRemainingMs = Math.max(0, this.invulnerableRemainingMs - safeDelta);
-        }
+        this._accumulatorMs = runFixedStepsWithTimeConfig(
+            this._accumulatorMs,
+            delta,
+            (fixedStepMs) => {
+                if (this.invulnerableRemainingMs > 0)
+                {
+                    this.invulnerableRemainingMs = Math.max(0, this.invulnerableRemainingMs - fixedStepMs);
+                }
 
-        this.updateEntity(time, safeDelta);
+                this.updateEntity(time, fixedStepMs);
+            }
+        );
     }
 
     /** Logika per-frame khusus subclass; dipanggil otomatis dari preUpdate(). */
