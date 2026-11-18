@@ -62,7 +62,7 @@ export const AssetManifest = {
     ],
     /** Dimuat di scene Preloader. */
     main: [
-        { key: AssetKeys.Logo, source: 'file', path: 'assets/logo.png' }
+        { key: AssetKeys.Logo, source: 'file', path: 'assets/logo-upscaled.png' }
     ],
     /** Digenerate saat Preloader.create() sebagai placeholder sementara. */
     placeholders: [

@@ -33,6 +33,7 @@ import { EffectType } from '../types/EffectType';
 import { InputAction } from '../types/InputAction';
 import { Team } from '../types/Team';
 import { DebugOverlay } from '../ui/DebugOverlay';
+import { computeFit } from '../utils/computeFit';
 import type { DebugStats } from '../ui/DebugOverlay';
 
 /**
@@ -174,10 +175,12 @@ export class Game extends Phaser.Scene
         const spawn = ScreenConfig.spawn;
         const camera = this.cameras.main;
 
-        camera.setViewport(playArea.x, playArea.y, playArea.width, playArea.height);
         camera.setBounds(0, 0, playArea.width, playArea.height);
         camera.setBackgroundColor(WorldConfig.background.color);
         this.physics.world.setBounds(0, 0, playArea.width, playArea.height);
+
+        this.applyCameraLayout();
+        this.scale.on('resize', this.applyCameraLayout, this);
 
         // TEMP: garis bantu batas play area; hapus setelah verifikasi fase ini.
         this.add.rectangle(0, 0, playArea.width, playArea.height)
@@ -257,7 +260,8 @@ export class Game extends Phaser.Scene
         this.events.off(GameEvents.BOMB_USED, this.handleBombUsed);
         this.events.on(GameEvents.BOMB_USED, this.handleBombUsed);
 
-        this.overlay = new DebugOverlay(this);
+        this.overlay = new DebugOverlay();
+        this.applyCameraLayout();
         this.debugTools = new DebugTools(this, {
             toggleOverlay: () => this.overlay?.toggle(),
             stress: (count: number) => this.spawnStressBullets(count),
@@ -282,6 +286,27 @@ export class Game extends Phaser.Scene
         // Reset accumulator saat scene pause/resume agar sisa delta tidak menjadi burst.
         this.events.on(Phaser.Core.Events.PAUSE, this.handleScenePause, this);
         this.events.on(Phaser.Core.Events.RESUME, this.handleSceneResume, this);
+    }
+
+    /** Menyesuaikan viewport dan zoom kamera agar play area tetap 4:3 dan tajam. */
+    private applyCameraLayout (): void
+    {
+        const playArea = ScreenConfig.playArea;
+        const fit = computeFit(this.scale.width, this.scale.height);
+        const camera = this.cameras.main;
+
+        camera.setViewport(
+            fit.offsetX + playArea.x * fit.scale,
+            fit.offsetY + playArea.y * fit.scale,
+            playArea.width * fit.scale,
+            playArea.height * fit.scale
+        );
+        camera.setZoom(fit.scale);
+        camera.centerOn(playArea.width / 2, playArea.height / 2);
+
+        // Overlay DOM ditempel ke sudut kiri atas viewport kamera (area hijau).
+        const canvasRect = this.scale.canvas.getBoundingClientRect();
+        this.overlay?.setPosition(canvasRect.left + camera.x + 8, canvasRect.top + camera.y + 8);
     }
 
     /** Menjalankan seluruh sistem per frame. */
@@ -594,6 +619,7 @@ export class Game extends Phaser.Scene
         this.spawnManager?.stop();
         this.activeBuffManager?.reset();
         this.slotManager?.reset();
+        this.scale.off('resize', this.applyCameraLayout, this);
 
         this.events.off(GameEvents.PLAYER_HIT, this.handlePlayerHit);
         this.events.off(GameEvents.BOMB_USED, this.handleBombUsed);

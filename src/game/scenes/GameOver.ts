@@ -1,6 +1,7 @@
 import { Scene } from 'phaser';
 import { AssetKeys } from '../config/AssetKeys';
 import { ScreenConfig } from '../config/ScreenConfig';
+import { bindDesignCamera } from '../utils/designCamera';
 
 /** Layar game over yang menunggu klik untuk kembali ke menu. */
 export class GameOver extends Scene
@@ -23,15 +24,18 @@ export class GameOver extends Scene
 
         const center = ScreenConfig.center;
 
-        this.background = this.add.image(center.x, center.y, AssetKeys.Background);
+        this.background = this.add.image(center.x, center.y, AssetKeys.Background)
+            .setDisplaySize(ScreenConfig.width, ScreenConfig.height);
         this.background.setAlpha(0.5);
 
         this.gameover_text = this.add.text(center.x, center.y, 'Game Over', {
             fontFamily: 'Arial Black', fontSize: 64, color: '#ffffff',
             stroke: '#000000', strokeThickness: 8,
-            align: 'center'
+            align: 'center', resolution: 2
         });
         this.gameover_text.setOrigin(0.5);
+
+        bindDesignCamera(this);
 
         this.input.once('pointerdown', () => {
 

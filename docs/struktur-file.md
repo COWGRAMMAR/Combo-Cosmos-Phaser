@@ -2,7 +2,8 @@
 
 - **Status:** Fase 0 (fondasi class) + InputManager + Fase 1 (bullet foundation) + Fase 2–4 (survival, efek & power-up, dash) + Fase screen/scale/layer/game loop selesai
 - **Tanggal:** 2026-11-06
-- **Scope dokumen:** **hanya struktur folder/file**. Rencana class, field, method, dan urutan implementasi ada di `plans/2#-entities-class.md`. Rencana porting arsitektur ada di `plans/1#-bullet-hell-porting.md`. Rencana UI HUD ada di `plans/7#-ui-hud-slot-power-up-panel-kanan.md`. Kontrak bullet system ada di `doc/bullet-system.md`.
+- **Scope dokumen:** **hanya struktur folder/file**. Rencana class, field, method, dan urutan implementasi ada di `plans/2#-entities-class.md`. Rencana porting arsitektur ada di `plans/1#-bullet-hell-porting.md`. Rencana input ada di `plans/3#-input-manager.md`. Rencana screen/scale/layer/game loop ada di `plans/4#-screen-scale-layer-gameloop.md`. Rencana UI HUD ada di `plans/7#-ui-hud-slot-power-up-panel-kanan.md`. Kontrak bullet system ada di `docs/bullet-system.md`.
+- **Catatan penomoran plan #3/#4:** nomor `3#` dan `4#` di branch ini kini menunjuk topik **input manager** dan **screen/scale/layer/game loop** (dari branch screen-res). Plan `3#`/`4#` lama di branch utama bertopik shield visual & sinkronisasi shield-laser, sudah selesai dan dihapus; keduanya berbeda 180°, jadi sengaja disimpan sebagai dua file terpisah dan tidak digabung.
 
 Dokumen ini adalah **sumber kebenaran struktur file**. Jika isinya berbeda dengan kondisi repo, struktur dianggap belum selesai dikerjakan.
 
@@ -25,9 +26,11 @@ Combo-Cosmos-Phaser/
 ├─ plans/
 │  ├─ 1#-bullet-hell-porting.md   # (existing)
 │  ├─ 2#-entities-class.md        # rencana class Player & Enemy
+│  ├─ 3#-input-manager.md         # rencana InputManager (abstraksi input lintas layer)
+│  ├─ 4#-screen-scale-layer-gameloop.md # rencana screen/scale/layer + game loop
 │  └─ 7#-ui-hud-slot-power-up-panel-kanan.md # UI HUD slot power-up (panel kiri & kanan)
 ├─ issues/                        # (dibuat saat ada bug)
-├─ doc/
+├─ docs/
 │  ├─ struktur-file.md            # dokumen ini
 │  ├─ bullet-system.md            # kontrak fondasi bullet untuk kerja paralel
 │  ├─ asset-system.md             # arsitektur aset: manifest, resolve, animasi, peta migrasi atlas
@@ -46,6 +49,7 @@ Combo-Cosmos-Phaser/
       │  ├─ TimeConfig.ts         # target/batas FPS + delta maksimum
       │  ├─ DepthConfig.ts        # urutan layer render bernama
       │  ├─ HudConfig.ts          # warna/label placeholder HUD
+      │  ├─ HudSizeConfig.ts      # ukuran & tata letak elemen HUD (padding, slot, progress bar)
       │  ├─ PauseConfig.ts        # warna/teks placeholder overlay pause
       │  ├─ AssetKeys.ts          # key logis aset (texture) — sumber nama key untuk manifest
       │  ├─ AssetManifest.ts      # data murni: entri file/placeholder, frame, dan tabel animasi
@@ -115,6 +119,8 @@ Combo-Cosmos-Phaser/
       │  ├─ EffectType.ts         # enum jenis efek durasi
       │  └─ IInputSource.ts       # kontrak sumber input (tanpa Phaser)
       └─ utils/
+         ├─ computeFit.ts         # hitung skala FIT (letterbox) + offset tengah dari ukuran window
+         ├─ designCamera.ts       # apply/bind kamera desain: zoom + centerOn + listener resize
          └─ fixedStep.ts          # helper loop fixed timestep (ekstraksi duplikat Game.ts & BaseEntity.ts)
 ```
 
@@ -175,9 +181,13 @@ berada di `entities/bullet/` karena dipakai bersama player dan enemy.
 
 ## 4. Referensi
 
-- Kontrak bullet system & aturan performa: `doc/bullet-system.md`
-- Arsitektur aset & peta migrasi atlas: `doc/asset-system.md`
-- Daftar tombol debug (F1–F4, Z–N) & isi overlay: `doc/debug-toggles.md`
+- Kontrak bullet system & aturan performa: `docs/bullet-system.md`
+- Arsitektur aset & peta migrasi atlas: `docs/asset-system.md`
+- Alur aset sampai render (versi sederhana): `docs/asset-system-alur-sederhana.md`
+- Daftar tombol debug (F1–F4, Z–N) & isi overlay: `docs/debug-toggles.md`
+- Panduan build: `docs/build.md`
 - Rencana class & implementasi: `plans/2#-entities-class.md`
+- Rencana input: `plans/3#-input-manager.md`
+- Rencana screen/scale/layer/game loop: `plans/4#-screen-scale-layer-gameloop.md`
 - Rencana UI HUD slot power-up: `plans/7#-ui-hud-slot-power-up-panel-kanan.md`
 - Rencana porting arsitektur (pooling, wave, difficulty, skill, profile): `plans/1#-bullet-hell-porting.md`

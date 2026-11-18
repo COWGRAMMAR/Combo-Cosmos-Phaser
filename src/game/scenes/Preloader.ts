@@ -2,6 +2,7 @@ import { Scene } from 'phaser';
 import { AssetKeys } from '../config/AssetKeys';
 import { ScreenConfig } from '../config/ScreenConfig';
 import { AssetManager } from '../systems/AssetManager';
+import { bindDesignCamera } from '../utils/designCamera';
 
 const BAR_WIDTH = 468;
 const BAR_HEIGHT = 32;
@@ -22,7 +23,8 @@ export class Preloader extends Scene
     init ()
     {
         //  We loaded this image in our Boot Scene, so we can display it here
-        this.add.image(ScreenConfig.center.x, ScreenConfig.center.y, AssetKeys.Background);
+        this.add.image(ScreenConfig.center.x, ScreenConfig.center.y, AssetKeys.Background)
+            .setDisplaySize(ScreenConfig.width, ScreenConfig.height);
 
         //  A simple progress bar. This is the outline of the bar.
         this.add.rectangle(ScreenConfig.center.x, ScreenConfig.center.y, BAR_WIDTH, BAR_HEIGHT).setStrokeStyle(1, 0xffffff);
@@ -43,6 +45,8 @@ export class Preloader extends Scene
             bar.width = BAR_FILL_START + (BAR_FILL_RANGE * progress);
 
         });
+
+        bindDesignCamera(this);
     }
 
     /** Memuat aset game dan menampilkan progres loading. */

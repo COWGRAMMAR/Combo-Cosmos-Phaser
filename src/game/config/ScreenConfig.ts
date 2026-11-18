@@ -1,6 +1,9 @@
 /**
- * Satu-satunya sumber kebenaran ukuran canvas dan tata letak layar.
- * Semua koordinat gameplay memakai ruang lokal play area (0..810 x 0..1080).
+ * Satu-satunya sumber kebenaran ukuran desain dan tata letak layar.
+ * `width`/`height` adalah ukuran DESAIN, bukan ukuran canvas aktual: canvas
+ * mengikuti ukuran window lewat Scale.RESIZE, lalu tiap scene memakai zoom
+ * kamera agar ruang desain ini tetap 4:3 dan terpusat.
+ * Semua koordinat gameplay memakai ruang lokal play area (0..1060 x 0..1080).
  */
 const screenWidth = 2180;
 const screenHeight = 1080; //1080

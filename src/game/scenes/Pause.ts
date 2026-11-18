@@ -4,6 +4,7 @@ import { DEFAULT_INPUT_BINDINGS } from '../config/InputBindings';
 import { PauseConfig } from '../config/PauseConfig';
 import { ScreenConfig } from '../config/ScreenConfig';
 import { InputAction } from '../types/InputAction';
+import { bindDesignCamera } from '../utils/designCamera';
 
 /** Overlay pause di atas gameplay; isinya masih placeholder. TEMP */
 export class Pause extends Scene
@@ -37,7 +38,8 @@ export class Pause extends Scene
                 fontSize: PauseConfig.title.fontSize,
                 color: PauseConfig.title.color,
                 stroke: PauseConfig.title.stroke,
-                strokeThickness: PauseConfig.title.strokeThickness
+                strokeThickness: PauseConfig.title.strokeThickness,
+                resolution: 2
             }
         ).setOrigin(0.5);
 
@@ -48,9 +50,12 @@ export class Pause extends Scene
             {
                 fontFamily: PauseConfig.hint.fontFamily,
                 fontSize: PauseConfig.hint.fontSize,
-                color: PauseConfig.hint.color
+                color: PauseConfig.hint.color,
+                resolution: 2
             }
         ).setOrigin(0.5);
+
+        bindDesignCamera(this);
 
         this.input.once('pointerdown', () => {
 
