@@ -1,5 +1,4 @@
 import * as Phaser from 'phaser';
-import { HudSizeConfig } from '../config/HudSizeConfig';
 import { HudConfig } from '../config/HudConfig';
 
 /**
@@ -23,41 +22,42 @@ export class PowerUpSlotBox extends Phaser.GameObjects.Container
         super(scene, x, y);
 
         this.bg = scene.add
-            .rectangle(0, 0, size, size, 0x334155, 0.5)
-            .setStrokeStyle(HudSizeConfig.slot.emptyBorderThickness, 0x94a3b8)
+            .rectangle(0, 0, size, size, HudConfig.slot.bgColor, HudConfig.slot.bgAlpha)
+            .setStrokeStyle(HudConfig.slot.borderThickness, HudConfig.slot.borderColor)
             .setOrigin(0.5);
 
         this.icon = scene.add
             .image(0, 0, '')
             .setDisplaySize(
-                size - HudSizeConfig.slot.padding * 2,
-                size - HudSizeConfig.slot.padding * 2
+                size - HudConfig.slot.padding * 2,
+                size - HudConfig.slot.padding * 2
             )
             .setVisible(false);
 
         this.stackText = scene.add
             .text(
-                size / 2 - HudSizeConfig.slot.padding,
-                size / 2 - HudSizeConfig.slot.padding,
+                size / 2 - HudConfig.slot.padding,
+                size / 2 - HudConfig.slot.padding,
                 '',
                 {
                     fontFamily: HudConfig.label.fontFamily,
-                    fontSize: 20,
-                    color: '#ffffff'
+                    fontSize: HudConfig.slot.stackFontSize,
+                    color: HudConfig.slot.stackColor
                 }
             )
-            .setOrigin(1, 0)
+            // Angka stack ditempel di pojok kanan bawah kotak.
+            .setOrigin(1, 1)
             .setVisible(false);
 
         this.keybindText = scene.add
             .text(
                 0,
-                size / 2 + HudSizeConfig.slot.padding + 4,
+                size / 2 + HudConfig.slot.padding + HudConfig.slot.keybindGap,
                 '',
                 {
                     fontFamily: HudConfig.label.fontFamily,
-                    fontSize: 18,
-                    color: '#e2e8f0'
+                    fontSize: HudConfig.slot.keybindFontSize,
+                    color: HudConfig.slot.keybindColor
                 }
             )
             .setOrigin(0.5, 0);
@@ -72,22 +72,20 @@ export class PowerUpSlotBox extends Phaser.GameObjects.Container
     {
         this.icon.setVisible(false);
         this.stackText.setVisible(false);
-        this.bg.setStrokeStyle(HudSizeConfig.slot.emptyBorderThickness, 0x64748b);
+        this.bg.setStrokeStyle(HudConfig.slot.borderThickness, HudConfig.slot.borderColor);
         this.keybindText.setText(keybind);
         this.keybindText.setVisible(true);
     }
 
-    /** Tampilkan slot terisi dengan ikon, stack, dan keybind. */
-    public setFilled(texture: string, count: number, maxStack: number, keybind: string): void
+    /** Tampilkan slot terisi dengan ikon, jumlah stack, dan keybind. */
+    public setFilled(texture: string, count: number, keybind: string): void
     {
         this.icon.setTexture(texture);
         this.icon.setVisible(true);
-        this.stackText.setText(`${count}/${maxStack}`);
+        this.stackText.setText(String(count));
         this.stackText.setVisible(true);
-        this.bg.setStrokeStyle(
-            count >= maxStack ? HudSizeConfig.slot.fullBorderThickness : HudSizeConfig.slot.emptyBorderThickness,
-            0x22d3ee
-        );
+        // Border tetap netral dan setebal slot kosong; jumlah stack cukup lewat angka.
+        this.bg.setStrokeStyle(HudConfig.slot.borderThickness, HudConfig.slot.borderColor);
         this.keybindText.setText(keybind);
         this.keybindText.setVisible(true);
     }

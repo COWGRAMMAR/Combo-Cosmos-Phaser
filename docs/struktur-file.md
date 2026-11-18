@@ -48,8 +48,7 @@ Combo-Cosmos-Phaser/
       │  ├─ ScreenConfig.ts       # sumber kebenaran canvas, play area, panel HUD, spawn
       │  ├─ TimeConfig.ts         # target/batas FPS + delta maksimum
       │  ├─ DepthConfig.ts        # urutan layer render bernama
-      │  ├─ HudConfig.ts          # warna/label placeholder HUD
-      │  ├─ HudSizeConfig.ts      # ukuran & tata letak elemen HUD (padding, slot, progress bar)
+      │  ├─ HudConfig.ts          # warna panel, gaya teks, ukuran & offset tata letak HUD
       │  ├─ PauseConfig.ts        # warna/teks placeholder overlay pause
       │  ├─ AssetKeys.ts          # key logis aset (texture) — sumber nama key untuk manifest
       │  ├─ AssetManifest.ts      # data murni: entri file/placeholder, frame, dan tabel animasi

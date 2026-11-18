@@ -111,6 +111,12 @@ export class EffectManager
         return (this.remaining.get(type) ?? 0) > 0;
     }
 
+    /** Sisa durasi efek dalam milidetik; 0 jika tidak aktif. Sumber kebenaran tunggal untuk timer buff. */
+    public getRemainingMs(type: EffectType): number
+    {
+        return this.remaining.get(type) ?? 0;
+    }
+
 
 
     /** Mematikan semua efek dan menjalankan callback akhirnya. */

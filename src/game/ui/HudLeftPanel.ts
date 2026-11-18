@@ -14,17 +14,17 @@ export class HudLeftPanel extends Phaser.GameObjects.Container
         super(scene, x, y);
 
         const background = scene.add
-            .rectangle(0, 0, width, height, 0x111827)
+            .rectangle(0, 0, width, height, HudConfig.panel.leftColor)
             .setOrigin(0);
 
         const label = scene.add
             .text(
                 width / 2,
                 height / 2,
-                'HUD KIRI',
+                HudConfig.panel.leftTitle,
                 {
                     fontFamily: HudConfig.label.fontFamily,
-                    fontSize: HudConfig.label.fontSize,
+                    fontSize: HudConfig.label.titleFontSize,
                     color: HudConfig.label.color
                 }
             )

@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { HudSizeConfig } from '../config/HudSizeConfig';
+import { HudConfig } from '../config/HudConfig';
 
 /**
  * Satu baris durasi buff aktif di daftar di bawah kotak slot.
@@ -25,25 +25,26 @@ export class ActiveBuffRow extends Phaser.GameObjects.Container
 
         this.icon = scene.add
             .image(0, 0, '')
-            .setDisplaySize(HudSizeConfig.buffRow.iconSize, HudSizeConfig.buffRow.iconSize)
+            .setDisplaySize(HudConfig.buffRow.iconSize, HudConfig.buffRow.iconSize)
             .setVisible(false);
 
         this.barBg = scene.add
             .rectangle(
-                HudSizeConfig.buffRow.iconSize + HudSizeConfig.buffRow.gapIconBar,
+                HudConfig.buffRow.iconSize + HudConfig.buffRow.gapIconBar,
                 0,
                 barWidth,
-                HudSizeConfig.buffRow.progressBarHeight,
-                0x334155
+                HudConfig.buffRow.progressBarHeight,
+                HudConfig.buffRow.barBgColor
             )
             .setOrigin(0, 0.5);
 
+        // Lebar penuh sejak awal: progress diatur lewat scaleX, bukan setDisplaySize.
         this.barFg = scene.add
             .rectangle(
-                HudSizeConfig.buffRow.iconSize + HudSizeConfig.buffRow.gapIconBar,
+                HudConfig.buffRow.iconSize + HudConfig.buffRow.gapIconBar,
                 0,
-                0,
-                HudSizeConfig.buffRow.progressBarHeight,
+                barWidth,
+                HudConfig.buffRow.progressBarHeight,
                 0x22d3ee
             )
             .setOrigin(0, 0.5);
@@ -75,18 +76,18 @@ export class ActiveBuffRow extends Phaser.GameObjects.Container
 
         this.barBg.setVisible(!isPaused);
         this.barFg.setVisible(!isPaused);
-        this.barFg.setDisplaySize(width, HudSizeConfig.buffRow.progressBarHeight);
+        this.barFg.setScale(this._barWidth > 0 ? width / this._barWidth : 0, 1);
         this.barFg.setFillStyle(color, 1);
 
         // Visual paused: progress bar diabaikan (di-hidden).
         if (isPaused)
         {
-            this.barBg.setFillStyle(0x475569, 0.5);
+            this.barBg.setFillStyle(HudConfig.buffRow.barBgPausedColor, HudConfig.buffRow.barBgPausedAlpha);
             this.barFg.setVisible(false);
         }
         else
         {
-            this.barBg.setFillStyle(0x334155, 1);
+            this.barBg.setFillStyle(HudConfig.buffRow.barBgColor, 1);
         }
     }
 }

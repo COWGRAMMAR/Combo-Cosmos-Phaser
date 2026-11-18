@@ -3,6 +3,7 @@ import type { IPowerUpBuff } from './IPowerUpBuff';
 import type { Player } from '../../entities/player/Player';
 import type { PlayerWeapon } from '../../entities/player/PlayerWeapon';
 import type { EffectManager } from '../EffectManager';
+import { EffectType } from '../../types/EffectType';
 import { PlayerConfig } from '../../config/PlayerConfig';
 
 /**
@@ -44,9 +45,9 @@ export class ActiveBuffManager
 
         buff.apply(player, weapon, this.effects, scene);
 
+        // buff.apply() sudah mengaktifkan timer di EffectManager; jangan aktifkan dua kali.
         if (durationMs > 0)
         {
-            this.effects.activate(type as any, durationMs);
             this.activeBuffs.delete(type);
             this.activeBuffs.set(type, { buff, remainingMs: durationMs, totalMs: durationMs });
         }
@@ -54,8 +55,11 @@ export class ActiveBuffManager
         this.recalculateBlocksNormalFire();
     }
 
-    /** Kurangi durasi semua buff aktif. Dipanggil tiap frame via Game.update(). Durasi tidak berkurang saat paused. */
-    public update(delta: number): void
+    /**
+     * Menyinkronkan sisa durasi dari EffectManager (sumber kebenaran tunggal).
+     * Dipanggil dari fixed-step Game.update() supaya clock-nya sama dengan efek.
+     */
+    public update(_delta: number): void
     {
         if (this._paused)
         {
@@ -67,7 +71,8 @@ export class ActiveBuffManager
 
         for (const [type, entry] of this.activeBuffs)
         {
-            entry.remainingMs = Math.max(0, entry.remainingMs - delta);
+            // Ikuti timer EffectManager agar HUD tidak melenceng saat frame hitch.
+            entry.remainingMs = this.effects.getRemainingMs(this.effectTypeFor(type));
             if (entry.remainingMs <= 0)
             {
                 toRemove.push(type);
@@ -135,7 +140,7 @@ export class ActiveBuffManager
             return;
         }
 
-        this.effects.stop(type as any);
+        this.effects.stop(this.effectTypeFor(type));
         this.activeBuffs.delete(type);
         this.recalculateBlocksNormalFire();
     }
@@ -163,7 +168,7 @@ export class ActiveBuffManager
     {
         for (const type of this.activeBuffs.keys())
         {
-            this.effects.stop(type as any);
+            this.effects.stop(this.effectTypeFor(type));
         }
         this.activeBuffs.clear();
         this.blocksNormalFireFlag = false;
@@ -179,6 +184,22 @@ export class ActiveBuffManager
                 this.blocksNormalFireFlag = true;
                 break;
             }
+        }
+    }
+
+    /** Map tipe buff ke tipe efek di EffectManager (AtkSpeed memakai efek FireRate). */
+    private effectTypeFor(type: PowerUpBuffType): EffectType
+    {
+        switch (type)
+        {
+            case PowerUpBuffType.AtkSpeed:
+                return EffectType.FireRate;
+            case PowerUpBuffType.Shield:
+                return EffectType.Shield;
+            case PowerUpBuffType.Laser:
+                return EffectType.Laser;
+            default:
+                return EffectType.FireRate;
         }
     }
 

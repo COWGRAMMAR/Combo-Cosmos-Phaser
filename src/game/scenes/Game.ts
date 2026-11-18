@@ -319,11 +319,11 @@ export class Game extends Phaser.Scene
             (fixedStepMs) => {
                 this.enemyBullets?.update(fixedStepMs);
                 this.effects?.update(fixedStepMs);
+                this.activeBuffManager?.update(fixedStepMs);
                 this.shockwave?.update(fixedStepMs);
             }
         );
 
-        this.activeBuffManager?.update(delta);
         this.spawnManager?.update(delta);
 
         if (this.inputManager?.isJustDown(InputAction.Pause))

@@ -3,7 +3,6 @@ import { PowerUpBuffType } from '../systems/power-ups/PowerUpBuffType';
 import { PowerUpConfig } from '../config/PowerUpConfig';
 import { AssetKeys } from '../config/AssetKeys';
 import { AssetManager } from '../systems/AssetManager';
-import { HudSizeConfig } from '../config/HudSizeConfig';
 import { HudConfig } from '../config/HudConfig';
 import { PowerUpSlotBox } from './PowerUpSlotBox';
 import { ActiveBuffRow } from './ActiveBuffRow';
@@ -37,68 +36,75 @@ export class HudRightPanel extends Phaser.GameObjects.Container
         this.gameScene = gameScene;
 
         const background = scene.add
-            .rectangle(0, 0, width, height, 0x1f2937)
+            .rectangle(0, 0, width, height, HudConfig.panel.rightColor)
             .setOrigin(0);
+
+        // Background harus masuk container paling awal agar tidak menimpa slot box.
+        this.add(background);
 
         // --- Indikator HP (di atas) ---
         const hpLabel = scene.add
             .text(
-                HudSizeConfig.rightPanelPadding,
-                HudSizeConfig.rightPanelPadding,
+                HudConfig.panel.padding,
+                HudConfig.panel.padding,
                 'HP',
                 {
                     fontFamily: HudConfig.label.fontFamily,
-                    fontSize: 20,
-                    color: '#94a3b8'
+                    fontSize: HudConfig.label.sectionFontSize,
+                    color: HudConfig.label.color
                 }
             )
             .setOrigin(0, 0);
 
         this.hpIcon = scene.add
             .image(
-                HudSizeConfig.rightPanelPadding,
-                HudSizeConfig.rightPanelPadding + HudSizeConfig.hp.iconSize + 8,
+                HudConfig.panel.padding,
+                HudConfig.panel.padding + HudConfig.hp.iconSize + HudConfig.hp.valueOffsetY,
                 AssetManager.resolve(AssetKeys.PowerUpIconLife).texture
             )
-            .setDisplaySize(HudSizeConfig.hp.iconSize, HudSizeConfig.hp.iconSize)
+            .setDisplaySize(HudConfig.hp.iconSize, HudConfig.hp.iconSize)
             .setOrigin(0, 0);
 
         this.hpText = scene.add
             .text(
-                HudSizeConfig.rightPanelPadding + HudSizeConfig.hp.iconSize + HudSizeConfig.hp.gap,
-                HudSizeConfig.rightPanelPadding + HudSizeConfig.hp.iconSize + 8,
+                HudConfig.panel.padding + HudConfig.hp.iconSize + HudConfig.hp.gap,
+                HudConfig.panel.padding + HudConfig.hp.iconSize + HudConfig.hp.valueOffsetY,
                 '',
                 {
                     fontFamily: HudConfig.label.fontFamily,
-                    fontSize: HudSizeConfig.hp.fontSize,
-                    color: '#ffffff'
+                    fontSize: HudConfig.hp.fontSize,
+                    color: HudConfig.hp.valueColor
                 }
             )
             .setOrigin(0, 0.5);
 
-        // --- 3 kotak slot buff (tengah) ---
+        // --- Kotak slot buff (tengah) ---
         const slotLabel = scene.add
             .text(
-                HudSizeConfig.rightPanelPadding,
-                HudSizeConfig.rightPanelPadding + HudSizeConfig.hp.iconSize + 40,
+                HudConfig.panel.padding,
+                HudConfig.panel.padding + HudConfig.hp.iconSize + HudConfig.slot.labelOffsetY,
                 'SLOT',
                 {
                     fontFamily: HudConfig.label.fontFamily,
-                    fontSize: 20,
-                    color: '#94a3b8'
+                    fontSize: HudConfig.label.sectionFontSize,
+                    color: HudConfig.label.color
                 }
             )
             .setOrigin(0, 0);
 
-        this.slotYStart = slotLabel.y + 24;
+        this.slotYStart = slotLabel.y + HudConfig.slot.rowGap;
 
-        for (let i = 0; i < 3; i++)
+        const slotCenterY = this.slotYStart + HudConfig.slot.size / 2;
+
+        for (let i = 0; i < PowerUpConfig.slotCount; i++)
         {
             const box = new PowerUpSlotBox(
                 scene,
-                HudSizeConfig.rightPanelPadding + HudSizeConfig.slot.size / 2,
-                this.slotYStart + i * (HudSizeConfig.slot.size + HudSizeConfig.slot.gap),
-                HudSizeConfig.slot.size
+                HudConfig.panel.padding
+                    + HudConfig.slot.size / 2
+                    + i * (HudConfig.slot.size + HudConfig.slot.gap),
+                slotCenterY,
+                HudConfig.slot.size
             );
             box.setDepth(10);
             box.setEmpty(String(i + 1));
@@ -109,27 +115,29 @@ export class HudRightPanel extends Phaser.GameObjects.Container
         // --- Daftar durasi buff aktif (bawah) ---
         const buffLabel = scene.add
             .text(
-                HudSizeConfig.rightPanelPadding,
-                this.slotYStart + 3 * (HudSizeConfig.slot.size + HudSizeConfig.slot.gap) + 20,
+                HudConfig.panel.padding,
+                // Sisakan ruang untuk label keybind di bawah satu baris slot.
+                this.slotYStart + HudConfig.slot.size + HudConfig.slot.buffLabelGap,
                 'BUFF AKTIF',
                 {
                     fontFamily: HudConfig.label.fontFamily,
-                    fontSize: 20,
-                    color: '#94a3b8'
+                    fontSize: HudConfig.label.sectionFontSize,
+                    color: HudConfig.label.color
                 }
             )
             .setOrigin(0, 0);
 
-        this.buffRowYStart = buffLabel.y + 24;
+        // Beri jarak setinggi label + celah agar baris buff tidak menimpa teks label.
+        this.buffRowYStart = buffLabel.y + HudConfig.buffRow.labelGap;
 
-        this.add([background, hpLabel, this.hpIcon, this.hpText, slotLabel, buffLabel]);
+        this.add([hpLabel, this.hpIcon, this.hpText, slotLabel, buffLabel]);
     }
 
     /** Polling data dari logic layer dan memperbarui semua tampilan. Dipanggil tiap frame. */
     public update(_time: number, _delta: number): void
     {
         const game = this.gameScene as unknown as {
-            getSlotManager?(): { getSlotType(i: number): PowerUpBuffType | null; getSlotCountAt(i: number): number; getMaxStackAt(i: number): number; getKeybind(i: number): string } | undefined;
+            getSlotManager?(): { getSlotType(i: number): PowerUpBuffType | null; getSlotCountAt(i: number): number; getKeybind(i: number): string } | undefined;
             getActiveBuffManager?(): {
                 getActiveBuffTypes(): PowerUpBuffType[];
                 getTotalMs(type: PowerUpBuffType): number;
@@ -156,7 +164,6 @@ export class HudRightPanel extends Phaser.GameObjects.Container
             {
                 const type = slotManager.getSlotType(i);
                 const count = slotManager.getSlotCountAt(i);
-                const maxStack = slotManager.getMaxStackAt(i);
                 const keybind = slotManager.getKeybind(i);
 
                 if (type === null)
@@ -166,7 +173,7 @@ export class HudRightPanel extends Phaser.GameObjects.Container
                 else
                 {
                     const texture = this.iconTextureFor(type);
-                    this.slotBoxes[i].setFilled(texture, count, maxStack, keybind);
+                    this.slotBoxes[i].setFilled(texture, count, keybind);
                 }
             }
         }
@@ -182,9 +189,9 @@ export class HudRightPanel extends Phaser.GameObjects.Container
             {
                 const row = new ActiveBuffRow(
                     this.scene,
-                    HudSizeConfig.rightPanelPadding,
-                    this.buffRowYStart + this.buffRows.length * (HudSizeConfig.buffRow.height + HudSizeConfig.buffRow.gap),
-                    HudSizeConfig.buffRow.progressBarWidth
+                    HudConfig.panel.padding,
+                    this.buffRowYStart + this.buffRows.length * (HudConfig.buffRow.height + HudConfig.buffRow.gap),
+                    HudConfig.buffRow.progressBarWidth
                 );
                 this.buffRows.push(row);
                 this.add(row);
@@ -207,7 +214,7 @@ export class HudRightPanel extends Phaser.GameObjects.Container
 
                 const row = this.buffRows[i];
                 row.setVisible(true);
-                row.setY(this.buffRowYStart + i * (HudSizeConfig.buffRow.height + HudSizeConfig.buffRow.gap));
+                row.setY(this.buffRowYStart + i * (HudConfig.buffRow.height + HudConfig.buffRow.gap));
                 row.setBuffData(texture, color, remainingMs, totalMs, isPaused);
             }
         }

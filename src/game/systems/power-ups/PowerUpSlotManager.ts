@@ -103,6 +103,8 @@ export class PowerUpSlotManager
                 const maxStack = this.maxStackPerSlot[type as keyof typeof this.maxStackPerSlot] ?? 1;
                 if (this.slotCounts[i] < maxStack)
                 {
+                    // Simpan instance buff baru agar jumlah array selalu sama dengan slotCounts.
+                    this.slots[i].push(buff);
                     this.slotCounts[i]++;
                     return true;
                 }
@@ -138,7 +140,8 @@ export class PowerUpSlotManager
         }
 
         this.slotCounts[index]--;
-        const buff = this.slots[index][this.slotCounts[index]];
+        // Ambil stack terakhir lewat pop agar indeks tidak pernah keluar dari isi array.
+        const buff = this.slots[index].pop() ?? null;
         if (this.slotCounts[index] === 0)
         {
             this.slotTypes[index] = PowerUpBuffType.Nuke;
