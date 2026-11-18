@@ -19,6 +19,10 @@ const PLAYER_COLOR = 0xff3b30;
 const PLAYER_IDLE_ALT_COLOR = 0xff6b60;
 /** Warna placeholder musuh. */
 const ENEMY_COLOR = 0xffd60a;
+/** Warna isi placeholder ledakan musuh (merah, dibedakan dari Grunt kuning). */
+const EXPLOSION_COLOR = EnemyConfig.explosion.color;
+/** Warna cincin luar placeholder ledakan musuh. */
+const EXPLOSION_RING_COLOR = EnemyConfig.explosion.ringColor;
 /** Warna placeholder peluru pemain. */
 const PLAYER_BULLET_COLOR = 0x7df9ff;
 /** Warna placeholder peluru musuh. */
@@ -78,6 +82,19 @@ const PLACEHOLDER_RECIPES: Partial<Record<AssetKey, PlaceholderRecipe>> = {
         draw: (graphics) => {
             graphics.fillStyle(ENEMY_COLOR, 1);
             graphics.fillCircle(TEXTURE_SIZE / 2, TEXTURE_SIZE / 2, TEXTURE_SIZE / 2 - 4);
+        }
+    },
+    [AssetKeys.EnemyExplosion]: {
+        width: TEXTURE_SIZE,
+        height: TEXTURE_SIZE,
+        draw: (graphics) => {
+            const center = TEXTURE_SIZE / 2;
+
+            // Isi setengah transparan supaya cincin tetap terlihat saat sprite mengecil.
+            graphics.fillStyle(EXPLOSION_COLOR, 0.85);
+            graphics.fillCircle(center, center, center - 8);
+            graphics.lineStyle(4, EXPLOSION_RING_COLOR, 1);
+            graphics.strokeCircle(center, center, center - 4);
         }
     },
     [AssetKeys.PlayerBullet]: {

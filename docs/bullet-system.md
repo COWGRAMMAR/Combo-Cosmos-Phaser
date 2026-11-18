@@ -1,11 +1,12 @@
-# Bullet System — Fondasi (Fase 1–4)
+# Bullet System — Fondasi & Musuh Pertama
 
-Dokumen ini untuk yang nanti mengerjakan musuh, tipe peluru musuh, dan pola tembakan.
+Dokumen ini untuk yang mengerjakan musuh, tipe peluru musuh, dan pola tembakan.
 Tujuannya: kamu bisa menambah perilaku baru **tanpa menyentuh** pool, manager, atau scene.
 
-- **Status:** Fase 1 (fondasi bullet) + Fase 2–4 (survival, efek & power-up, dash) selesai
-- **Belum ada:** musuh sungguhan, pola tembakan, wave, score/combo, audio
-- **Validasi:** `node "node_modules\typescript\bin\tsc" --noEmit` (exit 0)
+- **Status:** Fase 1 (fondasi bullet) + Fase 2–4 (survival, efek & power-up, dash) + Grunt Tipe 1 (pola `single`/`wall`/`stream`, `rain`, hit flash, ledakan) selesai
+- **Belum ada:** wave manager, enemy Tipe 2/Boss, score/combo, audio
+- **Validasi:** `bun x tsc --noEmit` lalu `bun run build` (tidak ada test runner otomatis)
+- **Panduan uji Grunt:** `docs/panduan-uji-grunt.md`
 
 ---
 
@@ -19,7 +20,10 @@ Tujuannya: kamu bisa menambah perilaku baru **tanpa menyentuh** pool, manager, a
 | Peluru pemain keluar layar | event `worldbounds` → `deactivate()` |
 | Gerak, culling, tabrakan peluru musuh | satu loop manual di `EnemyBulletManager.update()` |
 | Tembakan 1–5 jalur | `PlayerConfig.weapon.lanes` (atau tombol debug F4) |
-| Musuh uji | `DummyEnemy` (placeholder, akan diganti) |
+| Musuh pertama | `Grunt` (`entities/enemy/Grunt.ts`), dikelola `systems/enemy/GruntPool.ts` |
+| Pola spawn musuh | `SingleFormation`, `WallFormation`, `StreamFormation`, `RainFormation` |
+| Harness tes tanpa wave | `EnemyTestConfig` + `GruntTestRunner` (tombol `R`) |
+| Umpan balik damage | `Enemy.onDamaged()` (hit flash tint) + `systems/effects/EnemyExplosionPool.ts` |
 | Nyawa + i-frame + blink | `Player.applyHit()` / `startInvulnerability()` |
 | Shockwave saat kena | `entities/effects/Shockwave.ts` |
 | Efek berdurasi (atk speed, shield, laser) | satu `systems/EffectManager.ts` |
@@ -31,34 +35,56 @@ Tujuannya: kamu bisa menambah perilaku baru **tanpa menyentuh** pool, manager, a
 
 ## 2. Peta file
 
+Peta ringkas; struktur lengkap ada di `docs/struktur-file.md`.
+
 ```
 src/game/
 ├─ config/
 │  ├─ PlayerConfig.ts        # hp, hitbox, nyawa, weapon, shockwave, atk speed, shield, laser, dash, bomb
-│  ├─ EnemyConfig.ts         # hp musuh + bullet (speed, radius, pool, margin, lifetime)
+│  ├─ EnemyConfig.ts         # hp musuh, hit flash, ledakan, bullet (speed, radius, pool, margin, lifetime)
+│  ├─ GruntConfig.ts         # parameter Grunt: senjata, pola single/wall/stream, rain
+│  ├─ EnemyTestConfig.ts     # skenario tes Grunt + tombol reset
 │  ├─ WorldConfig.ts         # background + flag debug
-│  └─ GameEvents.ts          # nama event (player-hit, bomb-used, ...)
+│  ├─ ScreenConfig.ts        # ukuran desain, play area, spawn pemain
+│  └─ GameEvents.ts          # nama event (player-hit, enemy-killed, ...)
 ├─ entities/
+│  ├─ BaseEntity.ts          # HP, damage, hook onDamaged()/onDeath(), reset pool
 │  ├─ bullet/
 │  │  ├─ Bullet.ts           # abstract: activate/deactivate/radius
 │  │  ├─ PlayerBullet.ts     # pakai body fisika + damage
 │  │  └─ EnemyBullet.ts      # tanpa body + hook moveStep
 │  ├─ effects/
-│  │  └─ Shockwave.ts        # ring meluas, clearInRadius tiap frame
+│  │  ├─ Shockwave.ts        # ring meluas, clearInRadius tiap frame
+│  │  └─ Shield.ts           # lingkaran shield di sekitar pemain
 │  ├─ player/
 │  │  ├─ Player.ts           # gerak, nyawa, i-frame, shield, dash
 │  │  ├─ PlayerWeapon.ts     # cooldown + jalur tembakan
 │  │  └─ PlayerLaser.ts      # laser persisten, damage per interval
 │  └─ enemy/
-│     ├─ Enemy.ts            # base musuh (sudah ada)
-│     └─ DummyEnemy.ts       # musuh uji sementara
+│     ├─ Enemy.ts            # base musuh: hit flash, event kematian, die()
+│     ├─ Grunt.ts            # musuh Tipe 1: gerak via pattern + timer tembak
+│     ├─ EnemyState.ts       # enum Active / Dying
+│     ├─ DummyEnemy.ts       # alat debug, TIDAK di-wire ke Game
+│     └─ patterns/
+│        ├─ IMovementPattern.ts
+│        └─ LinearMovement.ts
 ├─ systems/
 │  ├─ EnemyBulletManager.ts  # satu loop untuk semua peluru musuh
 │  ├─ EffectManager.ts       # satu timer durasi untuk semua efek
 │  ├─ PowerUpManager.ts      # eksekusi efek power-up
-│  └─ DebugTools.ts          # F1–F4 + 1–6 (titik masuk sistem debug nanti)
+│  ├─ AssetManager.ts        # manifest, placeholder, resolve()
+│  ├─ effects/
+│  │  └─ EnemyExplosionPool.ts # ledakan musuh: membesar + memudar
+│  ├─ enemy/
+│  │  ├─ GruntPool.ts        # pool prewarm + group untuk overlap
+│  │  ├─ GruntTestRunner.ts  # pilih & jalankan skenario tes
+│  │  └─ *Formation.ts       # Single / Wall / Stream / Rain
+│  ├─ power-ups/             # buff, slot inventory, spawn manager
+│  └─ DebugTools.ts          # F1–F4, Z–N, R (titik masuk sistem debug nanti)
 ├─ types/
-│  └─ EffectType.ts          # enum FireRate / Shield / Laser
+│  ├─ EffectType.ts          # enum FireRate / Shield / Laser
+│  ├─ AssetRef.ts            # tekstur + frame hasil resolve
+│  └─ IEnemyBulletSpawner.ts # kontrak spawn peluru untuk musuh
 └─ ui/
    └─ DebugOverlay.ts        # teks statistik + nyawa + status efek
 ```
@@ -77,13 +103,18 @@ interface IDamageable {
 }
 ```
 
-`Enemy` (dan nantinya subclass musuh) sudah meng-extend `BaseEntity`, jadi otomatis memenuhi kontrak itu.
+`Grunt` dan subclass musuh lain meng-extend `BaseEntity`, jadi otomatis memenuhi kontrak itu.
 Yang perlu kamu siapkan di musuh baru:
 
-- `takeDamage()` menangani HP dan memanggil `die()` saat habis (sudah di `BaseEntity`).
+- `takeDamage()` menangani HP. Saat HP habis ia memanggil hook `onDeath()`; default
+  `onDeath()` memanggil `die()`, sedangkan `Enemy.onDeath()` memancarkan
+  `GameEvents.ENEMY_KILLED` sebelum `die()` supaya `Game` bisa memunculkan ledakan.
 - Jangan panggil `destroy()`. Pakai `setActive(false)` + `setVisible(false)` + `body.enable = false`
-  supaya musuh bisa masuk pool lagi.
+  supaya musuh bisa masuk pool lagi. Buang musuh yang keluar layar lewat `die()`; `kill()`
+  khusus untuk kematian yang layak mendapat ledakan (mis. tabrakan badan).
 - Untuk menembak, panggil `enemyBulletManager.spawn(...)`. Jangan membuat group/pool sendiri.
+- Kalau butuh feedback visual, override `onDamaged()` (lihat hit flash di `Enemy`); jangan
+  menaruh timer efek di `update()` scene.
 
 ---
 
@@ -200,7 +231,8 @@ Helper yang sudah dipakai: `Phaser.Math.Distance.Squared` (tanpa `sqrt`), perban
 | `player-damaged` | `Game` setelah nyawa berkurang | aktif, payload `{ lives }` |
 | `player-died` / `game-over` | `Game` saat nyawa habis | aktif |
 | `bomb-used` | `PowerUpManager.useBomb()` | aktif |
-| `enemy-killed`, `score-changed`, `combo-changed` | `config/GameEvents.ts` | belum dipakai bullet system |
+| `enemy-killed` | `Enemy.onDeath()` | aktif — payload `(x, y)`, memicu ledakan di `Game` |
+| `score-changed`, `combo-changed` | `config/GameEvents.ts` | belum dipakai (menunggu score/combo) |
 
 Aturan: manager/sistem **tidak** mengubah HP atau nyawa pemain secara langsung.
 Kirim event, biarkan pemilik state yang mengubah.
@@ -211,14 +243,14 @@ Kirim event, biarkan pemilik state yang mengubah.
 
 `Game.resetRun()` saat ini:
 
-- `effects.reset()` (semua efek durasi berhenti)
+- `effects.reset()` + `activeBuffManager.reset()` + `slotManager.reset()` (semua durasi & inventory kembali)
+- `spawnManager.stop()`
 - `weapon.reset()` + `weapon.clearAll()`
-- `enemyBullets.reset()`
-- `shockwave.stop()`
-- `laser.reset()`
-- membatalkan respawn dummy yang tertunda
-- reset counter statistik, `gameOverPending`, dan kembali ke posisi awal
-- `player.resetForPool(512, 680)` (nyawa, shield, dash, i-frame, alpha ikut di-reset)
+- `enemyBullets.reset()` (satu loop membersihkan semua peluru)
+- `shockwave.stop()`, `shield.stop()`, `laser.reset()`, `explosions.reset()`
+- reset counter statistik + `gameOverPending` + `lastEnemyContactFrame`
+- `player.resetForPool(ScreenConfig.spawn.playerX, ScreenConfig.spawn.playerY)` (nyawa, shield, dash, i-frame, alpha ikut di-reset)
+- `gruntTestRunner.start()` — skenario tes Grunt diulang dari pola pertama (`GruntPool.reset()` di dalamnya)
 
 Kalau kamu menambah pool/state baru, tambahkan pembersihannya di fungsi ini.
 Jangan membuat fungsi reset terpisah yang tidak dipanggil.
@@ -233,12 +265,15 @@ Jangan membuat fungsi reset terpisah yang tidak dipanggil.
 | `F2` | spawn 1000 peluru musuh sekaligus |
 | `F3` | spawn 3000 peluru musuh sekaligus |
 | `F4` | putar jumlah jalur 1 → 2 → 3 → 4 → 5 → 1 |
-| `1` | power-up lane (+1, permanen per run) |
-| `2` | power-up atk speed (durasi) |
-| `3` | power-up shield (durasi) |
-| `4` | power-up laser (durasi) |
-| `5` | bom nuke (damage semua musuh + `clearAll`) |
-| `6` | tambah nyawa (maks `PlayerConfig.maxLives`) |
+| `R` | ulangi skenario tes Grunt dari awal + bersihkan peluru musuh |
+| `Z` | power-up lane (+1, permanen per run) |
+| `X` | power-up atk speed → masuk slot inventory |
+| `C` | power-up shield → masuk slot inventory |
+| `V` | power-up laser → masuk slot inventory |
+| `B` | power-up nuke → masuk slot inventory |
+| `N` | tambah nyawa (maks `PlayerConfig.maxLives`) |
+| `1`–`3` | pakai isi slot inventory |
+| `E` + `1`–`3` | buang isi slot inventory |
 
 Overlay menampilkan FPS, waktu frame, jumlah peluru pemain/musuh, puncak per pool,
 overflow, jumlah hit ke pemain, jumlah jalur, nyawa, serta status `dash`/`kebal`/
@@ -251,7 +286,8 @@ sistem debug yang lebih lengkap.
 
 ## 10. Yang belum ada (jangan diasumsikan)
 
-- Musuh sungguhan, pola tembakan, wave, score/combo
-- Item power-up yang jatuh dan bisa diambil (sekarang hanya lewat tombol debug)
-- Audio/SFX, HUD permanen selain overlay debug
-- `DummyEnemy` hanya untuk menguji damage; ganti saat musuh asli sudah siap.
+- WaveManager/difficulty curve, enemy Tipe 2 & Boss, score/combo
+- Item power-up yang jatuh sendiri dan bisa diambil di lapangan
+- Audio/SFX, HUD permanen di luar overlay debug
+- `DummyEnemy` masih ada sebagai alat debug, tetapi **tidak** di-wire ke `Game`;
+  enemy yang benar-benar berjalan adalah `Grunt` (lihat `docs/panduan-uji-grunt.md`).

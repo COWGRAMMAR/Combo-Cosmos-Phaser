@@ -8,6 +8,14 @@ export interface DebugActions
     stress: (count: number) => void;
     cycleLanes: () => void;
     powerUp: (kind: PowerUpType) => void;
+    resetEnemyTest: () => void;
+}
+
+/** Opsi tombol debug yang berasal dari config. */
+export interface DebugOptions
+{
+    /** Nama key Phaser untuk reset skenario; undefined membuat tombol tidak didaftarkan. */
+    resetKey?: string;
 }
 
 /** Urutan power-up untuk tombol Z sampai N. */
@@ -33,9 +41,10 @@ export class DebugTools
     private readonly stress3000Key: Phaser.Input.Keyboard.Key;
     private readonly lanesKey: Phaser.Input.Keyboard.Key;
     private readonly powerUpKeys: Phaser.Input.Keyboard.Key[];
+    private readonly resetKey?: Phaser.Input.Keyboard.Key;
 
     /** Mendaftarkan tombol debug; melempar error kalau keyboard tidak tersedia. */
-    constructor(scene: Phaser.Scene, actions: DebugActions)
+    constructor(scene: Phaser.Scene, actions: DebugActions, options?: DebugOptions)
     {
         const keyboard = scene.input.keyboard;
 
@@ -64,6 +73,7 @@ export class DebugTools
         this.stress3000Key = keyboard.addKey(keyCodes.F3);
         this.lanesKey = keyboard.addKey(keyCodes.F4);
         this.powerUpKeys = powerUpCodes.map((code) => keyboard.addKey(code));
+        this.resetKey = options?.resetKey ? keyboard.addKey(options.resetKey) : undefined;
     }
 
     /** Memeriksa tombol debug sekali per frame. */
@@ -77,8 +87,8 @@ export class DebugTools
 
         if (Phaser.Input.Keyboard.JustDown(this.stress1000Key))
         {
-            // F2: hujan 100 peluru musuh dari atas layar untuk uji baseline performa.
-            this.actions.stress(100);
+            // F2: hujan 1000 peluru musuh dari atas layar untuk uji baseline performa.
+            this.actions.stress(1000);
         }
 
         if (Phaser.Input.Keyboard.JustDown(this.stress3000Key))
@@ -101,6 +111,11 @@ export class DebugTools
                 this.actions.powerUp(POWER_UP_KEYS[i]);
             }
         }
+
+        if (this.resetKey && Phaser.Input.Keyboard.JustDown(this.resetKey))
+        {
+            this.actions.resetEnemyTest();
+        }
     }
 
     /** Melepas seluruh tombol debug dari keyboard. */
@@ -122,7 +137,10 @@ export class DebugTools
         {
             keyboard.removeKey(this.powerUpKeys[i]);
         }
+
+        if (this.resetKey)
+        {
+            keyboard.removeKey(this.resetKey);
+        }
     }
 }
-
-
