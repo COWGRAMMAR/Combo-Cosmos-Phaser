@@ -170,7 +170,7 @@ jadi tidak ada state yang bocor ke spawn berikutnya.
    jadi PNG final dari Preloader otomatis menang).
 4. Tambah opsi `texture` bila perlu, atau buat spawn helper di sistemmu sendiri.
 
-Detail lengkap ada di `doc/asset-system.md`.
+Detail lengkap ada di `docs/asset-system.md`.
 
 ---
 

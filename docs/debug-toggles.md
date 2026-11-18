@@ -108,7 +108,7 @@ Status di baris 5 dirakit dari: `dash siap` / `dash cooldown`, lalu tambahan `ke
 | Overlay | `src/game/ui/DebugOverlay.ts` | Visibilitas awal dari `WorldConfig.debug.enabled` |
 | Default overlay tampil | `src/game/config/WorldConfig.ts:6-8` | `debug.enabled: true` |
 | Stress test | `Game.ts:510` `spawnStressBullets()` | Jumlah datang dari tombol, bukan config |
-| Slot & pemakaian | `PowerUpConfig`, `PowerUpSlotManager` | Lihat `doc/asset-system.md` untuk aset, power-up di `plans/5#` |
+| Slot & pemakaian | `PowerUpConfig`, `PowerUpSlotManager` | Lihat `docs/asset-system.md` untuk aset; sistem power-up ada di `src/game/systems/power-ups/` |
 
 Tombol debug **tidak** didaftarkan di `InputAction`/`InputBindings` supaya keybind gameplay tetap bersih dan tombol debug bisa dicabut tanpa menyentuh sistem input pemain.
 
@@ -134,7 +134,7 @@ Tombol debug **tidak** didaftarkan di `InputAction`/`InputBindings` supaya keybi
 3. Tambah field `Key` di `DebugTools`, daftarkan lewat `keyboard.addKey(...)` di constructor.
 4. Tambah blok `JustDown` di `update()` dengan komentar satu baris: tombol apa, efek apa.
 5. Tambah `keyboard.removeKey(...)` di `destroy()` agar tidak bocor saat scene restart.
-6. Perbarui tabel di dokumen ini dan `doc/struktur-file.md` bila ada file baru.
+6. Perbarui tabel di dokumen ini dan `docs/struktur-file.md` bila ada file baru.
 
 Kalau yang ditambah hanya varian jumlah (misal stress 500), cukup tambah satu tombol + satu argumen `stress(n)`; tidak perlu mengubah `Game.ts`.
 

@@ -1,15 +1,14 @@
 # Struktur File — Combo-Cosmos-Phaser
 
-- **Status:** Fase 0 (fondasi class) + InputManager + Fase 1 (bullet foundation) + Fase 2–4 (survival, efek & power-up, dash) + Fase screen/scale/layer/game loop selesai
-- **Tanggal:** 2026-11-06
-- **Scope dokumen:** **hanya struktur folder/file**. Rencana class, field, method, dan urutan implementasi ada di `plans/2#-entities-class.md`. Rencana porting arsitektur ada di `plans/1#-bullet-hell-porting.md`. Rencana input ada di `plans/3#-input-manager.md`. Rencana screen/scale/layer/game loop ada di `plans/4#-screen-scale-layer-gameloop.md`. Rencana UI HUD ada di `plans/7#-ui-hud-slot-power-up-panel-kanan.md`. Kontrak bullet system ada di `docs/bullet-system.md`.
-- **Catatan penomoran plan #3/#4:** nomor `3#` dan `4#` di branch ini kini menunjuk topik **input manager** dan **screen/scale/layer/game loop** (dari branch screen-res). Plan `3#`/`4#` lama di branch utama bertopik shield visual & sinkronisasi shield-laser, sudah selesai dan dihapus; keduanya berbeda 180°, jadi sengaja disimpan sebagai dua file terpisah dan tidak digabung.
+- **Status:** Fase 0 (fondasi class) + InputManager + Fase 1 (bullet foundation) + Fase 2–4 (survival, efek & power-up, dash) + Fase screen/scale/layer/game loop + HUD power-up selesai
+- **Tanggal:** 2026-11-18
+- **Scope dokumen:** **hanya struktur folder/file**. Rencana class, field, method, dan urutan implementasi ada di `plans/2#-entities-class.md`. Rencana porting arsitektur ada di `plans/1#-bullet-hell-porting.md`. Kontrak bullet system ada di `docs/bullet-system.md`.
 
 Dokumen ini adalah **sumber kebenaran struktur file**. Jika isinya berbeda dengan kondisi repo, struktur dianggap belum selesai dikerjakan.
 
 ---
 
-## 1. Struktur Folder Saat Ini (verified 2026-11-06)
+## 1. Struktur Folder Saat Ini (verified 2026-11-18)
 
 ```
 Combo-Cosmos-Phaser/
@@ -25,10 +24,7 @@ Combo-Cosmos-Phaser/
 │  └─ assets/                     # sprite, audio, tilemap
 ├─ plans/
 │  ├─ 1#-bullet-hell-porting.md   # (existing)
-│  ├─ 2#-entities-class.md        # rencana class Player & Enemy
-│  ├─ 3#-input-manager.md         # rencana InputManager (abstraksi input lintas layer)
-│  ├─ 4#-screen-scale-layer-gameloop.md # rencana screen/scale/layer + game loop
-│  └─ 7#-ui-hud-slot-power-up-panel-kanan.md # UI HUD slot power-up (panel kiri & kanan)
+│  └─ 2#-entities-class.md        # rencana class Player & Enemy
 ├─ issues/                        # (dibuat saat ada bug)
 ├─ docs/
 │  ├─ struktur-file.md            # dokumen ini
@@ -89,7 +85,7 @@ Combo-Cosmos-Phaser/
       │  ├─ EffectManager.ts      # satu timer durasi untuk semua efek (refresh, bukan stack)
       │  ├─ PowerUpManager.ts     # eksekusi efek power-up, delegasi ke buff class + slot manager
       │  ├─ PauseManager.ts       # pause/resume Game+Hud, auto-pause BLUR/HIDDEN
-      │  ├─ DebugTools.ts         # tombol debug (F1–F4, Z–N), detail di doc/debug-toggles.md
+      │  ├─ DebugTools.ts         # tombol debug (F1–F4, Z–N), detail di docs/debug-toggles.md
       │  └─ power-ups/            # sistem power-up (buff, slot, aktif, spawn)
       │     ├─ IPowerUpBuff.ts    # kontrak kelas buff (isValid, getWeight, apply, blocksNormalFire)
       │     ├─ PowerUpBuffType.ts # enum tipe buff: Lane, AtkSpeed, Shield, Laser, Nuke, Life
@@ -186,7 +182,4 @@ berada di `entities/bullet/` karena dipakai bersama player dan enemy.
 - Daftar tombol debug (F1–F4, Z–N) & isi overlay: `docs/debug-toggles.md`
 - Panduan build: `docs/build.md`
 - Rencana class & implementasi: `plans/2#-entities-class.md`
-- Rencana input: `plans/3#-input-manager.md`
-- Rencana screen/scale/layer/game loop: `plans/4#-screen-scale-layer-gameloop.md`
-- Rencana UI HUD slot power-up: `plans/7#-ui-hud-slot-power-up-panel-kanan.md`
 - Rencana porting arsitektur (pooling, wave, difficulty, skill, profile): `plans/1#-bullet-hell-porting.md`

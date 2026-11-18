@@ -94,7 +94,7 @@ AssetManager.ensureAnimations(this); // frame animasi harus sudah ada
 
 ### Aturan dependensi (penting)
 
-`doc/struktur-file.md` melarang `entities/` meng-import `systems/`. Karena itu:
+`docs/struktur-file.md` melarang `entities/` meng-import `systems/`. Karena itu:
 
 - **entities** (`Player`, `Enemy`, `DummyEnemy`, `PlayerWeapon`) menerima `AssetRef` sebagai parameter.
 - **scene** (`Game.ts`) yang memanggil `AssetManager.resolve(...)` dan meneruskannya.

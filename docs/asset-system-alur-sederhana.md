@@ -2,7 +2,7 @@
 
 Dokumen ini menjelaskan **kenapa** dan **bagaimana** aset bergerak dari file/gambar sampai muncul di layar,
 tanpa istilah teknis berat. Untuk detail API, nama method, dan peta migrasi atlas, lihat
-[`doc/asset-system.md`](./asset-system.md).
+[`docs/asset-system.md`](./asset-system.md).
 
 - **Status sistem:** fondasi selesai (plan #6), semua aset masih **placeholder**
 - **Audiens:** kontributor manusia yang baru masuk, dan AI agent yang akan mengubah kode aset
@@ -116,7 +116,7 @@ AssetManager.preloadMain(this);
 
 | Boleh | Tidak boleh |
 |---|---|
-| `scenes/` (Boot, Preloader, Game, MainMenu, GameOver) | `entities/` — dilarang oleh aturan dependensi di `doc/struktur-file.md` |
+| `scenes/` (Boot, Preloader, Game, MainMenu, GameOver) | `entities/` — dilarang oleh aturan dependensi di `docs/struktur-file.md` |
 | `systems/` (contoh: `EnemyBulletManager`) | `config/` dan `types/` — keduanya lapisan data murni |
 | `ui/` bila nanti butuh ikon | — |
 
@@ -197,6 +197,6 @@ tidak perlu disesuaikan ulang. Jangan pernah memakai ukuran gambar sebagai hitbo
 ## 8. Urutan baca yang disarankan
 
 1. Dokumen ini (alur & aturan main).
-2. `doc/asset-system.md` (API lengkap + peta migrasi atlas).
+2. `docs/asset-system.md` (API lengkap + peta migrasi atlas).
 3. `src/game/config/AssetManifest.ts` (inventaris nyata).
 4. `src/game/systems/AssetManager.ts` (implementasi petugas gudang).
