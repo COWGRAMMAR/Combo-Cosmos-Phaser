@@ -69,6 +69,7 @@ export const AssetManifest = {
         { key: AssetKeys.Player, source: 'generated', frameCount: 1 },
         { key: AssetKeys.PlayerIdleAlt, source: 'generated', frameCount: 1 },
         { key: AssetKeys.Enemy, source: 'generated', frameCount: 1 },
+        { key: AssetKeys.EnemyExplosion, source: 'generated', frameCount: 1 },
         { key: AssetKeys.PlayerBullet, source: 'generated', frameCount: 1 },
         { key: AssetKeys.EnemyBullet, source: 'generated', frameCount: 1 },
         { key: AssetKeys.PowerUpIconAtkSpeed, source: 'generated', frameCount: 1 },

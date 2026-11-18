@@ -17,6 +17,9 @@ export interface DebugStats
     playerHits: number;
     lanes: number;
     lives: number;
+    gruntsActive: number;
+    gruntsOverflow: number;
+    gruntScenario: string;
     invulnerable: boolean;
     shieldActive: boolean;
     fireRateActive: boolean;
@@ -84,6 +87,7 @@ export class DebugOverlay
             `peluru pemain: ${stats.playerBulletsActive} aktif / max ${stats.playerBulletsMax} / overflow ${stats.playerBulletsOverflow}\n` +
             `peluru musuh : ${stats.enemyBulletsActive} aktif / max ${stats.enemyBulletsMax} / overflow ${stats.enemyBulletsOverflow}\n` +
             `total dibuat : ${stats.enemyBulletsTotalCreated} / frame ${stats.enemyBulletsCreatedThisFrame} / spawn ${stats.enemyBulletsSpawnMs.toFixed(2)} ms\n` +
+            `grunt        : ${stats.gruntsActive} aktif / overflow ${stats.gruntsOverflow} | skenario ${stats.gruntScenario}\n` +
             `pemain kena : ${stats.playerHits} | nyawa ${stats.lives} | ${status}`;
     }
 
