@@ -262,7 +262,7 @@ Jangan membuat fungsi reset terpisah yang tidak dipanggil.
 | Tombol | Fungsi |
 |---|---|
 | `F1` | toggle overlay statistik |
-| `F2` | spawn 100 peluru musuh sekaligus |
+| `F2` | spawn 1000 peluru musuh sekaligus |
 | `F3` | spawn 3000 peluru musuh sekaligus |
 | `F4` | putar jumlah jalur 1 → 2 → 3 → 4 → 5 → 1 |
 | `R` | ulangi skenario tes Grunt dari awal + bersihkan peluru musuh |

@@ -11,7 +11,7 @@ Untuk urutan uji Grunt memakai tombol-tombol ini, lihat `docs/panduan-uji-grunt.
 | Tombol | Aksi di `DebugActions` | Efek instan | Butuh aksi lanjutan? |
 | ------ | ---------------------- | ----------- | -------------------- |
 | `F1`   | `toggleOverlay`        | Tampilkan / sembunyikan overlay statistik | Tidak |
-| `F2`   | `stress(100)`          | Hujan 100 peluru musuh dari atas layar | Tidak |
+| `F2`   | `stress(1000)`         | Hujan 1000 peluru musuh dari atas layar | Tidak |
 | `F3`   | `stress(3000)`         | Hujan 3000 peluru musuh dari atas layar | Tidak |
 | `F4`   | `cycleLanes`           | Putar jumlah jalur tembak pemain 1 → 5 → 1 | Tidak |
 | `R`    | `resetEnemyTest`       | Ulangi skenario tes Grunt dari awal + bersihkan peluru musuh | Tidak |
@@ -36,9 +36,9 @@ Saat overlay disembunyikan, `DebugOverlay.update()` langsung `return` sehingga t
 
 Lokasi: `Game.ts:262` → `this.overlay?.toggle()`.
 
-### F2 — Stress test ringan (100 peluru)
+### F2 — Stress test ringan (1000 peluru)
 
-Memanggil `spawnStressBullets(100)`: 100 peluru musuh dibuat di `x` acak dalam play area, `y = -offScreenMargin`, kecepatan `EnemyConfig.bullet.speed`. Dipakai untuk melihat baseline FPS dan `spawn ms` saat beban normal.
+Memanggil `spawnStressBullets(1000)`: 1000 peluru musuh dibuat di `x` acak dalam play area, `y = -offScreenMargin`, kecepatan `EnemyConfig.bullet.speed`. Dipakai untuk melihat baseline FPS dan `spawn ms` saat beban normal.
 
 Lokasi: `Game.ts:263` → `spawnStressBullets(count)` (`Game.ts:510`).
 

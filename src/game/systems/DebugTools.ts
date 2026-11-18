@@ -87,8 +87,8 @@ export class DebugTools
 
         if (Phaser.Input.Keyboard.JustDown(this.stress1000Key))
         {
-            // F2: hujan 100 peluru musuh dari atas layar untuk uji baseline performa.
-            this.actions.stress(100);
+            // F2: hujan 1000 peluru musuh dari atas layar untuk uji baseline performa.
+            this.actions.stress(1000);
         }
 
         if (Phaser.Input.Keyboard.JustDown(this.stress3000Key))
