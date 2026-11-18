@@ -8,6 +8,8 @@ export const AssetKeys = {
     Logo: 'logo',
     /** Frame kedua placeholder player; dihapus saat migrasi atlas. */
     PlayerIdleAlt: 'player-idle-alt',
+    /** Placeholder lingkaran ledakan musuh; diganti spritesheet asli nanti. */
+    EnemyExplosion: 'enemy-explosion',
 
     /** Ikon placeholder power-up (diganti file asli nanti via manifest). */
     PowerUpIconAtkSpeed: 'powerup-icon-atk-speed',

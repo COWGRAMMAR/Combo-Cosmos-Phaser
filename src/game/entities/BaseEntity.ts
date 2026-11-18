@@ -67,7 +67,7 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
         return this._hp > 0;
     }
 
-    /** Mengurangi HP, memicu onDamaged(), dan memanggil die() jika HP habis. */
+    /** Mengurangi HP, memicu onDamaged(), dan memanggil onDeath() jika HP habis. */
     public takeDamage(amount: number, _source?: unknown): void
     {
         if (!this.isAlive || amount <= 0 || this.isInvulnerable())
@@ -80,7 +80,7 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
 
         if (this._hp <= 0)
         {
-            this.die();
+            this.onDeath();
         }
     }
 
@@ -100,6 +100,7 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
         this.setPosition(x, y);
         this._hp = this.maxHp ?? 0;
         this.invulnerableRemainingMs = 0;
+        this.clearTint();
         this.setActive(true);
         this.setVisible(true);
 
@@ -144,6 +145,15 @@ export abstract class BaseEntity extends Phaser.Physics.Arcade.Sprite implements
     /** Hook opsional yang dijalankan setiap kali entitas menerima damage. */
     protected onDamaged(): void {}
 
-    /** Aksi yang dijalankan subclass saat HP entitas habis. */
+    /**
+     * Hook saat HP habis karena damage. Default langsung melepas entitas;
+     * subclass bisa menambah umpan balik visual sebelum memanggil die().
+     */
+    protected onDeath(): void
+    {
+        this.die();
+    }
+
+    /** Melepas entitas tanpa efek samping visual; dipakai juga saat despawn atau reset pool. */
     public abstract die(): void;
 }

@@ -1,6 +1,6 @@
 # Struktur File — Combo-Cosmos-Phaser
 
-- **Status:** Fase 0 (fondasi class) + InputManager + Fase 1 (bullet foundation) + Fase 2–4 (survival, efek & power-up, dash) + Fase screen/scale/layer/game loop + HUD power-up + Grunt Tipe 1 (pola single/wall/stream + rain berbasis pola) selesai
+- **Status:** Fase 0 (fondasi class) + InputManager + Fase 1 (bullet foundation) + Fase 2–4 (survival, efek & power-up, dash) + Fase screen/scale/layer/game loop + HUD power-up + Grunt Tipe 1 (pola single/wall/stream, rain berbasis pola, hit flash & ledakan) selesai
 - **Tanggal:** 2026-11-18
 - **Scope dokumen:** **hanya struktur folder/file**. Rencana class, field, method, dan urutan implementasi ada di `plans/2#-entities-class.md`. Rencana porting arsitektur ada di `plans/1#-bullet-hell-porting.md`. Kontrak bullet system ada di `docs/bullet-system.md`.
 
@@ -43,7 +43,7 @@ Combo-Cosmos-Phaser/
       ├─ main.ts                  # Phaser GameConfig
       ├─ config/
       │  ├─ PlayerConfig.ts       # hp, hitbox, nyawa, weapon, shockwave, atk speed, shield, laser, dash, bomb
-      │  ├─ EnemyConfig.ts        # hp musuh + bullet (speed/radius/pool/margin/lifetime)
+      │  ├─ EnemyConfig.ts        # hp musuh, hit flash, ledakan, bullet (speed/radius/pool/margin/lifetime)
       │  ├─ GruntConfig.ts        # hp/radius/despawn/pool + senjata & parameter pola Single/Wall/Stream + rain (termasuk spawnX override)
       │  ├─ EnemyTestConfig.ts    # skenario tes Grunt (single/wall/stream/rain) + reset key opsional
       │  ├─ WorldConfig.ts        # background + flag debug + delay/layout bantu
@@ -81,7 +81,7 @@ Combo-Cosmos-Phaser/
       │  │  ├─ PlayerWeapon.ts    # cooldown + jalur tembakan (1–5) + multiplier cooldown
       │  │  └─ PlayerLaser.ts     # laser persisten, damage per interval (bukan pool)
       │  └─ enemy/
-      │     ├─ Enemy.ts           # base musuh (tanpa asumsi static)
+      │     ├─ Enemy.ts           # base musuh: hit flash (tint) + event kematian, tanpa asumsi static
       │     ├─ EnemyState.ts      # string enum
       │     ├─ DummyEnemy.ts      # PLACEHOLDER musuh diam untuk uji damage
       │     ├─ Grunt.ts           # musuh Tipe 1: gerak via pattern + tembak + despawn
@@ -109,6 +109,8 @@ Combo-Cosmos-Phaser/
       │  │  ├─ ShieldBuff.ts      # Slotted: kebal peluru musuh (shield)
       │  │  ├─ LaserBuff.ts       # Slotted: laser lurus, blokir tembakan biasa
       │  │  └─ NukeBuff.ts        # Slotted: bom instan, damage semua musuh
+      │  ├─ effects/
+      │  │  └─ EnemyExplosionPool.ts # pool ledakan musuh: membesar + memudar, tanpa tween
       │  └─ enemy/
       │     ├─ GruntPool.ts       # pool prewarm Grunt + group untuk overlap/laser/bom
       │     ├─ GruntTestRunner.ts # skenario tes Grunt tanpa WaveManager

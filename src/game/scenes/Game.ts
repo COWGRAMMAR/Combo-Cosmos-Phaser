@@ -27,6 +27,7 @@ import { PowerUpManager } from '../systems/PowerUpManager';
 import type { PowerUpType } from '../systems/PowerUpManager';
 import { GruntPool } from '../systems/enemy/GruntPool';
 import { GruntTestRunner } from '../systems/enemy/GruntTestRunner';
+import { EnemyExplosionPool } from '../systems/effects/EnemyExplosionPool';
 import { PowerUpSlotManager } from '../systems/power-ups/PowerUpSlotManager';
 import { ActiveBuffManager } from '../systems/power-ups/ActiveBuffManager';
 import { PowerUpSpawnManager } from '../systems/power-ups/PowerUpSpawnManager';
@@ -61,6 +62,7 @@ export class Game extends Phaser.Scene
     private shockwave?: Shockwave;
     private shield?: Shield;
     private laser?: PlayerLaser;
+    private explosions?: EnemyExplosionPool;
     private overlay?: DebugOverlay;
     private debugTools?: DebugTools;
     private pauseManager?: PauseManager;
@@ -141,7 +143,7 @@ export class Game extends Phaser.Scene
 
         // Semua musuh yang menabrak tetap hancur, tetapi konsekuensinya
         // dibatasi satu kali per frame agar tumpukan Grunt tidak menghabiskan nyawa.
-        enemy.die();
+        enemy.kill();
 
         const frame = this.game.loop.frame;
 
@@ -170,6 +172,12 @@ export class Game extends Phaser.Scene
     private readonly handlePlayerHit = (): void =>
     {
         this.damagePlayer();
+    };
+
+    /** Memunculkan ledakan di posisi musuh yang benar-benar mati. */
+    private readonly handleEnemyKilled = (x: number, y: number): void =>
+    {
+        this.explosions?.spawn(x, y);
     };
 
     /** Mendaftarkan scene Game. */
@@ -229,6 +237,11 @@ export class Game extends Phaser.Scene
         this.grunts = grunts;
         this.enemies = grunts.poolGroup;
 
+        this.explosions = new EnemyExplosionPool(
+            this,
+            AssetManager.resolve(AssetKeys.EnemyExplosion)
+        );
+
         this.laser = new PlayerLaser(this, this.player, this.enemies);
 
         this.effects = new EffectManager({
@@ -273,6 +286,9 @@ export class Game extends Phaser.Scene
 
         this.events.off(GameEvents.PLAYER_HIT, this.handlePlayerHit);
         this.events.on(GameEvents.PLAYER_HIT, this.handlePlayerHit);
+
+        this.events.off(GameEvents.ENEMY_KILLED, this.handleEnemyKilled);
+        this.events.on(GameEvents.ENEMY_KILLED, this.handleEnemyKilled);
 
         const resetKey = EnemyTestConfig.enabled && EnemyTestConfig.resetKeyEnabled
             ? EnemyTestConfig.resetKey
@@ -348,6 +364,7 @@ export class Game extends Phaser.Scene
                 this.activeBuffManager?.update(fixedStepMs);
                 this.shockwave?.update(fixedStepMs);
                 this.laser?.update(fixedStepMs);
+                this.explosions?.update(fixedStepMs);
             }
         );
 
@@ -472,6 +489,7 @@ export class Game extends Phaser.Scene
         this.shockwave?.stop();
         this.shield?.stop();
         this.laser?.reset();
+        this.explosions?.reset();
 
         this.playerBulletMax = 0;
         this.gameOverPending = false;
@@ -657,6 +675,9 @@ export class Game extends Phaser.Scene
         this.laser?.destroy();
         this.laser = undefined;
 
+        this.explosions?.destroy();
+        this.explosions = undefined;
+
         this.gruntTestRunner = undefined;
         this.grunts = undefined;
         this.enemies = undefined;
@@ -667,6 +688,7 @@ export class Game extends Phaser.Scene
         this.scale.off('resize', this.applyCameraLayout, this);
 
         this.events.off(GameEvents.PLAYER_HIT, this.handlePlayerHit);
+        this.events.off(GameEvents.ENEMY_KILLED, this.handleEnemyKilled);
         this.events.off(GameEvents.POWER_UP_COLLECTED, this.handlePowerUpCollected, this);
         this.events.off(GameEvents.POWER_UP_USED, this.handlePowerUpUsed, this);
         this.events.off(Phaser.Core.Events.PAUSE, this.handleScenePause, this);

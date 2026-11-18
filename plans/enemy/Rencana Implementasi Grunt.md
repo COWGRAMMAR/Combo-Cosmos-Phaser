@@ -1,6 +1,6 @@
 # Rencana Implementasi Enemy Grunt
 
-- **Status:** Fase 1–5 + rain berbasis pola dasar diimplementasikan dan sudah diselaraskan dengan `main` (sistem aset + play area 1060×1080), menunggu verifikasi browser
+- **Status:** Fase 1–5 + rain berbasis pola dasar + Fase 8 (hit flash & ledakan) diimplementasikan dan sudah diselaraskan dengan `main` (sistem aset + play area 1060×1080), menunggu verifikasi browser
 - **Tanggal:** 2026-11-18
 - **Scope:** Grunt (Tipe 1) end-to-end: spawn, gerak, menembak, ditembak, tabrakan, dan harness tes.
 - **Referensi:** `Ide Enemy.md`, `Placeholder Enemy.md`, `docs/struktur-file.md`, `docs/bullet-system.md`
@@ -426,6 +426,31 @@ Perilaku:
 - [ ] Tidak ada import yang melanggar arah dependensi.
 - [ ] `bun x tsc --noEmit` lolos.
 - [ ] `bun run build` lolos.
+
+### Fase 8 — Umpan Balik Visual (Hit Flash & Ledakan)
+
+**Tujuan:** Grunt memberi reaksi saat terkena damage dan saat mati, tanpa menambah beban ke hot loop.
+
+**Keputusan:**
+
+1. **Hit flash memakai tint, bukan tekstur baru.** `Enemy.onDamaged()` memanggil `setTintMode(FILL)` + `setTint(EnemyConfig.hitFlash.color)`, lalu `preUpdate()` menghitung mundur dan `clearHitFlash()` mengembalikan mode tint ke `MULTIPLY`. Bentuk dan ukuran otomatis sama dengan tekstur asli.
+2. **Ledakan adalah efek terpisah, bukan animasi di sprite Grunt.** `Grunt` pooled; `die()` juga dipakai untuk despawn keluar layar dan `GruntPool.reset()`. Menaruh animasi di sana akan membuat Grunt yang lolos ke bawah layar ikut meledak dan animasi terpotong saat pool dipakai ulang.
+3. **Mati vs dibuang dipisahkan.** `BaseEntity.takeDamage()` memanggil hook `onDeath()` (default `die()`), `Enemy.onDeath()` memancarkan `GameEvents.ENEMY_KILLED` lalu `die()`, dan `Enemy.kill()` dipakai jalur tabrakan badan. Despawn dan reset tetap memanggil `die()` tanpa efek.
+4. **Tekstur placeholder baru** `AssetKeys.EnemyExplosion` (`enemy-explosion`): 48×48, isi lingkaran + cincin, terdaftar di `AssetManifest.placeholders` dan `PLACEHOLDER_RECIPES`.
+5. **Pool efek** `systems/effects/EnemyExplosionPool.ts`: prewarm `EnemyConfig.explosion.poolSize` sprite, animasi scale + alpha manual dari delta (tanpa tween), `Float32Array` untuk sisa umur, pool penuh = ledakan dilewati.
+
+**Lokasi tuning:** semua di `src/game/config/EnemyConfig.ts` → `hitFlash` (warna, `durationMs`) dan `explosion` (warna, `ringColor`, `durationMs`, `scaleFrom`, `scaleTo`, `poolSize`).
+
+**Wiring:** `Game` membuat pool setelah `GruntPool`, mendengarkan `ENEMY_KILLED`, memanggil `update()` di loop fixed-step, `reset()` di `resetRun()`, serta `off` + `destroy()` di shutdown.
+
+**Kriteria selesai:**
+
+- [ ] Tembakan yang tidak mematikan menampilkan siluet merah ±`hitFlash.durationMs`, lalu kembali normal.
+- [ ] Tembakan yang mematikan memunculkan ledakan di posisi Grunt.
+- [ ] Grunt yang lolos ke bawah layar **tidak** meledak.
+- [ ] Tabrakan badan dan bom sama-sama memunculkan ledakan.
+- [ ] `R` dan pause/resume tidak meninggalkan ledakan atau warna sisa.
+- [ ] Pool ledakan penuh tidak menyebabkan error.
 
 ---
 
