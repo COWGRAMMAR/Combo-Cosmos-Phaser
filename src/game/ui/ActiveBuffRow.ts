@@ -55,7 +55,7 @@ export class ActiveBuffRow extends Phaser.GameObjects.Container
     /**
      * Tampilkan baris durasi buff.
      * @param texture Tekstur ikon buff.
-     * @param color Warna progress bar (dari PowerUpConfig.iconColor).
+     * @param color Warna progress bar (dari PowerUpConfig.render.iconColor).
      * @param remainingMs Sisa durasi dalam milidetik.
      * @param totalMs Durasi total dalam milidetik.
      * @param isPaused Apakah seluruh buff sedang pause (progress bar dibeku).

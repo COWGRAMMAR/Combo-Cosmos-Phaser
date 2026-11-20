@@ -1,6 +1,6 @@
 # Debug Toggles — Daftar Tombol Debug
 
-Status: terverifikasi 2026-11-18 terhadap `src/game/systems/DebugTools.ts`.
+Status: terverifikasi 2026-11-20 terhadap `src/game/systems/DebugTools.ts`.
 Dokumen ini menjawab satu pertanyaan: **tombol apa saja yang bisa dipakai saat game berjalan, dan apa efeknya.**
 Untuk urutan uji Grunt memakai tombol-tombol ini, lihat `docs/panduan-uji-grunt.md`.
 
@@ -30,11 +30,23 @@ Tombol debug **selalu aktif** selama scene `Game` berjalan. Tidak ada flag on/of
 
 ### F1 — Toggle overlay statistik
 
-Memanggil `DebugOverlay.toggle()`: teks overlay disembunyikan/ditampilkan. Overlay **sudah tampil sejak awal** karena `WorldConfig.debug.enabled = true`, jadi tekan F1 pertama akan menyembunyikannya.
+Memanggil `DebugOverlay.toggle()`: teks overlay disembunyikan/ditampilkan. Overlay **sudah tampil sejak awal** karena `DebugConfig.enabled = true`, jadi tekan F1 pertama akan menyembunyikannya.
 
 Saat overlay disembunyikan, `DebugOverlay.update()` langsung `return` sehingga tidak ada string yang dibangun tiap frame — biaya performa nol.
 
-Lokasi: `Game.create()` → `this.overlay?.toggle()`.
+F1 juga mengendalikan **visual dunia** power-up (`DebugTools.renderPowerUpPaths()`), digambar di `pathGraphics` dengan depth `PowerUpConfig.itemDepth + 1`:
+
+| Visual | Sumber | Arti |
+| ------ | ------ | ---- |
+| Titik-titik jalur | `item.predict(ageMs)` untuk 0–3000 ms tiap 100 ms | Prediksi lintasan item memakai rumus gerak yang sama dengan gameplay |
+| Kotak 300×300 | `PowerUpSpawnManager.getSpawnZone()` | Zona spawn aktif (pusat + sisi dari `PowerUpConfig.spawnZone`) |
+| Titik pusat zona | pusat kotak | Titik acuan spawn item |
+| Ring di pemain | radius `PowerUpConfig.minPlayerSpawnDistance` (150 px) | Item tidak akan di-spawn di dalam ring ini |
+| Garis arah pendek | `item.getDirectionAngleDeg()` (hanya pola `straight`) | Arah diagonal item: 0° = lurus bawah, negatif = miring kiri, positif = miring kanan |
+
+Semua graphics dibersihkan (`clear()`) tiap frame dan ditinggal kosong saat overlay disembunyikan, jadi tidak ada sisa visual setelah F1 ditekan lagi.
+
+Lokasi: `Game.create()` → `this.overlay?.toggle()`; render per frame di `Game.update()`.
 
 ### F2 — Stress test ringan (1000 peluru)
 
@@ -112,12 +124,13 @@ Status di baris 6 dirakit dari: `dash siap` / `dash cooldown`, lalu tambahan `ke
 
 | Hal | Lokasi | Catatan |
 | --- | ------ | ------- |
-| Tombol & pengecekan | `src/game/systems/DebugTools.ts` | Hardcode sengaja, bukan `InputAction` |
+| Tombol & pengecekan | `src/game/systems/DebugTools.ts` | Key & styling dibaca dari `DebugConfig`, bukan `InputAction` |
+| Sumber konfigurasi debug | `src/game/config/DebugConfig.ts` | `enabled`, `keys` (F1–F4, Z–N), `stress`, `graphics` (jalur/zona/ring/arah) |
 | Aksi yang dipanggil | `Game.create()` | Satu-satunya tempat `new DebugTools(...)` |
-| Overlay | `src/game/ui/DebugOverlay.ts` | Visibilitas awal dari `WorldConfig.debug.enabled` |
-| Default overlay tampil | `src/game/config/WorldConfig.ts` (`debug.enabled`) | `debug.enabled: true` |
-| Stress test | `Game.spawnStressBullets()` | Jumlah datang dari tombol, bukan config |
-| Slot & pemakaian | `PowerUpConfig`, `PowerUpSlotManager` | Lihat `docs/asset-system.md` untuk aset; sistem power-up ada di `src/game/systems/power-ups/` |
+| Overlay | `src/game/ui/DebugOverlay.ts` | Visibilitas awal dari `DebugConfig.enabled` |
+| Default overlay tampil | `src/game/config/DebugConfig.ts` (`enabled`) | `enabled: true` |
+| Stress test | `Game.spawnStressBullets()` | Jumlah datang dari `DebugConfig.stress.light/heavy` |
+| Slot & pemakaian | `PowerUpConfig`, `PowerUpSlotManager` | Nilai gameplay (slot, pickup, pool) tetap di `PowerUpConfig`, bukan `DebugConfig` |
 
 Tombol debug **tidak** didaftarkan di `InputAction`/`InputBindings` supaya keybind gameplay tetap bersih dan tombol debug bisa dicabut tanpa menyentuh sistem input pemain.
 
@@ -140,7 +153,7 @@ Tombol debug **tidak** didaftarkan di `InputAction`/`InputBindings` supaya keybi
 
 1. Tambah aksi di `DebugActions` (`DebugTools.ts`) — misal `teleportPlayer: () => void`.
 2. Implementasikan aksi itu di call site `Game.create()`.
-3. Tambah field `Key` di `DebugTools`, daftarkan lewat `keyboard.addKey(...)` di constructor.
+3. Tambah key di `DebugConfig.keys` (`src/game/config/DebugConfig.ts`), lalu daftarkan lewat `keyboard.addKey(DebugConfig.keys.<nama>)` di constructor.
 4. Tambah blok `JustDown` di `update()` dengan komentar satu baris: tombol apa, efek apa.
 5. Tambah `keyboard.removeKey(...)` di `destroy()` agar tidak bocor saat scene restart.
 6. Perbarui tabel di dokumen ini dan `docs/struktur-file.md` bila ada file baru.
@@ -175,3 +188,4 @@ Belum ada dan sengaja tidak dibuat di sini:
 8. `B` lalu pakai → semua peluru musuh hilang, musuh aktif menerima damage besar.
 9. Restart run → jalur kembali 1, slot kosong, nyawa kembali ke `PlayerConfig.lives`.
 10. `R` → skenario Grunt mulai lagi dari pola pertama dan peluru musuh hilang.
+11. `F1` saat overlay tampil → terlihat kotak zona 300×300 + titik pusat, ring 150 px di pemain, titik-titik jalur item, dan garis arah untuk item `straight`; `F1` lagi → semua visual itu hilang tanpa sisa.

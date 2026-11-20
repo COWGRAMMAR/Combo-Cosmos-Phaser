@@ -96,7 +96,7 @@ export class HudRightPanel extends Phaser.GameObjects.Container
 
         const slotCenterY = this.slotYStart + HudConfig.slot.size / 2;
 
-        for (let i = 0; i < PowerUpConfig.slotCount; i++)
+        for (let i = 0; i < PowerUpConfig.item.slotCount; i++)
         {
             const box = new PowerUpSlotBox(
                 scene,
@@ -220,16 +220,16 @@ export class HudRightPanel extends Phaser.GameObjects.Container
         }
     }
 
-    /** Map tipe buff ke kunci tekstur ikon (single source: PowerUpConfig.iconAssetKey → AssetKeys). */
+    /** Map tipe buff ke kunci tekstur ikon (single source: PowerUpConfig.render.iconAssetKey → AssetKeys). */
     private iconTextureFor(type: PowerUpBuffType): string
     {
-        const key = (PowerUpConfig as { iconAssetKey: Record<string, string> }).iconAssetKey[type];
+        const key = (PowerUpConfig.render as { iconAssetKey: Record<string, string> }).iconAssetKey[type];
         return AssetManager.resolve(AssetKeys[key as keyof typeof AssetKeys]).texture;
     }
 
-    /** Map tipe buff ke warna ikon (single source: PowerUpConfig.iconColor). */
+    /** Map tipe buff ke warna ikon (single source: PowerUpConfig.render.iconColor). */
     private iconColorFor(type: PowerUpBuffType): number
     {
-        return (PowerUpConfig as { iconColor: Record<string, number> }).iconColor[type];
+        return (PowerUpConfig.render as { iconColor: Record<string, number> }).iconColor[type];
     }
 }

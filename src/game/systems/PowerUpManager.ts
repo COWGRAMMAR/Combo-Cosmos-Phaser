@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 import { GameEvents } from '../config/GameEvents';
 import { PlayerConfig } from '../config/PlayerConfig';
+import { PowerUpType } from '../types/PowerUpType';
 import type { EffectManager } from './EffectManager';
 import type { EnemyBulletManager } from './EnemyBulletManager';
 import type { Player } from '../entities/player/Player';
@@ -17,17 +18,6 @@ import { AtkSpeedBuff } from './power-ups/AtkSpeedBuff';
 import { ShieldBuff } from './power-ups/ShieldBuff';
 import { LaserBuff } from './power-ups/LaserBuff';
 import { NukeBuff } from './power-ups/NukeBuff';
-
-/** Semua power-up yang bisa didapat pemain. */
-export enum PowerUpType
-{
-    Lane = 'lane',
-    AtkSpeed = 'atk-speed',
-    Shield = 'shield',
-    Laser = 'laser',
-    Bomb = 'bomb',
-    Life = 'life'
-}
 
 /**
  * Dispatcher power-up: menerjemahkan jenis power-up menjadi aksi buff.

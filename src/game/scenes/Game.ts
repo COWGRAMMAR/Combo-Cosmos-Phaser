@@ -24,7 +24,7 @@ import { EnemyBulletManager } from '../systems/EnemyBulletManager';
 import { InputManager } from '../systems/InputManager';
 import { PauseManager } from '../systems/PauseManager';
 import { PowerUpManager } from '../systems/PowerUpManager';
-import type { PowerUpType } from '../systems/PowerUpManager';
+import type { PowerUpType } from '../types/PowerUpType';
 import { GruntPool } from '../systems/enemy/GruntPool';
 import { GruntTestRunner } from '../systems/enemy/GruntTestRunner';
 import { EnemyExplosionPool } from '../systems/effects/EnemyExplosionPool';
@@ -263,7 +263,12 @@ export class Game extends Phaser.Scene
             this.activeBuffManager
         );
 
-        this.spawnManager = new PowerUpSpawnManager(this, this.player, this.powerUps.getBuffRegistry());
+        this.spawnManager = new PowerUpSpawnManager(
+            this,
+            this.player,
+            this.powerUps.getBuffRegistry(),
+            this.slotManager
+        );
 
         this.shockwave = new Shockwave(this, this.enemyBullets);
         this.shield = new Shield(this);
@@ -365,14 +370,16 @@ export class Game extends Phaser.Scene
                 this.shockwave?.update(fixedStepMs);
                 this.laser?.update(fixedStepMs);
                 this.explosions?.update(fixedStepMs);
+                this.spawnManager?.updateItems(fixedStepMs);
+                // Jadwal spawn ikut jam simulasi agar seluruh timing gameplay konsisten
+                // (dipanggil setelah updateItems supaya item baru maju mulai step berikutnya).
+                this.spawnManager?.update(fixedStepMs);
             }
         );
 
         // Spawn pola Grunt memakai delta frame, bukan fixed-step, agar jeda pola
         // tetap mengikuti waktu nyata.
         this.gruntTestRunner?.update(delta);
-
-        this.spawnManager?.update(delta);
 
         if (this.inputManager?.isJustDown(InputAction.Pause))
         {
@@ -391,6 +398,17 @@ export class Game extends Phaser.Scene
 
         this.debugTools?.update();
         this.overlay?.update(this.stats);
+
+        // Prediksi jalur + zona spawn hanya digambar saat overlay debug terlihat.
+        this.debugTools?.renderPowerUpPaths(
+            this.spawnManager?.getActiveItems() ?? [],
+            this.overlay?.isVisible ?? false,
+            this.spawnManager?.getSpawnZone() ?? null,
+            {
+                x: this.player?.x ?? ScreenConfig.playArea.centerX,
+                y: this.player?.y ?? ScreenConfig.playArea.centerY
+            }
+        );
     }
 
     /** Getter read-only slot manager untuk konsumsi UI/HUD (UI hanya baca, tidak mengubah gameplay). */
@@ -427,7 +445,7 @@ export class Game extends Phaser.Scene
         }
 
         const discard = input.isDown(InputAction.DiscardModifier);
-        const slotCount = Math.min(SLOT_INPUT_ACTIONS.length, PowerUpConfig.slotCount);
+        const slotCount = Math.min(SLOT_INPUT_ACTIONS.length, PowerUpConfig.item.slotCount);
 
         for (let i = 0; i < slotCount; i++)
         {
@@ -482,6 +500,7 @@ export class Game extends Phaser.Scene
         this.effects?.reset();
         this.activeBuffManager?.reset();
         this.slotManager?.reset();
+        this.spawnManager?.clearAll();
         this.spawnManager?.stop();
         this.weapon?.reset();
         this.weapon?.clearAll();
@@ -682,6 +701,7 @@ export class Game extends Phaser.Scene
         this.grunts = undefined;
         this.enemies = undefined;
 
+        this.spawnManager?.clearAll();
         this.spawnManager?.stop();
         this.activeBuffManager?.reset();
         this.slotManager?.reset();

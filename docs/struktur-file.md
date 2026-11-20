@@ -1,14 +1,14 @@
 # Struktur File — Combo-Cosmos-Phaser
 
-- **Status:** Fase 0 (fondasi class) + InputManager + Fase 1 (bullet foundation) + Fase 2–4 (survival, efek & power-up, dash) + Fase screen/scale/layer/game loop + HUD power-up + Grunt Tipe 1 (pola single/wall/stream, rain berbasis pola, hit flash & ledakan) selesai
-- **Tanggal:** 2026-11-18
+- **Status:** Fase 0 (fondasi class) + InputManager + Fase 1 (bullet foundation) + Fase 2–4 (survival, efek & power-up, dash) + Fase screen/scale/layer/game loop + HUD power-up + Grunt Tipe 1 (pola single/wall/stream, rain berbasis pola, hit flash & ledakan) + power-up item movement (3 pola gerak, pool 50, pickup berbasis jarak & kapasitas inventory) + dynamic spawn zone (zona 300×300 berpindah tiap 2 item, jarak minimum 150 px dari player, straight diagonal, despawn 4 sisi) + pemisahan config power-up ke 4 domain (render/item/spawn/movement) & DebugConfig terpusat selesai
+- **Tanggal:** 2026-11-20
 - **Scope dokumen:** **hanya struktur folder/file**. Rencana class, field, method, dan urutan implementasi ada di `plans/2#-entities-class.md`. Rencana porting arsitektur ada di `plans/1#-bullet-hell-porting.md`. Kontrak bullet system ada di `docs/bullet-system.md`.
 
 Dokumen ini adalah **sumber kebenaran struktur file**. Jika isinya berbeda dengan kondisi repo, struktur dianggap belum selesai dikerjakan.
 
 ---
 
-## 1. Struktur Folder Saat Ini (verified 2026-11-18)
+## 1. Struktur Folder Saat Ini (verified 2026-11-20)
 
 ```
 Combo-Cosmos-Phaser/
@@ -25,6 +25,9 @@ Combo-Cosmos-Phaser/
 ├─ plans/
 │  ├─ 1#-bullet-hell-porting.md   # (existing)
 │  ├─ 2#-entities-class.md        # rencana class Player & Enemy
+│  ├─ 5#-power-up-item-movement.md # rencana gerak item power-up (3 pola, pool, pickup)
+│  ├─ 6#-dynamic-spawn-zone.md    # rencana zona spawn dinamis, jarak aman player, straight diagonal, despawn 4 sisi
+│  ├─ 7#-config-split.md          # rencana pemisahan config power-up 4 domain + DebugConfig terpusat
 │  └─ enemy/
 │     ├─ Ide Enemy.md             # desain pola gerak & serangan enemy
 │     └─ Placeholder Enemy.md     # spesifikasi visual placeholder
@@ -46,7 +49,7 @@ Combo-Cosmos-Phaser/
       │  ├─ EnemyConfig.ts        # hp musuh, hit flash, ledakan, bullet (speed/radius/pool/margin/lifetime)
       │  ├─ GruntConfig.ts        # hp/radius/despawn/pool + senjata & parameter pola Single/Wall/Stream + rain (termasuk spawnX override)
       │  ├─ EnemyTestConfig.ts    # skenario tes Grunt (single/wall/stream/rain) + reset key opsional
-      │  ├─ WorldConfig.ts        # background + flag debug + delay/layout bantu
+      │  ├─ WorldConfig.ts        # background, letterbox, delay game over, frame play area
       │  ├─ ScreenConfig.ts       # sumber kebenaran canvas, play area, panel HUD, spawn
       │  ├─ TimeConfig.ts         # target/batas FPS + fixed step dan batas akumulasi
       │  ├─ DepthConfig.ts        # urutan layer render bernama
@@ -56,7 +59,8 @@ Combo-Cosmos-Phaser/
       │  ├─ AssetManifest.ts      # data murni: entri file/placeholder, frame, dan tabel animasi
       │  ├─ GameEvents.ts         # konstanta nama event
       │  ├─ InputBindings.ts      # default binding action → key (data-driven)
-      │  └─ PowerUpConfig.ts      # konfigurasi sistem power-up (stock, slot, spawn, bobot, item visual)
+      │  ├─ PowerUpConfig.ts      # power-up 4 domain: render (visual item, ikon) → item (slot, stack, pickup, pool, interval) → spawn (spawnZone, jarak aman player, bobot) → movement (kantong pola + rentang speed/amp/ampY/freq/sudut)
+      │  └─ DebugConfig.ts        # sumber tunggal debug: enabled, key F1–F4 & Z–N, jumlah stress, styling grafis jalur/zona/ring/arah
       ├─ scenes/
       │  ├─ Boot.ts               # preload aset boot lewat AssetManager
       │  ├─ Preloader.ts          # preload aset main + generate placeholder + registrasi animasi
@@ -95,14 +99,16 @@ Combo-Cosmos-Phaser/
       │  ├─ EffectManager.ts      # satu timer durasi untuk semua efek (refresh, bukan stack)
       │  ├─ PowerUpManager.ts     # eksekusi efek power-up, delegasi ke buff class + slot manager
       │  ├─ PauseManager.ts       # pause/resume Game+Hud, auto-pause BLUR/HIDDEN
-      │  ├─ DebugTools.ts         # tombol debug (F1–F4, Z–N, reset skenario), detail di docs/debug-toggles.md
+      │  ├─ DebugTools.ts         # tombol debug + visual jalur item, kotak zona spawn, ring jarak player, garis arah straight; semua key & styling dari DebugConfig (detail di docs/debug-toggles.md)
       │  ├─ power-ups/            # sistem power-up (buff, slot, aktif, spawn)
       │  │  ├─ IPowerUpBuff.ts    # kontrak kelas buff (isValid, getWeight, apply, blocksNormalFire)
       │  │  ├─ PowerUpBuffType.ts # enum tipe buff: Lane, AtkSpeed, Shield, Laser, Nuke, Life
       │  │  ├─ PowerUpCategory.ts # enum kategori: AutoPickup, Slotted
-      │  │  ├─ PowerUpSlotManager.ts # inventory slot (3 slot, stack, keybind 1/2/3, Ctrl+1/2/3 buang)
+│  │  ├─ PowerUpItem.ts      # satu item di dunia: pola gerak, base posisi, reset()/advance()/predict()/setBlocked(), getter pola & sudut
+│  │  ├─ PowerUpMovement.ts  # registry 3 pola gerak murni (straight diagonal + sine + infinity) + kantong pola + roll parameter + validasi config
+      │  │  ├─ PowerUpSlotManager.ts # inventory slot (3 slot, stack, keybind 1/2/3, Ctrl+1/2/3 buang, canAccept)
       │  │  ├─ ActiveBuffManager.ts # buff aktif dengan pause/resume durasi + flag blocksNormalFire
-      │  │  ├─ PowerUpSpawnManager.ts # timer spawn, pilihan bobot via isValid/getWeight, overlap
+      │  │  ├─ PowerUpSpawnManager.ts # spawn item: pool 50, kantong jenis (bobot) & pola, zona 300×300 berpindah sesuai itemsPerZone, jarak aman player, updateItems fixed-step + despawn 4 sisi
       │  │  ├─ LaneBuff.ts        # AutoPickup: tambah jalur tembakan (max 5)
       │  │  ├─ LifeBuff.ts        # AutoPickup: tambah nyawa (max 5)
       │  │  ├─ AtkSpeedBuff.ts    # Slotted: tembak lebih cepat (fire-rate)
@@ -120,7 +126,7 @@ Combo-Cosmos-Phaser/
       │     ├─ WallFormation.ts    # pola dasar: satu baris unit, sekali per run
       │     └─ StreamFormation.ts  # pola dasar: satu kolom, unit muncul berurutan
       ├─ ui/
-      │  ├─ DebugOverlay.ts       # teks statistik performa, pool, nyawa, status efek & skenario Grunt
+      │  ├─ DebugOverlay.ts       # teks statistik performa, pool, nyawa, status efek & skenario Grunt; visibilitas awal dari DebugConfig.enabled
       │  ├─ HudManager.ts         # koordinator panel HUD kiri + kanan
       │  ├─ HudLeftPanel.ts       # wadah panel kiri (placeholder untuk ekstensi)
       │  ├─ HudRightPanel.ts      # panel kanan: HP + slot buff + daftar durasi buff
@@ -128,6 +134,7 @@ Combo-Cosmos-Phaser/
       │  └─ ActiveBuffRow.ts      # komponen satu baris durasi buff aktif
       ├─ types/
       │  ├─ Team.ts               # enum Team
+      │  ├─ PowerUpType.ts        # enum tipe power-up (vocabulary lintas layer, dipakai config & systems)
       │  ├─ EntityConfig.ts       # interface config konstruktor entity
       │  ├─ AssetRef.ts           # referensi tekstur siap pakai: { texture, frame? }
       │  ├─ InputAction.ts        # enum aksi input lintas layer
@@ -138,7 +145,8 @@ Combo-Cosmos-Phaser/
       └─ utils/
          ├─ computeFit.ts         # hitung skala FIT (letterbox) + offset tengah dari ukuran window
          ├─ designCamera.ts       # apply/bind kamera desain: zoom + centerOn + listener resize
-         └─ fixedStep.ts          # helper loop fixed timestep (ekstraksi duplikat Game.ts & BaseEntity.ts)
+         ├─ fixedStep.ts          # helper loop fixed timestep (ekstraksi duplikat Game.ts & BaseEntity.ts)
+         └─ ShuffleBag.ts         # kantong acak tanpa pengembalian (draw/refill/clear) untuk pilihan berbobot
 ```
 
 ---
@@ -167,7 +175,7 @@ src/game/
 ```
 
 Catatan: `config/GameConfig.ts` dan `entities/projectile/*` dari rencana lama **tidak dipakai**.
-Konfigurasi dipisah per domain (`PlayerConfig`, `EnemyConfig`, `WorldConfig`), dan bullet
+Konfigurasi dipisah per domain (`PlayerConfig`, `EnemyConfig`, `WorldConfig`, `PowerUpConfig` 4 domain, `DebugConfig`), dan bullet
 berada di `entities/bullet/` karena dipakai bersama player dan enemy.
 
 ---

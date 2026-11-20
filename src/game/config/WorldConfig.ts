@@ -1,4 +1,4 @@
-/** Konfigurasi tingkat dunia: tampilan latar dan saklar debug. */
+/** Konfigurasi tingkat dunia: tampilan latar. */
 export const WorldConfig = {
     background: {
         color: 0x1b5e20
@@ -6,9 +6,6 @@ export const WorldConfig = {
     /** Warna canvas di luar ruang desain (letterbox). */
     letterbox: {
         color: 0x000000
-    },
-    debug: {
-        enabled: true
     },
     /** Jeda sebelum scene GameOver tampil, dalam milidetik. */
     gameOverDelayMs: 600,
