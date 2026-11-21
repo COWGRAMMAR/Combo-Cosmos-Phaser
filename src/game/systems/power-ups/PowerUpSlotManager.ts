@@ -10,7 +10,7 @@ import { PowerUpConfig } from '../../config/PowerUpConfig';
  */
 export class PowerUpSlotManager
 {
-    private readonly slotCount = PowerUpConfig.slotCount;
+    private readonly slotCount = PowerUpConfig.item.slotCount;
 
     private readonly slots: IPowerUpBuff[][] = [];
 
@@ -21,7 +21,7 @@ export class PowerUpSlotManager
     private readonly slotCounts: number[] = [];
 
     /** Max stack per slot per jenis buff (config dari PowerUpConfig). */
-    private readonly maxStackPerSlot = PowerUpConfig.maxStackPerSlot;
+    private readonly maxStackPerSlot = PowerUpConfig.item.maxStackPerSlot;
 
     constructor()
     {
@@ -173,6 +173,23 @@ export class PowerUpSlotManager
             }
         }
         return -1;
+    }
+
+    /**
+     * Apakah inventory masih mampu menampung satu item jenis tertentu.
+     * Dicek saat pickup (bukan saat spawn): true jika slot jenis sama belum penuh stack,
+     * atau masih ada slot kosong untuk jenis baru.
+     */
+    public canAccept(type: PowerUpBuffType): boolean
+    {
+        const index = this.findSlot(type);
+
+        if (index >= 0)
+        {
+            return this.getSlotCountAt(index) < this.getMaxStackAt(index);
+        }
+
+        return !this.isFull();
     }
 
     /** Apakah slot penuh (semua ada stack). */

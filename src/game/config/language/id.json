@@ -1,0 +1,16 @@
+{
+    "main_menu.screen.title": "Menu Utama",
+    "game_over.screen.title": "Permainan Berakhir",
+    "pause.overlay.title": "DIJEDA",
+    "pause.overlay.hint": "Klik atau tekan ESC untuk melanjutkan",
+    "hud.left.score_label": "SKOR",
+    "hud.left.combo_label": "COMBO",
+    "hud.left.multiplier_label": "PENGALI",
+    "hud.left.dash_label": "DASH",
+    "hud.left.dash_ready": "SIAP",
+    "hud.right.hp_label": "HP",
+    "hud.right.hp_value": "{lives}x",
+    "hud.right.slot_label": "SLOT",
+    "hud.right.buff_label": "BUFF AKTIF",
+    "common.example.greeting": "Halo, {name}!"
+}

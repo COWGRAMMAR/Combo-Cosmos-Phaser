@@ -1,0 +1,16 @@
+{
+    "main_menu.screen.title": "Main Menu",
+    "game_over.screen.title": "Game Over",
+    "pause.overlay.title": "PAUSED",
+    "pause.overlay.hint": "Click or press ESC to resume",
+    "hud.left.score_label": "SCORE",
+    "hud.left.combo_label": "COMBO",
+    "hud.left.multiplier_label": "MULTIPLIER",
+    "hud.left.dash_label": "DASH",
+    "hud.left.dash_ready": "READY",
+    "hud.right.hp_label": "HP",
+    "hud.right.hp_value": "{lives}x",
+    "hud.right.slot_label": "SLOT",
+    "hud.right.buff_label": "ACTIVE BUFFS",
+    "common.example.greeting": "Hello, {name}!"
+}

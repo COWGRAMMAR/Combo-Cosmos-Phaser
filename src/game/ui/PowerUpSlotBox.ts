@@ -21,28 +21,30 @@ export class PowerUpSlotBox extends Phaser.GameObjects.Container
     {
         super(scene, x, y);
 
+        const slotCfg = HudConfig.right.slot;
+
         this.bg = scene.add
-            .rectangle(0, 0, size, size, HudConfig.slot.bgColor, HudConfig.slot.bgAlpha)
-            .setStrokeStyle(HudConfig.slot.borderThickness, HudConfig.slot.borderColor)
+            .rectangle(0, 0, size, size, slotCfg.bgColor, slotCfg.bgAlpha)
+            .setStrokeStyle(slotCfg.borderThickness, slotCfg.borderColor)
             .setOrigin(0.5);
 
         this.icon = scene.add
             .image(0, 0, '')
             .setDisplaySize(
-                size - HudConfig.slot.padding * 2,
-                size - HudConfig.slot.padding * 2
+                size - slotCfg.padding * 2,
+                size - slotCfg.padding * 2
             )
             .setVisible(false);
 
         this.stackText = scene.add
             .text(
-                size / 2 - HudConfig.slot.padding,
-                size / 2 - HudConfig.slot.padding,
+                size / 2 - slotCfg.padding,
+                size / 2 - slotCfg.padding,
                 '',
                 {
                     fontFamily: HudConfig.label.fontFamily,
-                    fontSize: HudConfig.slot.stackFontSize,
-                    color: HudConfig.slot.stackColor
+                    fontSize: slotCfg.stackFontSize,
+                    color: slotCfg.stackColor
                 }
             )
             // Angka stack ditempel di pojok kanan bawah kotak.
@@ -52,12 +54,12 @@ export class PowerUpSlotBox extends Phaser.GameObjects.Container
         this.keybindText = scene.add
             .text(
                 0,
-                size / 2 + HudConfig.slot.padding + HudConfig.slot.keybindGap,
+                size / 2 + slotCfg.padding + slotCfg.keybindGap,
                 '',
                 {
                     fontFamily: HudConfig.label.fontFamily,
-                    fontSize: HudConfig.slot.keybindFontSize,
-                    color: HudConfig.slot.keybindColor
+                    fontSize: slotCfg.keybindFontSize,
+                    color: slotCfg.keybindColor
                 }
             )
             .setOrigin(0.5, 0);
@@ -70,9 +72,10 @@ export class PowerUpSlotBox extends Phaser.GameObjects.Container
     /** Tampilkan slot kosong dengan label keybind. */
     public setEmpty(keybind: string): void
     {
+        const slotCfg = HudConfig.right.slot;
         this.icon.setVisible(false);
         this.stackText.setVisible(false);
-        this.bg.setStrokeStyle(HudConfig.slot.borderThickness, HudConfig.slot.borderColor);
+        this.bg.setStrokeStyle(slotCfg.borderThickness, slotCfg.borderColor);
         this.keybindText.setText(keybind);
         this.keybindText.setVisible(true);
     }
@@ -80,12 +83,13 @@ export class PowerUpSlotBox extends Phaser.GameObjects.Container
     /** Tampilkan slot terisi dengan ikon, jumlah stack, dan keybind. */
     public setFilled(texture: string, count: number, keybind: string): void
     {
+        const slotCfg = HudConfig.right.slot;
         this.icon.setTexture(texture);
         this.icon.setVisible(true);
         this.stackText.setText(String(count));
         this.stackText.setVisible(true);
         // Border tetap netral dan setebal slot kosong; jumlah stack cukup lewat angka.
-        this.bg.setStrokeStyle(HudConfig.slot.borderThickness, HudConfig.slot.borderColor);
+        this.bg.setStrokeStyle(slotCfg.borderThickness, slotCfg.borderColor);
         this.keybindText.setText(keybind);
         this.keybindText.setVisible(true);
     }

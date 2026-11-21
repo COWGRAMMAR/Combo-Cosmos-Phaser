@@ -21,30 +21,31 @@ export class ActiveBuffRow extends Phaser.GameObjects.Container
     {
         super(scene, x, y);
 
+        const buffRow = HudConfig.right.buffRow;
         this._barWidth = barWidth;
 
         this.icon = scene.add
             .image(0, 0, '')
-            .setDisplaySize(HudConfig.buffRow.iconSize, HudConfig.buffRow.iconSize)
+            .setDisplaySize(buffRow.iconSize, buffRow.iconSize)
             .setVisible(false);
 
         this.barBg = scene.add
             .rectangle(
-                HudConfig.buffRow.iconSize + HudConfig.buffRow.gapIconBar,
+                buffRow.iconSize + buffRow.gapIconBar,
                 0,
                 barWidth,
-                HudConfig.buffRow.progressBarHeight,
-                HudConfig.buffRow.barBgColor
+                buffRow.progressBarHeight,
+                buffRow.barBgColor
             )
             .setOrigin(0, 0.5);
 
         // Lebar penuh sejak awal: progress diatur lewat scaleX, bukan setDisplaySize.
         this.barFg = scene.add
             .rectangle(
-                HudConfig.buffRow.iconSize + HudConfig.buffRow.gapIconBar,
+                buffRow.iconSize + buffRow.gapIconBar,
                 0,
                 barWidth,
-                HudConfig.buffRow.progressBarHeight,
+                buffRow.progressBarHeight,
                 0x22d3ee
             )
             .setOrigin(0, 0.5);
@@ -55,7 +56,7 @@ export class ActiveBuffRow extends Phaser.GameObjects.Container
     /**
      * Tampilkan baris durasi buff.
      * @param texture Tekstur ikon buff.
-     * @param color Warna progress bar (dari PowerUpConfig.iconColor).
+     * @param color Warna progress bar (dari PowerUpConfig.render.iconColor).
      * @param remainingMs Sisa durasi dalam milidetik.
      * @param totalMs Durasi total dalam milidetik.
      * @param isPaused Apakah seluruh buff sedang pause (progress bar dibeku).
@@ -68,6 +69,8 @@ export class ActiveBuffRow extends Phaser.GameObjects.Container
         isPaused: boolean
     ): void
     {
+        const buffRow = HudConfig.right.buffRow;
+
         this.icon.setTexture(texture);
         this.icon.setVisible(true);
 
@@ -82,12 +85,12 @@ export class ActiveBuffRow extends Phaser.GameObjects.Container
         // Visual paused: progress bar diabaikan (di-hidden).
         if (isPaused)
         {
-            this.barBg.setFillStyle(HudConfig.buffRow.barBgPausedColor, HudConfig.buffRow.barBgPausedAlpha);
+            this.barBg.setFillStyle(buffRow.barBgPausedColor, buffRow.barBgPausedAlpha);
             this.barFg.setVisible(false);
         }
         else
         {
-            this.barBg.setFillStyle(HudConfig.buffRow.barBgColor, 1);
+            this.barBg.setFillStyle(buffRow.barBgColor, 1);
         }
     }
 }

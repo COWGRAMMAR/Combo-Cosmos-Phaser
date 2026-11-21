@@ -6,105 +6,136 @@ import { AssetManager } from '../systems/AssetManager';
 import { HudConfig } from '../config/HudConfig';
 import { PowerUpSlotBox } from './PowerUpSlotBox';
 import { ActiveBuffRow } from './ActiveBuffRow';
+import { TranslatedText } from './TranslatedText';
+import { HudDataProvider } from '../systems/HudDataProvider';
 
 /**
  * Panel kanan HUD.
  * Menampilkan indikator HP (atas), 3 kotak slot buff (tengah), dan daftar durasi buff aktif (bawah).
- * UI hanya menampilkan; semua data diambil dari Game scene (logic layer) via polling tiap frame.
+ * UI hanya menampilkan; semua data diambil dari HudDataProvider (polling tiap frame).
+ * Posisi tiap komponen diambil dari HudConfig.right.<component>.x/.y (relatif ke padding panel).
  */
 export class HudRightPanel extends Phaser.GameObjects.Container
 {
-    private readonly gameScene: Phaser.Scene;
+    private readonly provider: HudDataProvider;
 
     private readonly hpIcon: Phaser.GameObjects.Image;
 
-    private readonly hpText: Phaser.GameObjects.Text;
+    private readonly hpText: TranslatedText;
 
     private readonly slotBoxes: PowerUpSlotBox[] = [];
 
     private readonly buffRows: ActiveBuffRow[] = [];
 
-    private readonly slotYStart: number;
-
-    private readonly buffRowYStart: number;
-
     /** Konstruktor panel kanan. */
-    constructor(scene: Phaser.Scene, gameScene: Phaser.Scene, x: number, y: number, width: number, height: number)
+    constructor(
+        scene: Phaser.Scene,
+        provider: HudDataProvider,
+        x: number,
+        y: number,
+        width: number,
+        height: number
+    )
     {
         super(scene, x, y);
 
-        this.gameScene = gameScene;
+        this.provider = provider;
 
+        const rightCfg = HudConfig.right;
+        const labelCfg = HudConfig.label;
+        const pad = rightCfg.padding;
+
+        // Background panel
         const background = scene.add
-            .rectangle(0, 0, width, height, HudConfig.panel.rightColor)
+            .rectangle(0, 0, width, height, rightCfg.bgColor)
             .setOrigin(0);
 
         // Background harus masuk container paling awal agar tidak menimpa slot box.
         this.add(background);
 
-        // --- Indikator HP (di atas) ---
-        const hpLabel = scene.add
-            .text(
-                HudConfig.panel.padding,
-                HudConfig.panel.padding,
-                'HP',
-                {
-                    fontFamily: HudConfig.label.fontFamily,
-                    fontSize: HudConfig.label.sectionFontSize,
-                    color: HudConfig.label.color
-                }
-            )
-            .setOrigin(0, 0);
+        // ===== HP =====
+        const hpLabelX = pad + rightCfg.hp.x;
+        const hpLabelY = pad + rightCfg.hp.y;
+        const hpLabel = new TranslatedText(
+            scene,
+            hpLabelX,
+            hpLabelY,
+            'hud.right.hp_label',
+            undefined,
+            {
+                fontFamily: labelCfg.fontFamily,
+                fontSize: rightCfg.hp.labelFontSize,
+                color: labelCfg.color
+            }
+        ).setOrigin(0, 0);
 
+        // HP icon + value: di bawah label, offset valueOffsetY
+        const hpIconX = hpLabelX;
+        const hpIconY = hpLabelY + rightCfg.hp.labelFontSize + rightCfg.hp.valueOffsetY;
         this.hpIcon = scene.add
             .image(
-                HudConfig.panel.padding,
-                HudConfig.panel.padding + HudConfig.hp.iconSize + HudConfig.hp.valueOffsetY,
+                hpIconX,
+                hpIconY,
                 AssetManager.resolve(AssetKeys.PowerUpIconLife).texture
             )
-            .setDisplaySize(HudConfig.hp.iconSize, HudConfig.hp.iconSize)
+            .setDisplaySize(rightCfg.hp.iconSize, rightCfg.hp.iconSize)
             .setOrigin(0, 0);
 
-        this.hpText = scene.add
-            .text(
-                HudConfig.panel.padding + HudConfig.hp.iconSize + HudConfig.hp.gap,
-                HudConfig.panel.padding + HudConfig.hp.iconSize + HudConfig.hp.valueOffsetY,
-                '',
-                {
-                    fontFamily: HudConfig.label.fontFamily,
-                    fontSize: HudConfig.hp.fontSize,
-                    color: HudConfig.hp.valueColor
-                }
-            )
-            .setOrigin(0, 0.5);
+        const hpTextX = hpIconX + rightCfg.hp.iconSize + rightCfg.hp.gap;
+        const hpTextY = hpIconY + rightCfg.hp.iconSize / 2; // center vertikal dengan ikon
+        this.hpText = new TranslatedText(
+            scene,
+            hpTextX,
+            hpTextY,
+            'hud.right.hp_value',
+            { lives: 0 },
+            {
+                fontFamily: labelCfg.fontFamily,
+                fontSize: rightCfg.hp.valueFontSize,
+                color: rightCfg.hp.valueColor
+            }
+        ).setOrigin(0, 0.5);
 
-        // --- Kotak slot buff (tengah) ---
-        const slotLabel = scene.add
-            .text(
-                HudConfig.panel.padding,
-                HudConfig.panel.padding + HudConfig.hp.iconSize + HudConfig.slot.labelOffsetY,
-                'SLOT',
-                {
-                    fontFamily: HudConfig.label.fontFamily,
-                    fontSize: HudConfig.label.sectionFontSize,
-                    color: HudConfig.label.color
-                }
-            )
-            .setOrigin(0, 0);
+        // ===== SLOT =====
+        // Hitung y slot: di bawah HP (label + iconSize + valueOffsetY + sectionGap)
+        const hpSectionH = rightCfg.hp.labelFontSize + rightCfg.hp.iconSize + rightCfg.hp.valueOffsetY;
+        const slotY = rightCfg.hp.y + hpSectionH + rightCfg.sectionGap;
+        (rightCfg.slot as any).y = slotY;
 
-        this.slotYStart = slotLabel.y + HudConfig.slot.rowGap;
+        const slotLabelX = pad + rightCfg.slot.x;
+        const slotLabelY = pad + slotY;
+        const slotLabel = new TranslatedText(
+            scene,
+            slotLabelX,
+            slotLabelY,
+            'hud.right.slot_label',
+            undefined,
+            {
+                fontFamily: labelCfg.fontFamily,
+                fontSize: rightCfg.slot.labelFontSize,
+                color: labelCfg.color
+            }
+        ).setOrigin(0, 0);
 
-        const slotCenterY = this.slotYStart + HudConfig.slot.size / 2;
+        // Slot boxes: di bawah label + rowOffsetY, center vertikal
+        const slotBoxesY = slotLabelY + rightCfg.slot.labelFontSize + rightCfg.slot.rowOffsetY;
+        const slotCenterY = slotBoxesY + rightCfg.slot.size / 2;
 
-        for (let i = 0; i < PowerUpConfig.slotCount; i++)
+        // firstBoxOffsetX: center 3 kotak di panel (padding + offset)
+        // Total lebar 3 kotak + 2 gap = 3*64 + 2*18 = 192 + 36 = 228
+        // Panel content width = width - 2*padding
+        // Center: (contentWidth - totalBoxesWidth) / 2
+        const contentWidth = width - pad * 2;
+        const totalBoxesWidth = PowerUpConfig.item.slotCount * rightCfg.slot.size + (PowerUpConfig.item.slotCount - 1) * rightCfg.slot.gap;
+        const firstBoxX = pad + Math.max(0, (contentWidth - totalBoxesWidth) / 2) + rightCfg.slot.firstBoxOffsetX;
+
+        for (let i = 0; i < PowerUpConfig.item.slotCount; i++)
         {
             const box = new PowerUpSlotBox(
                 scene,
-                HudConfig.panel.padding
-                    + HudConfig.slot.size / 2
-                    + i * (HudConfig.slot.size + HudConfig.slot.gap),
-                slotCenterY,
-                HudConfig.slot.size
+                firstBoxX + i * (rightCfg.slot.size + rightCfg.slot.gap),
+                slotCenterY + rightCfg.slot.boxOffsetY,
+                rightCfg.slot.size
             );
             box.setDepth(10);
             box.setEmpty(String(i + 1));
@@ -112,59 +143,55 @@ export class HudRightPanel extends Phaser.GameObjects.Container
             this.add(box);
         }
 
-        // --- Daftar durasi buff aktif (bawah) ---
-        const buffLabel = scene.add
-            .text(
-                HudConfig.panel.padding,
-                // Sisakan ruang untuk label keybind di bawah satu baris slot.
-                this.slotYStart + HudConfig.slot.size + HudConfig.slot.buffLabelGap,
-                'BUFF AKTIF',
-                {
-                    fontFamily: HudConfig.label.fontFamily,
-                    fontSize: HudConfig.label.sectionFontSize,
-                    color: HudConfig.label.color
-                }
-            )
-            .setOrigin(0, 0);
+        // ===== BUFF ROW =====
+        // Hitung y buffRow: di bawah SLOT (label + labelFontSize + rowOffsetY + size + buffLabelGap + sectionGap)
+        const slotSectionH = rightCfg.slot.labelFontSize + rightCfg.slot.rowOffsetY + rightCfg.slot.size + rightCfg.slot.buffLabelGap;
+        const buffRowY = slotY + slotSectionH + rightCfg.sectionGap;
+        (rightCfg.buffRow as any).y = buffRowY;
 
-        // Beri jarak setinggi label + celah agar baris buff tidak menimpa teks label.
-        this.buffRowYStart = buffLabel.y + HudConfig.buffRow.labelGap;
+        const buffLabelX = pad + rightCfg.buffRow.x;
+        const buffLabelY = pad + buffRowY;
+        const buffLabel = new TranslatedText(
+            scene,
+            buffLabelX,
+            buffLabelY,
+            'hud.right.buff_label',
+            undefined,
+            {
+                fontFamily: labelCfg.fontFamily,
+                fontSize: rightCfg.buffRow.labelFontSize,
+                color: labelCfg.color
+            }
+        ).setOrigin(0, 0);
+
+        // Baris buff pertama: di bawah label + firstRowOffsetY
+        this.buffRowStartY = buffLabelY + rightCfg.buffRow.labelFontSize + rightCfg.buffRow.firstRowOffsetY;
 
         this.add([hpLabel, this.hpIcon, this.hpText, slotLabel, buffLabel]);
     }
 
-    /** Polling data dari logic layer dan memperbarui semua tampilan. Dipanggil tiap frame. */
+    /** Posisi Y baris buff pertama (relatif ke panel, sudah include padding). */
+    private buffRowStartY: number = 0;
+
+    /** Polling data dari HudDataProvider dan memperbarui semua tampilan. Dipanggil tiap frame. */
     public update(_time: number, _delta: number): void
     {
-        const game = this.gameScene as unknown as {
-            getSlotManager?(): { getSlotType(i: number): PowerUpBuffType | null; getSlotCountAt(i: number): number; getKeybind(i: number): string } | undefined;
-            getActiveBuffManager?(): {
-                getActiveBuffTypes(): PowerUpBuffType[];
-                getTotalMs(type: PowerUpBuffType): number;
-                getRemainingMs(type: PowerUpBuffType): number;
-                isPaused(): boolean;
-            } | undefined;
-            getPlayer?(): { lives: number } | undefined;
-        };
-
-        const slotManager = game.getSlotManager?.();
-        const activeBuffManager = game.getActiveBuffManager?.();
-        const player = game.getPlayer?.();
+        const rightCfg = HudConfig.right;
 
         // --- Perbarui indikator HP ---
-        if (player)
+        if (this.provider.hasPlayer)
         {
-            this.hpText.setText(`${player.lives}x`);
+            this.hpText.setParam('lives', this.provider.lives);
         }
 
         // --- Perbarui kotak slot ---
-        if (slotManager)
+        if (this.provider.hasSlots)
         {
             for (let i = 0; i < this.slotBoxes.length; i++)
             {
-                const type = slotManager.getSlotType(i);
-                const count = slotManager.getSlotCountAt(i);
-                const keybind = slotManager.getKeybind(i);
+                const type = this.provider.getSlotType(i);
+                const count = this.provider.getSlotCountAt(i);
+                const keybind = this.provider.getSlotKeybind(i);
 
                 if (type === null)
                 {
@@ -179,57 +206,57 @@ export class HudRightPanel extends Phaser.GameObjects.Container
         }
 
         // --- Perbarui daftar durasi buff aktif ---
-        if (activeBuffManager)
+        const activeTypes = this.provider.getActiveBuffTypes();
+        if (activeTypes !== undefined)
         {
-            const types = activeBuffManager.getActiveBuffTypes();
-            const isPaused = activeBuffManager.isPaused();
+            const isPaused = this.provider.isBuffsPaused();
 
             // Cukupkan jumlah baris dengan jumlah buff aktif.
-            while (this.buffRows.length < types.length)
+            while (this.buffRows.length < activeTypes.length)
             {
                 const row = new ActiveBuffRow(
                     this.scene,
-                    HudConfig.panel.padding,
-                    this.buffRowYStart + this.buffRows.length * (HudConfig.buffRow.height + HudConfig.buffRow.gap),
-                    HudConfig.buffRow.progressBarWidth
+                    HudConfig.right.buffRow.x, // x dari config (0)
+                    this.buffRowStartY + this.buffRows.length * (rightCfg.buffRow.height + rightCfg.buffRow.gap),
+                    rightCfg.buffRow.progressBarWidth
                 );
                 this.buffRows.push(row);
                 this.add(row);
             }
 
             // Sembunyikan baris kelebihan (buff yang sudah hilang).
-            for (let i = types.length; i < this.buffRows.length; i++)
+            for (let i = activeTypes.length; i < this.buffRows.length; i++)
             {
                 this.buffRows[i].setVisible(false);
             }
 
             // Perbarui data setiap baris.
-            for (let i = 0; i < types.length; i++)
+            for (let i = 0; i < activeTypes.length; i++)
             {
-                const type = types[i];
-                const remainingMs = activeBuffManager.getRemainingMs(type);
-                const totalMs = activeBuffManager.getTotalMs(type);
+                const type = activeTypes[i];
+                const remainingMs = this.provider.getBuffRemainingMs(type);
+                const totalMs = this.provider.getBuffTotalMs(type);
                 const texture = this.iconTextureFor(type);
                 const color = this.iconColorFor(type);
 
                 const row = this.buffRows[i];
                 row.setVisible(true);
-                row.setY(this.buffRowYStart + i * (HudConfig.buffRow.height + HudConfig.buffRow.gap));
+                row.setY(this.buffRowStartY + i * (rightCfg.buffRow.height + rightCfg.buffRow.gap));
                 row.setBuffData(texture, color, remainingMs, totalMs, isPaused);
             }
         }
     }
 
-    /** Map tipe buff ke kunci tekstur ikon (single source: PowerUpConfig.iconAssetKey → AssetKeys). */
+    /** Map tipe buff ke kunci tekstur ikon (single source: PowerUpConfig.render.iconAssetKey → AssetKeys). */
     private iconTextureFor(type: PowerUpBuffType): string
     {
-        const key = (PowerUpConfig as { iconAssetKey: Record<string, string> }).iconAssetKey[type];
+        const key = (PowerUpConfig.render as { iconAssetKey: Record<string, string> }).iconAssetKey[type];
         return AssetManager.resolve(AssetKeys[key as keyof typeof AssetKeys]).texture;
     }
 
-    /** Map tipe buff ke warna ikon (single source: PowerUpConfig.iconColor). */
+    /** Map tipe buff ke warna ikon (single source: PowerUpConfig.render.iconColor). */
     private iconColorFor(type: PowerUpBuffType): number
     {
-        return (PowerUpConfig as { iconColor: Record<string, number> }).iconColor[type];
+        return (PowerUpConfig.render as { iconColor: Record<string, number> }).iconColor[type];
     }
 }

@@ -1,6 +1,7 @@
 import { Scene } from 'phaser';
 import { ScreenConfig } from '../config/ScreenConfig';
 import { HudManager } from '../ui/HudManager';
+import { IHudGameSource } from '../systems/IHudGameSource';
 import { computeFit } from '../utils/computeFit';
 import type { FitResult } from '../utils/computeFit';
 
@@ -32,8 +33,8 @@ export class Hud extends Scene
         this.leftContainer = this.add.container(0, 0);
         this.rightContainer = this.add.container(0, 0);
 
-        // Inisialisasi HudManager dengan referensi scene Game untuk polling data logic.
-        const gameScene = this.scene.get('Game');
+        // Inisialisasi HudManager dengan referensi scene Game (implementasi IHudGameSource) untuk polling data logic.
+        const gameScene = this.scene.get('Game') as unknown as IHudGameSource;
         this.hudManager = new HudManager(this, gameScene, this.leftContainer, this.rightContainer);
 
         // Setiap kamera hanya merender panel miliknya sendiri.

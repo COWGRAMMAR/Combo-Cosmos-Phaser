@@ -1,4 +1,4 @@
-import { WorldConfig } from '../config/WorldConfig';
+import { DebugConfig } from '../config/DebugConfig';
 
 /** Angka yang ditampilkan overlay debug; diisi ulang tiap frame oleh scene. */
 export interface DebugStats
@@ -37,7 +37,7 @@ export interface DebugStats
 export class DebugOverlay
 {
     private readonly element: HTMLDivElement;
-    private visible: boolean = WorldConfig.debug.enabled;
+    private visible: boolean = DebugConfig.enabled;
 
     /** Membuat elemen overlay yang menempel di sudut kiri atas layar. */
     constructor()

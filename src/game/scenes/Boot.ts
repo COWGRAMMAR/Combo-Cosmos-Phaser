@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { AssetManager } from '../systems/AssetManager';
+import { LanguageManager } from '../systems/LanguageManager';
 
 export class Boot extends Scene
 {
@@ -21,6 +22,9 @@ export class Boot extends Scene
     /** Lanjut ke scene Preloader setelah aset Boot selesai dimuat. */
     create ()
     {
+        // Emitter global dipasang sekali di awal supaya perubahan bahasa menjangkau scene mana pun.
+        LanguageManager.getInstance().attachEvents(this.game.events);
+
         this.scene.start('Preloader');
     }
 }

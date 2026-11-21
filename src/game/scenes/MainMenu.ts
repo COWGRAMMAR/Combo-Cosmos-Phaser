@@ -1,6 +1,7 @@
 import { Scene, GameObjects } from 'phaser';
 import { AssetKeys } from '../config/AssetKeys';
 import { ScreenConfig } from '../config/ScreenConfig';
+import { TranslatedText } from '../ui/TranslatedText';
 import { bindDesignCamera } from '../utils/designCamera';
 
 const LOGO_OFFSET_Y = -240;
@@ -30,7 +31,7 @@ export class MainMenu extends Scene
         this.logo = this.add.image(center.x, center.y + LOGO_OFFSET_Y, AssetKeys.Logo)
             .setDisplaySize(500, 108);
 
-        this.title = this.add.text(center.x, center.y + TITLE_OFFSET_Y, 'Main Menu', {
+        this.title = new TranslatedText(this, center.x, center.y + TITLE_OFFSET_Y, 'main_menu.screen.title', undefined, {
             fontFamily: 'Arial Black', fontSize: 38, color: '#ffffff',
             stroke: '#000000', strokeThickness: 8,
             align: 'center', resolution: 2

@@ -1,6 +1,7 @@
 import { Scene } from 'phaser';
 import { AssetKeys } from '../config/AssetKeys';
 import { ScreenConfig } from '../config/ScreenConfig';
+import { TranslatedText } from '../ui/TranslatedText';
 import { bindDesignCamera } from '../utils/designCamera';
 
 /** Layar game over yang menunggu klik untuk kembali ke menu. */
@@ -28,7 +29,7 @@ export class GameOver extends Scene
             .setDisplaySize(ScreenConfig.width, ScreenConfig.height);
         this.background.setAlpha(0.5);
 
-        this.gameover_text = this.add.text(center.x, center.y, 'Game Over', {
+        this.gameover_text = new TranslatedText(this, center.x, center.y, 'game_over.screen.title', undefined, {
             fontFamily: 'Arial Black', fontSize: 64, color: '#ffffff',
             stroke: '#000000', strokeThickness: 8,
             align: 'center', resolution: 2
