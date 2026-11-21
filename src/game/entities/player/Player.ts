@@ -21,8 +21,8 @@ export class Player extends BaseEntity
     private _lives: number = PlayerConfig.lives;
     private shieldActive: boolean = false;
 
-    private dashRemainingMs: number = 0;
-    private dashCooldownRemainingMs: number = 0;
+    private _dashRemainingMs: number = 0;
+    private _dashCooldownRemainingMs: number = 0;
     private dashDirX: number = 0;
     private dashDirY: number = 0;
 
@@ -146,13 +146,29 @@ export class Player extends BaseEntity
     /** True selama durasi dash berjalan. */
     public isDashing(): boolean
     {
-        return this.dashRemainingMs > 0;
+        return this._dashRemainingMs > 0;
     }
 
     /** True kalau cooldown dash sudah selesai dan dash bisa dipakai lagi. */
     public isDashReady(): boolean
     {
-        return this.dashCooldownRemainingMs <= 0;
+        return this._dashCooldownRemainingMs <= 0;
+    }
+
+    /** Sisa cooldown dash dalam milidetik (untuk HUD). */
+    public get dashCooldownRemainingMs(): number
+    {
+        return this._dashCooldownRemainingMs;
+    }
+
+    /** Rasio cooldown dash 0..1 (0 = siap, 1 = baru dipakai). */
+    public get dashCooldownRatio(): number
+    {
+        if (PlayerConfig.dash.cooldownMs <= 0)
+        {
+            return 0;
+        }
+        return Phaser.Math.Clamp(this._dashCooldownRemainingMs / PlayerConfig.dash.cooldownMs, 0, 1);
     }
 
     /** Tangkap snapshot input sekali per frame sebelum loop fixed-step berjalan. */
@@ -170,14 +186,14 @@ export class Player extends BaseEntity
         const axisX = this._inputAxisX;
         const axisY = this._inputAxisY;
 
-        if (this.dashRemainingMs > 0)
+        if (this._dashRemainingMs > 0)
         {
-            this.dashRemainingMs = Math.max(0, this.dashRemainingMs - delta);
+            this._dashRemainingMs = Math.max(0, this._dashRemainingMs - delta);
         }
 
-        if (this.dashCooldownRemainingMs > 0)
+        if (this._dashCooldownRemainingMs > 0)
         {
-            this.dashCooldownRemainingMs = Math.max(0, this.dashCooldownRemainingMs - delta);
+            this._dashCooldownRemainingMs = Math.max(0, this._dashCooldownRemainingMs - delta);
         }
 
         this.tryStartDash(axisX, axisY);
@@ -220,8 +236,8 @@ export class Player extends BaseEntity
 
         this._lives = PlayerConfig.lives;
         this.shieldActive = false;
-        this.dashRemainingMs = 0;
-        this.dashCooldownRemainingMs = 0;
+        this._dashRemainingMs = 0;
+        this._dashCooldownRemainingMs = 0;
         this.dashDirX = 0;
         this.dashDirY = 0;
         this.invulnerableRemainingMs = 0;
@@ -258,8 +274,8 @@ export class Player extends BaseEntity
 
         this.dashDirX = axisX / length;
         this.dashDirY = axisY / length;
-        this.dashRemainingMs = PlayerConfig.dash.durationMs;
-        this.dashCooldownRemainingMs = PlayerConfig.dash.cooldownMs;
+        this._dashRemainingMs = PlayerConfig.dash.durationMs;
+        this._dashCooldownRemainingMs = PlayerConfig.dash.cooldownMs;
 
         this.startInvulnerability(PlayerConfig.dash.invulnMs);
     }

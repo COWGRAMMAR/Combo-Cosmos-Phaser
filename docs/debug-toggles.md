@@ -14,6 +14,7 @@ Untuk urutan uji Grunt memakai tombol-tombol ini, lihat `docs/panduan-uji-grunt.
 | `F2`   | `stress(1000)`         | Hujan 1000 peluru musuh dari atas layar | Tidak |
 | `F3`   | `stress(3000)`         | Hujan 3000 peluru musuh dari atas layar | Tidak |
 | `F4`   | `cycleLanes`           | Putar jumlah jalur tembak pemain 1 → 5 → 1 | Tidak |
+| `8`    | `toggleLanguage`       | Ganti bahasa aktif `en` ⇄ `id` (teks di layar langsung berubah) | Tidak |
 | `R`    | `resetEnemyTest`       | Ulangi skenario tes Grunt dari awal + bersihkan peluru musuh | Tidak |
 | `Z`    | `powerUp(Lane)`        | Tambah 1 jalur tembak permanen (run ini) | Tidak |
 | `X`    | `powerUp(AtkSpeed)`    | Masukkan AtkSpeed ke slot inventory | Ya — tekan `1`/`2`/`3` |
@@ -23,6 +24,9 @@ Untuk urutan uji Grunt memakai tombol-tombol ini, lihat `docs/panduan-uji-grunt.
 | `N`    | `powerUp(Life)`        | Tambah 1 nyawa langsung | Tidak |
 
 Tombol debug **selalu aktif** selama scene `Game` berjalan. Tidak ada flag on/off untuk `DebugTools` itu sendiri.
+Pengecualian: `8` didengar langsung dari `window`, jadi **tetap berfungsi saat game di-pause** (scene `Game` berhenti update tapi teks tetap harus bisa diganti).
+
+Batas cakupannya: listener `8` (dan hook `window.__language`) hidup selama `DebugTools` ada, yaitu sejak scene `Game` dibuat sampai scene itu shutdown. Di `MainMenu` dan `Preloader` tombol `8` belum terdaftar, jadi judul menu tidak berubah saat ditekan di sana — untuk menguji judul menu dalam bahasa lain, tekan `8` di dalam `Game` lalu reload halaman.
 
 ---
 
@@ -65,6 +69,24 @@ Memanggil `PlayerWeapon.cycleLanes()`: `lanes` naik satu, dan kalau sudah mencap
 Efeknya: pola tembakan berubah langsung (1 peluru → 2 peluru sejajar → dst). Nilai ini **bukan** permanen antar run: `resetForPool()` mengembalikan ke nilai config.
 
 Lokasi: `Game.create()` → `this.weapon?.cycleLanes()` (`PlayerWeapon.cycleLanes()`).
+
+### 8 — Ganti bahasa
+
+Memanggil `LanguageManager.toggleLanguage()`: bahasa aktif berpindah ke bahasa berikutnya di `LanguageConfig.supportedLanguages` (`en` → `id` → `en`). Pilihan disimpan ke `localStorage` di key `LanguageConfig.storageKey`, lalu diumumkan lewat `GameEvents.LANGUAGE_CHANGED` sehingga semua `TranslatedText` yang masih hidup langsung menulis ulang teksnya.
+
+Berbeda dari tombol lain, `8` **tidak** memakai `keyboard.addKey` + `JustDown`. Alasannya: `Game.update()` berhenti saat pause, padahal bahasa harus tetap bisa diganti di overlay pause. `DebugTools` karena itu memasang listener `window` sendiri (`event.key === DebugConfig.keys.toggleLanguage`) dan melepasnya di `destroy()`.
+
+Konsekuensi yang mudah terlewat: karena listener dipasang oleh `DebugTools`, tombol `8` baru ada setelah scene `Game` jalan. Di `MainMenu` tekan `8` tidak berefek (tidak ada listener dan `window.__language` masih `undefined`).
+
+`DebugTools` juga memasang hook console `window.__language` (instance `LanguageManager`), berguna untuk menguji fallback tanpa reload:
+
+```js
+__language.t('tidak.ada')                       // → "tidak.ada" (raw key)
+__language.t('common.example.greeting', {name: 'Rafif'})
+__language.setLanguage('id')
+```
+
+Hook itu **hanya ada** saat `DebugTools` hidup; `LanguageManager` sendiri tidak tahu apa-apa soal debug.
 
 ### R — Ulangi skenario tes Grunt
 
@@ -125,7 +147,7 @@ Status di baris 6 dirakit dari: `dash siap` / `dash cooldown`, lalu tambahan `ke
 | Hal | Lokasi | Catatan |
 | --- | ------ | ------- |
 | Tombol & pengecekan | `src/game/systems/DebugTools.ts` | Key & styling dibaca dari `DebugConfig`, bukan `InputAction` |
-| Sumber konfigurasi debug | `src/game/config/DebugConfig.ts` | `enabled`, `keys` (F1–F4, Z–N), `stress`, `graphics` (jalur/zona/ring/arah) |
+| Sumber konfigurasi debug | `src/game/config/DebugConfig.ts` | `enabled`, `keys` (F1–F4, `8`, Z–N), `stress`, `graphics` (jalur/zona/ring/arah) |
 | Aksi yang dipanggil | `Game.create()` | Satu-satunya tempat `new DebugTools(...)` |
 | Overlay | `src/game/ui/DebugOverlay.ts` | Visibilitas awal dari `DebugConfig.enabled` |
 | Default overlay tampil | `src/game/config/DebugConfig.ts` (`enabled`) | `enabled: true` |
@@ -146,6 +168,7 @@ Tombol debug **tidak** didaftarkan di `InputAction`/`InputBindings` supaya keybi
 | `F4` | Umumnya aman (di beberapa aplikasi = close window) | Tidak dipakai browser sebagai shortcut utama |
 | `F5`, `F11`, `F12` | Reload / fullscreen / devtools | **Sengaja tidak dipakai** — alasan `Z..N` dipilih untuk power-up |
 | `Z..N` | Tidak ada; gameplay memakai WASD/arrow, `SPACE`, `SHIFT`, `1/2/3`, `E`, `ESC` | — |
+| `8` | Tidak ada; gameplay memakai `1`/`2`/`3` untuk slot, bukan `8` | — |
 
 ---
 
@@ -157,6 +180,8 @@ Tombol debug **tidak** didaftarkan di `InputAction`/`InputBindings` supaya keybi
 4. Tambah blok `JustDown` di `update()` dengan komentar satu baris: tombol apa, efek apa.
 5. Tambah `keyboard.removeKey(...)` di `destroy()` agar tidak bocor saat scene restart.
 6. Perbarui tabel di dokumen ini dan `docs/struktur-file.md` bila ada file baru.
+
+Catatan: kalau tombol baru harus tetap bekerja saat game di-pause, jangan pakai `keyboard.addKey` + `JustDown` — pasang listener `window` di `DebugTools` seperti tombol `8`, dan lepas di `destroy()`.
 
 Kalau yang ditambah hanya varian jumlah (misal stress 500), cukup tambah satu tombol + satu argumen `stress(n)`; tidak perlu mengubah `Game.ts`.
 
@@ -189,3 +214,4 @@ Belum ada dan sengaja tidak dibuat di sini:
 9. Restart run → jalur kembali 1, slot kosong, nyawa kembali ke `PlayerConfig.lives`.
 10. `R` → skenario Grunt mulai lagi dari pola pertama dan peluru musuh hilang.
 11. `F1` saat overlay tampil → terlihat kotak zona 300×300 + titik pusat, ring 150 px di pemain, titik-titik jalur item, dan garis arah untuk item `straight`; `F1` lagi → semua visual itu hilang tanpa sisa.
+12. `8` di dalam `Game` → label HUD dan overlay pause berganti bahasa seketika; tekan lagi → kembali. Setelah itu reload halaman → bahasa tersimpan dipakai lagi oleh judul `MainMenu`.

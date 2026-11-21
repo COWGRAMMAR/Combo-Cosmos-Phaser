@@ -1,6 +1,7 @@
 # Contributing: Combo-Cosmos-Phaser
 
 Panduan berkontribusi ke repo ini. Cara install, menjalankan dev server, dan build ada di [`docs/build.md`](docs/build.md).
+Semua teks yang dilihat pemain wajib lewat sistem bahasa — baca [`docs/language.md`](docs/language.md) sebelum menambah teks baru.
 
 ## Aturan Branch
 
