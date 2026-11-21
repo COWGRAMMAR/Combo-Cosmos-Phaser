@@ -13,7 +13,7 @@ export type EnemyTestScenario =
  */
 export const EnemyTestConfig = {
     /** Matikan untuk menonaktifkan spawn tes dan tombol reset. */
-    enabled: false,
+    enabled: true,
     scenario: 'rain' as EnemyTestScenario,
     /** Nama key Phaser untuk memunculkan ulang skenario. */
     resetKey: 'R',

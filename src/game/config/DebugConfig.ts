@@ -23,6 +23,9 @@ export const DebugConfig = {
         /** F4: putar jumlah jalur tembak pemain. */
         cycleLanes: 'F4',
 
+        /** Digit 8: ganti bahasa aktif; didengar langsung dari window agar tetap jalan saat pause. */
+        toggleLanguage: '8',
+
         /** Pemetaan tombol Z..N ke jenis power-up, sesuai urutan tombol. */
         powerUps: [
             { type: PowerUpType.Lane, key: 'Z' },

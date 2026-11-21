@@ -1,6 +1,7 @@
 /**
  * Nilai tampilan overlay pause.
  * Menu pause masih placeholder untuk verifikasi mekanisme pause.
+ * Teks judul dan hint tidak ada di sini karena berasal dari file bahasa.
  */
 export const PauseConfig = {
     overlay: {
@@ -8,7 +9,6 @@ export const PauseConfig = {
         alpha: 0.6
     },
     title: {
-        text: 'PAUSED',
         fontFamily: 'Arial Black',
         fontSize: 72,
         color: '#ffffff',
@@ -17,7 +17,6 @@ export const PauseConfig = {
         offsetY: -40
     },
     hint: {
-        text: 'Klik atau ESC untuk resume',
         fontFamily: 'Arial',
         fontSize: 28,
         color: '#cbd5e1',

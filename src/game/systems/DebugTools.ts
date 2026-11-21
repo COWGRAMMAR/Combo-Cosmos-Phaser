@@ -2,6 +2,7 @@ import * as Phaser from 'phaser';
 import { DebugConfig } from '../config/DebugConfig';
 import { PowerUpConfig } from '../config/PowerUpConfig';
 import { PowerUpType } from '../types/PowerUpType';
+import { LanguageManager } from './LanguageManager';
 import type { PowerUpItem } from './power-ups/PowerUpItem';
 
 /** Aksi yang dipanggil oleh tombol debug. */
@@ -11,7 +12,14 @@ export interface DebugActions
     stress: (count: number) => void;
     cycleLanes: () => void;
     powerUp: (kind: PowerUpType) => void;
+    toggleLanguage: () => void;
     resetEnemyTest: () => void;
+}
+
+/** Jendela browser dengan hook console khusus debug; properti dihapus saat alat debug mati. */
+interface DebugWindow extends Window
+{
+    __language?: LanguageManager;
 }
 
 /** Opsi tombol debug yang berasal dari config. */
@@ -36,6 +44,23 @@ export class DebugTools
     private readonly powerUpKeys: Phaser.Input.Keyboard.Key[];
     private readonly resetKey?: Phaser.Input.Keyboard.Key;
 
+    /** Tombol bahasa dari config; dibandingkan langsung dengan `event.key`. */
+    private readonly languageKey: string;
+
+    /** Referensi window yang sama dengan tempat listener dipasang, dipakai saat destroy. */
+    private readonly debugWindow: DebugWindow;
+
+    /** Menangkap tombol bahasa di level window agar tetap berfungsi saat scene Game di-pause. */
+    private readonly handleWindowKeyDown = (event: KeyboardEvent): void =>
+    {
+        if (event.repeat || event.key !== this.languageKey)
+        {
+            return;
+        }
+
+        this.actions.toggleLanguage();
+    };
+
     /** Layer gambar prediksi jalur item power-up; berdiri sendiri dari sistem item. */
     private readonly pathGraphics: Phaser.GameObjects.Graphics;
 
@@ -58,6 +83,11 @@ export class DebugTools
         // Urutan power-up mengikuti DebugConfig.keys.powerUps agar tombol dan jenis tetap sinkron.
         this.powerUpKeys = DebugConfig.keys.powerUps.map((entry) => keyboard.addKey(entry.key));
         this.resetKey = options?.resetKey ? keyboard.addKey(options.resetKey) : undefined;
+
+        this.languageKey = DebugConfig.keys.toggleLanguage;
+        this.debugWindow = window as DebugWindow;
+        this.debugWindow.__language = LanguageManager.getInstance();
+        this.debugWindow.addEventListener('keydown', this.handleWindowKeyDown);
 
         this.pathGraphics = scene.add.graphics();
         this.pathGraphics.setDepth(PowerUpConfig.render.itemDepth + DebugConfig.graphics.depthOffset);
@@ -222,9 +252,12 @@ export class DebugTools
         );
     }
 
-    /** Melepas seluruh tombol debug dari keyboard. */
+    /** Melepas seluruh tombol debug dari keyboard dan menghapus hook console. */
     public destroy(): void
     {
+        this.debugWindow.removeEventListener('keydown', this.handleWindowKeyDown);
+        delete this.debugWindow.__language;
+
         this.pathGraphics.destroy();
 
         const keyboard = this.scene.input.keyboard;

@@ -4,6 +4,7 @@ import { DEFAULT_INPUT_BINDINGS } from '../config/InputBindings';
 import { PauseConfig } from '../config/PauseConfig';
 import { ScreenConfig } from '../config/ScreenConfig';
 import { InputAction } from '../types/InputAction';
+import { TranslatedText } from '../ui/TranslatedText';
 import { bindDesignCamera } from '../utils/designCamera';
 
 /** Overlay pause di atas gameplay; isinya masih placeholder. TEMP */
@@ -29,10 +30,12 @@ export class Pause extends Scene
             PauseConfig.overlay.alpha
         );
 
-        this.add.text(
+        new TranslatedText(
+            this,
             center.x,
             center.y + PauseConfig.title.offsetY,
-            PauseConfig.title.text,
+            'pause.overlay.title',
+            undefined,
             {
                 fontFamily: PauseConfig.title.fontFamily,
                 fontSize: PauseConfig.title.fontSize,
@@ -43,10 +46,12 @@ export class Pause extends Scene
             }
         ).setOrigin(0.5);
 
-        this.add.text(
+        new TranslatedText(
+            this,
             center.x,
             center.y + PauseConfig.hint.offsetY,
-            PauseConfig.hint.text,
+            'pause.overlay.hint',
+            undefined,
             {
                 fontFamily: PauseConfig.hint.fontFamily,
                 fontSize: PauseConfig.hint.fontSize,
