@@ -22,8 +22,12 @@ import { AssetManager } from '../systems/AssetManager';
 import { EffectManager } from '../systems/EffectManager';
 import { EnemyBulletManager } from '../systems/EnemyBulletManager';
 import { InputManager } from '../systems/InputManager';
+import { LanguageManager } from '../systems/LanguageManager';
 import { PauseManager } from '../systems/PauseManager';
 import { PowerUpManager } from '../systems/PowerUpManager';
+import { ScoreSystem } from '../systems/ScoreSystem';
+import { ComboScoreConfig } from '../config/ComboScoreConfig';
+import { IHudGameSource } from '../systems/IHudGameSource';
 import type { PowerUpType } from '../types/PowerUpType';
 import { GruntPool } from '../systems/enemy/GruntPool';
 import { GruntTestRunner } from '../systems/enemy/GruntTestRunner';
@@ -39,13 +43,14 @@ import { Team } from '../types/Team';
 import { DebugOverlay } from '../ui/DebugOverlay';
 import { computeFit } from '../utils/computeFit';
 import type { DebugStats } from '../ui/DebugOverlay';
+import { ScoreDebug } from '../debug/ScoreDebug';
 
 /**
  * Scene utama permainan.
  * Scene ini hanya merakit pool, manager, dan collision; logika tiap sistem
  * tetap berada di file masing-masing.
  */
-export class Game extends Phaser.Scene
+export class Game extends Phaser.Scene implements IHudGameSource
 {
     private inputManager?: InputManager;
     private player?: Player;
@@ -65,6 +70,8 @@ export class Game extends Phaser.Scene
     private explosions?: EnemyExplosionPool;
     private overlay?: DebugOverlay;
     private debugTools?: DebugTools;
+    private scoreSystem?: ScoreSystem;
+    private scoreDebug?: ScoreDebug;
     private pauseManager?: PauseManager;
     private playerBulletMax: number = 0;
     private gameOverPending: boolean = false;
@@ -299,13 +306,19 @@ export class Game extends Phaser.Scene
             ? EnemyTestConfig.resetKey
             : undefined;
 
+        // Sistem skor harus ada sebelum ScoreDebug dibuat (debug membaca state di konstruktor).
+        const scoreSystem = new ScoreSystem();
+        this.scoreSystem = scoreSystem;
+
         this.overlay = new DebugOverlay();
         this.applyCameraLayout();
+
         this.debugTools = new DebugTools(this, {
             toggleOverlay: () => this.overlay?.toggle(),
             stress: (count: number) => this.spawnStressBullets(count),
             cycleLanes: () => this.weapon?.cycleLanes(),
             powerUp: (kind: PowerUpType) => this.powerUps?.apply(kind),
+            toggleLanguage: () => LanguageManager.getInstance().toggleLanguage(),
             resetEnemyTest: () =>
             {
                 this.enemyBullets?.clearAll();
@@ -319,6 +332,18 @@ export class Game extends Phaser.Scene
         // Event power-up: item disentuh pemain dan power-up dipakai dari slot.
         this.events.on(GameEvents.POWER_UP_COLLECTED, this.handlePowerUpCollected, this);
         this.events.on(GameEvents.POWER_UP_USED, this.handlePowerUpUsed, this);
+
+        // Hook: player kena hit (bukan shield pecah) -> combo reset
+        this.events.on(GameEvents.PLAYER_HIT, this.handlePlayerHitScore, this);
+
+        // Hook: pickup item valid -> skor flat
+        this.events.on(GameEvents.POWER_UP_COLLECTED, this.handleScoreItemPickup, this);
+
+        // Hook: aktivasi buff -> skor flat
+        this.events.on(GameEvents.POWER_UP_USED, this.handleScoreBuffActivate, this);
+
+        // Debug skor dibuat terakhir, setelah ScoreSystem & hook event terpasang.
+        this.scoreDebug = new ScoreDebug(this, scoreSystem);
 
         this.pauseManager = new PauseManager(this);
         this.scene.launch('Hud');
@@ -374,6 +399,9 @@ export class Game extends Phaser.Scene
                 // Jadwal spawn ikut jam simulasi agar seluruh timing gameplay konsisten
                 // (dipanggil setelah updateItems supaya item baru maju mulai step berikutnya).
                 this.spawnManager?.update(fixedStepMs);
+
+                // Sistem skor: timer combo pakai fixed-step delta
+                this.scoreSystem?.update(fixedStepMs);
             }
         );
 
@@ -398,6 +426,9 @@ export class Game extends Phaser.Scene
 
         this.debugTools?.update();
         this.overlay?.update(this.stats);
+
+        // Debug skor
+        this.scoreDebug?.update();
 
         // Prediksi jalur + zona spawn hanya digambar saat overlay debug terlihat.
         this.debugTools?.renderPowerUpPaths(
@@ -427,6 +458,18 @@ export class Game extends Phaser.Scene
     public getPlayer(): Player | undefined
     {
         return this.player;
+    }
+
+    /** Getter read-only score system untuk konsumsi UI/HUD (UI hanya baca, tidak mengubah gameplay). */
+    public getScoreSystem(): ScoreSystem | undefined
+    {
+        return this.scoreSystem;
+    }
+
+    /** Getter read-only Grunt pool untuk konsumsi UI/HUD (UI hanya baca, tidak mengubah gameplay). */
+    public getGruntPool(): GruntPool | undefined
+    {
+        return this.grunts;
     }
 
     /** Cek keybind slot: 1/2/3 pakai, tahan E lalu tekan 1/2/3 untuk membuang. */
@@ -510,6 +553,8 @@ export class Game extends Phaser.Scene
         this.laser?.reset();
         this.explosions?.reset();
 
+        this.scoreSystem?.reset();
+
         this.playerBulletMax = 0;
         this.gameOverPending = false;
         this.lastEnemyContactFrame = -1;
@@ -561,6 +606,24 @@ export class Game extends Phaser.Scene
         // Buff sudah diaktifkan di updateSlotKeybinds lewat activeBuffManager.activate();
         // Event ini dipancarkan untuk konsumsi UI/HUD.
     }
+
+    /** Handler skor: player kena hit (dipicu oleh EnemyBulletManager, bukan shield pecah). */
+    private handlePlayerHitScore = (): void =>
+    {
+        this.scoreSystem?.onPlayerHit();
+    };
+
+    /** Handler skor: pickup item valid. */
+    private handleScoreItemPickup = (): void =>
+    {
+        this.scoreSystem?.addFlat(ComboScoreConfig.score.itemPickupScore);
+    };
+
+    /** Handler skor: aktivasi buff dari slot. */
+    private handleScoreBuffActivate = (): void =>
+    {
+        this.scoreSystem?.addFlat(ComboScoreConfig.score.buffActivateScore);
+    };
 
     /** Menerapkan efek samping saat sebuah efek durasi mulai. */
     private handleEffectStart (type: EffectType): void
@@ -711,7 +774,14 @@ export class Game extends Phaser.Scene
         this.events.off(GameEvents.ENEMY_KILLED, this.handleEnemyKilled);
         this.events.off(GameEvents.POWER_UP_COLLECTED, this.handlePowerUpCollected, this);
         this.events.off(GameEvents.POWER_UP_USED, this.handlePowerUpUsed, this);
+        this.events.off(GameEvents.PLAYER_HIT, this.handlePlayerHitScore, this);
+        this.events.off(GameEvents.POWER_UP_COLLECTED, this.handleScoreItemPickup, this);
+        this.events.off(GameEvents.POWER_UP_USED, this.handleScoreBuffActivate, this);
         this.events.off(Phaser.Core.Events.PAUSE, this.handleScenePause, this);
         this.events.off(Phaser.Core.Events.RESUME, this.handleSceneResume, this);
+
+        this.scoreDebug?.destroy();
+        this.scoreDebug = undefined;
+        this.scoreSystem = undefined;
     }
 }

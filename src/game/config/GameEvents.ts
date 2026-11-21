@@ -15,4 +15,10 @@ export const GameEvents = {
     POWER_UP_COLLECTED: 'power-up-collected',
     /** Dipancarkan saat pemain menggunakan power-up dari slot. */
     POWER_UP_USED: 'power-up-used',
+    /** Dipancarkan saat pemain graze peluru musuh. */
+    GRAZE: 'graze',
+    /** Dipancarkan saat wave bersih (semua musuh wave selesai). */
+    WAVE_CLEARED: 'wave-cleared',
+    /** Dipancarkan setelah bahasa aktif divalidasi dan disimpan; pembawa data kode bahasa baru. */
+    LANGUAGE_CHANGED: 'language-changed',
 } as const;
